@@ -7,9 +7,10 @@ import { Session } from '../../../models/session.model';
 import { Person } from '../../../models/person.model';
 import { PreferenceType } from '../../../models/preference.model';
 import { GroupingStrategy, GroupingSettings, GroupingResult } from '../../../models/group.model';
+import { GroupingService, ValidationMessage } from '../../../core/services/grouping.service';
 import { SessionService } from '../../../core/services/session.service';
-import { GroupingService } from '../../../core/services/grouping.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { I18nService } from '../../../core/services/i18n.service';
 
 @Component({
   selector: 'app-session-detail',
@@ -37,7 +38,8 @@ export class SessionDetail implements OnInit, OnDestroy {
     private router: Router,
     private sessionService: SessionService,
     private groupingService: GroupingService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -69,7 +71,7 @@ export class SessionDetail implements OnInit, OnDestroy {
   addPerson(): void {
     if (!this.session) return;
 
-    const name = prompt('Enter person name:');
+    const name = prompt(this.i18n.t('sessionDetail.prompt.personName'));
     if (name && name.trim()) {
       const person: Person = {
         id: uuidv4(),
@@ -77,16 +79,16 @@ export class SessionDetail implements OnInit, OnDestroy {
         createdAt: new Date()
       };
       this.sessionService.addPersonToSession(this.session.id, person);
-      this.snackBar.open('Person added', 'Close', { duration: 2000 });
+      this.showSnack('sessionDetail.snackbar.personAdded', 2000);
     }
   }
 
   removePerson(person: Person): void {
     if (!this.session) return;
 
-    if (confirm(`Remove ${person.name}?`)) {
+    if (confirm(this.i18n.t('sessionDetail.confirm.removePerson', { name: person.name }))) {
       this.sessionService.removePersonFromSession(this.session.id, person.id);
-      this.snackBar.open('Person removed', 'Close', { duration: 2000 });
+      this.showSnack('sessionDetail.snackbar.personRemoved', 2000);
     }
   }
 
@@ -130,7 +132,7 @@ export class SessionDetail implements OnInit, OnDestroy {
     if (!this.session) return;
 
     if (this.session.people.length === 0) {
-      this.snackBar.open('Please add people first', 'Close', { duration: 3000 });
+      this.showSnack('sessionDetail.snackbar.addPeopleFirst');
       return;
     }
 
@@ -142,7 +144,7 @@ export class SessionDetail implements OnInit, OnDestroy {
 
     const validation = this.groupingService.validateSettings(this.session.people.length, settings);
     if (!validation.isValid) {
-      this.snackBar.open(validation.errors[0], 'Close', { duration: 3000 });
+      this.showValidationMessage(validation.errors[0]);
       return;
     }
 
@@ -154,9 +156,12 @@ export class SessionDetail implements OnInit, OnDestroy {
       );
 
       this.sessionService.addGroupingResult(this.session.id, this.currentResult);
-      this.snackBar.open('Groups generated successfully', 'Close', { duration: 2000 });
+      this.showSnack('sessionDetail.snackbar.groupsGenerated', 2000);
     } catch (error: any) {
-      this.snackBar.open(error.message || 'Failed to generate groups', 'Close', { duration: 3000 });
+      const message = typeof error?.message === 'string'
+        ? this.i18n.t(error.message, error.params)
+        : this.i18n.t('sessionDetail.snackbar.failedGenerateGroups');
+      this.snackBar.open(message, this.i18n.t('common.close'), { duration: 3000 });
     }
   }
 
@@ -172,5 +177,15 @@ export class SessionDetail implements OnInit, OnDestroy {
 
   back(): void {
     this.router.navigate(['/sessions']);
+  }
+
+  private showSnack(messageKey: string, duration = 3000): void {
+    this.snackBar.open(this.i18n.t(messageKey), this.i18n.t('common.close'), { duration });
+  }
+
+  private showValidationMessage(message: ValidationMessage): void {
+    this.snackBar.open(this.i18n.t(message.key, message.params), this.i18n.t('common.close'), {
+      duration: 3000
+    });
   }
 }

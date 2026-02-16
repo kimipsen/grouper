@@ -1,6 +1,6 @@
 <div class="session-detail-container" *ngIf="session">
   <div class="header">
-    <button mat-icon-button (click)="back()">
+    <button mat-icon-button (click)="back()" [attr.aria-label]="'common.back' | t">
       <mat-icon>arrow_back</mat-icon>
     </button>
     <h1>{{ session.name }}</h1>
@@ -10,7 +10,7 @@
     <!-- People Management -->
     <mat-card class="section-card">
       <mat-card-header>
-        <mat-card-title>People ({{ session.people.length }})</mat-card-title>
+        <mat-card-title>{{ 'sessionDetail.peopleTitle' | t:{ count: session.people.length } }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="people-list">
@@ -22,12 +22,12 @@
             </button>
           </div>
           <div class="empty-state" *ngIf="session.people.length === 0">
-            <p>No people yet</p>
+            <p>{{ 'sessionDetail.noPeople' | t }}</p>
           </div>
         </div>
         <button mat-raised-button color="primary" (click)="addPerson()" class="add-button">
           <mat-icon>add</mat-icon>
-          Add Person
+          {{ 'sessionDetail.addPerson' | t }}
         </button>
       </mat-card-content>
     </mat-card>
@@ -35,7 +35,7 @@
     <!-- Preferences Matrix -->
     <mat-card class="section-card preferences-card">
       <mat-card-header>
-        <mat-card-title>Preferences</mat-card-title>
+        <mat-card-title>{{ 'sessionDetail.preferencesTitle' | t }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div *ngIf="session.people.length >= 2" class="preferences-matrix">
@@ -56,11 +56,11 @@
                       [value]="getPreference(person.id, targetPerson.id)"
                       (change)="onPreferenceChange(person.id, targetPerson.id, $any($event.target).value)"
                       class="preference-select">
-                      <option value="none">-</option>
-                      <option value="wantWith">Want with</option>
-                      <option value="avoid">Avoid</option>
+                      <option value="none">{{ 'sessionDetail.preferenceNone' | t }}</option>
+                      <option value="wantWith">{{ 'sessionDetail.preferenceWantWith' | t }}</option>
+                      <option value="avoid">{{ 'sessionDetail.preferenceAvoid' | t }}</option>
                     </select>
-                    <span *ngIf="person.id === targetPerson.id" class="diagonal">-</span>
+                    <span *ngIf="person.id === targetPerson.id" class="diagonal">{{ 'sessionDetail.preferenceNone' | t }}</span>
                   </td>
                 </tr>
               </tbody>
@@ -68,7 +68,7 @@
           </div>
         </div>
         <div class="empty-state" *ngIf="session.people.length < 2">
-          <p>Add at least 2 people to set preferences</p>
+          <p>{{ 'sessionDetail.preferencesMinPeople' | t }}</p>
         </div>
       </mat-card-content>
     </mat-card>
@@ -76,29 +76,29 @@
     <!-- Grouping Configuration -->
     <mat-card class="section-card">
       <mat-card-header>
-        <mat-card-title>Create Groups</mat-card-title>
+        <mat-card-title>{{ 'sessionDetail.createGroupsTitle' | t }}</mat-card-title>
       </mat-card-header>
       <mat-card-content class="grouping-config">
         <mat-form-field>
-          <mat-label>Strategy</mat-label>
+          <mat-label>{{ 'sessionDetail.strategy' | t }}</mat-label>
           <select matNativeControl [(ngModel)]="groupingStrategy">
-            <option [value]="GroupingStrategy.RANDOM">Random</option>
-            <option [value]="GroupingStrategy.PREFERENCE_BASED">Preference-Based</option>
+            <option [value]="GroupingStrategy.RANDOM">{{ 'sessionDetail.strategyRandom' | t }}</option>
+            <option [value]="GroupingStrategy.PREFERENCE_BASED">{{ 'sessionDetail.strategyPreferenceBased' | t }}</option>
           </select>
         </mat-form-field>
 
         <mat-form-field>
-          <mat-label>Group Size</mat-label>
+          <mat-label>{{ 'sessionDetail.groupSize' | t }}</mat-label>
           <input matNativeControl type="number" [(ngModel)]="groupSize" min="1" [max]="session.people.length">
         </mat-form-field>
 
         <mat-checkbox [(ngModel)]="allowPartialGroups">
-          Allow partial groups
+          {{ 'sessionDetail.allowPartialGroups' | t }}
         </mat-checkbox>
 
         <button mat-raised-button color="primary" (click)="generateGroups()" [disabled]="session.people.length === 0">
           <mat-icon>shuffle</mat-icon>
-          Generate Groups
+          {{ 'sessionDetail.generateGroups' | t }}
         </button>
       </mat-card-content>
     </mat-card>
@@ -107,22 +107,22 @@
     <mat-card class="section-card groups-display" *ngIf="currentResult">
       <mat-card-header>
         <mat-card-title>
-          Generated Groups
+          {{ 'sessionDetail.generatedGroups' | t }}
           <span class="satisfaction-badge" *ngIf="currentResult.overallSatisfaction !== undefined">
-            Satisfaction: {{ currentResult.overallSatisfaction }}
+            {{ 'sessionDetail.satisfaction' | t:{ score: currentResult.overallSatisfaction } }}
           </span>
         </mat-card-title>
-        <button mat-icon-button (click)="regenerateGroups()">
+        <button mat-icon-button (click)="regenerateGroups()" [attr.aria-label]="'sessionDetail.regenerateGroupsAria' | t">
           <mat-icon>refresh</mat-icon>
         </button>
       </mat-card-header>
       <mat-card-content>
         <div class="groups-grid">
-          <div *ngFor="let group of currentResult.groups" class="group-card">
+          <div *ngFor="let group of currentResult.groups; let i = index" class="group-card">
             <div class="group-header">
-              <h3>{{ group.name }}</h3>
+              <h3>{{ 'sessionDetail.groupLabel' | t:{ index: i + 1 } }}</h3>
               <span class="score" *ngIf="group.satisfactionScore !== undefined">
-                Score: {{ group.satisfactionScore }}
+                {{ 'sessionDetail.score' | t:{ score: group.satisfactionScore } }}
               </span>
             </div>
             <div class="group-members">

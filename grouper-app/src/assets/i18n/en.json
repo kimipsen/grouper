@@ -1,0 +1,93 @@
+{
+  "app": {
+    "title": "Grouper",
+    "sessionsNav": "Sessions",
+    "themeToggleAria": "Toggle dark mode",
+    "themeToggle": {
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "languageLabel": "Language"
+  },
+  "common": {
+    "close": "Close",
+    "open": "Open",
+    "delete": "Delete",
+    "export": "Export",
+    "import": "Import",
+    "back": "Back"
+  },
+  "sessionList": {
+    "title": "Sessions",
+    "newSession": "New Session",
+    "emptyTitle": "No sessions yet",
+    "emptyDescription": "Create a new session to start grouping people",
+    "createFirstSession": "Create First Session",
+    "peopleCount": "{{count}} people",
+    "groupingsCount": "{{count}} groupings",
+    "snackbar": {
+      "created": "Session created successfully",
+      "deleted": "Session deleted",
+      "exported": "Session exported successfully",
+      "exportFailed": "Failed to export session",
+      "imported": "Session imported successfully",
+      "importFailed": "Failed to import session: Invalid file"
+    },
+    "prompt": {
+      "sessionName": "Enter session name:"
+    },
+    "confirm": {
+      "deleteSession": "Are you sure you want to delete session \"{{name}}\"?"
+    }
+  },
+  "sessionDetail": {
+    "peopleTitle": "People ({{count}})",
+    "noPeople": "No people yet",
+    "addPerson": "Add Person",
+    "preferencesTitle": "Preferences",
+    "preferenceNone": "-",
+    "preferenceWantWith": "Want with",
+    "preferenceAvoid": "Avoid",
+    "preferencesMinPeople": "Add at least 2 people to set preferences",
+    "createGroupsTitle": "Create Groups",
+    "strategy": "Strategy",
+    "strategyRandom": "Random",
+    "strategyPreferenceBased": "Preference-Based",
+    "groupSize": "Group Size",
+    "allowPartialGroups": "Allow partial groups",
+    "generateGroups": "Generate Groups",
+    "generatedGroups": "Generated Groups",
+    "satisfaction": "Satisfaction: {{score}}",
+    "regenerateGroupsAria": "Regenerate groups",
+    "groupLabel": "Group {{index}}",
+    "score": "Score: {{score}}",
+    "prompt": {
+      "personName": "Enter person name:"
+    },
+    "confirm": {
+      "removePerson": "Remove {{name}}?"
+    },
+    "snackbar": {
+      "personAdded": "Person added",
+      "personRemoved": "Person removed",
+      "addPeopleFirst": "Please add people first",
+      "groupsGenerated": "Groups generated successfully",
+      "failedGenerateGroups": "Failed to generate groups"
+    }
+  },
+  "grouping": {
+    "errors": {
+      "preferencesRequired": "Preferences are required for preference-based grouping",
+      "unknownStrategy": "Unknown grouping strategy: {{strategy}}",
+      "groupSizeMin": "Group size must be at least 1",
+      "noPeople": "No people to group"
+    },
+    "warnings": {
+      "groupSizeLargerThanPeople": "Group size ({{groupSize}}) is larger than number of people ({{peopleCount}})",
+      "unevenDistributionOne": "{{peopleCount}} people cannot be evenly divided into groups of {{groupSize}}. {{remainder}} person will be distributed across groups.",
+      "unevenDistributionMany": "{{peopleCount}} people cannot be evenly divided into groups of {{groupSize}}. {{remainder}} people will be distributed across groups.",
+      "partialGroupOne": "One group will have {{remainder}} person instead of {{groupSize}}",
+      "partialGroupMany": "One group will have {{remainder}} people instead of {{groupSize}}"
+    }
+  }
+}

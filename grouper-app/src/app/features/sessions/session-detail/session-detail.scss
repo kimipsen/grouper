@@ -41,10 +41,10 @@
     align-items: center;
     gap: 10px;
     padding: 8px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
 
     mat-icon {
-      color: #666;
+      color: var(--mat-sys-on-surface-variant);
     }
 
     span {
@@ -76,12 +76,12 @@
     th, td {
       padding: 8px;
       text-align: center;
-      border: 1px solid #ddd;
+      border: 1px solid var(--mat-sys-outline-variant);
       min-width: 100px;
     }
 
     th {
-      background: #f5f5f5;
+      background: var(--mat-sys-surface-container-low);
       font-weight: 600;
       position: sticky;
       top: 0;
@@ -89,7 +89,7 @@
     }
 
     .row-header {
-      background: #f5f5f5;
+      background: var(--mat-sys-surface-container-low);
       font-weight: 600;
       position: sticky;
       left: 0;
@@ -99,17 +99,19 @@
     .preference-select {
       width: 100%;
       padding: 4px;
-      border: 1px solid #ccc;
+      border: 1px solid var(--mat-sys-outline);
       border-radius: 4px;
+      background: var(--mat-sys-surface);
+      color: var(--mat-sys-on-surface);
 
       &:focus {
         outline: none;
-        border-color: #3f51b5;
+        border-color: var(--mat-sys-primary);
       }
     }
 
     .diagonal {
-      color: #ccc;
+      color: var(--mat-sys-outline);
     }
   }
 }
@@ -145,8 +147,8 @@
 
       .satisfaction-badge {
         font-size: 14px;
-        background: #e8f5e9;
-        color: #2e7d32;
+        background: var(--mat-sys-secondary-container);
+        color: var(--mat-sys-on-secondary-container);
         padding: 4px 12px;
         border-radius: 12px;
         font-weight: normal;
@@ -162,10 +164,10 @@
 }
 
 .group-card {
-  border: 1px solid #ddd;
+  border: 1px solid var(--mat-sys-outline-variant);
   border-radius: 8px;
   padding: 16px;
-  background: #fafafa;
+  background: var(--mat-sys-surface-container-low);
 
   .group-header {
     display: flex;
@@ -173,7 +175,7 @@
     align-items: center;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 2px solid var(--mat-sys-outline-variant);
 
     h3 {
       margin: 0;
@@ -182,8 +184,8 @@
 
     .score {
       font-size: 12px;
-      background: #fff3e0;
-      color: #e65100;
+      background: var(--mat-sys-tertiary-container);
+      color: var(--mat-sys-on-tertiary-container);
       padding: 2px 8px;
       border-radius: 8px;
     }
@@ -200,7 +202,7 @@
         font-size: 18px;
         width: 18px;
         height: 18px;
-        color: #666;
+        color: var(--mat-sys-on-surface-variant);
       }
 
       span {
@@ -213,5 +215,5 @@
 .empty-state {
   text-align: center;
   padding: 20px;
-  color: #999;
+  color: var(--mat-sys-on-surface-variant);
 }

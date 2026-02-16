@@ -6,7 +6,7 @@ import { Session } from '../../../models/session.model';
 import { SessionService } from '../../../core/services/session.service';
 import { ExportImportService } from '../../../core/services/export-import.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { v4 as uuidv4 } from 'uuid';
+import { I18nService } from '../../../core/services/i18n.service';
 
 @Component({
   selector: 'app-session-list',
@@ -22,8 +22,13 @@ export class SessionList implements OnInit, OnDestroy {
     private sessionService: SessionService,
     private exportImportService: ExportImportService,
     private snackBar: MatSnackBar,
-    private router: Router
+    private router: Router,
+    private i18n: I18nService
   ) {}
+
+  get currentDateLocale(): string {
+    return this.i18n.getCurrentDateLocale();
+  }
 
   ngOnInit(): void {
     this.sessionService.sessions$
@@ -39,12 +44,14 @@ export class SessionList implements OnInit, OnDestroy {
   }
 
   createNewSession(): void {
-    const name = prompt('Enter session name:');
+    const name = prompt(this.i18n.t('sessionList.prompt.sessionName'));
     if (name && name.trim()) {
       const session = this.sessionService.createSession(name.trim());
       this.sessionService.setCurrentSession(session.id);
       this.router.navigate(['/session', session.id]);
-      this.snackBar.open('Session created successfully', 'Close', { duration: 3000 });
+      this.snackBar.open(this.i18n.t('sessionList.snackbar.created'), this.i18n.t('common.close'), {
+        duration: 3000
+      });
     }
   }
 
@@ -55,9 +62,11 @@ export class SessionList implements OnInit, OnDestroy {
 
   deleteSession(session: Session, event: Event): void {
     event.stopPropagation();
-    if (confirm(`Are you sure you want to delete session "${session.name}"?`)) {
+    if (confirm(this.i18n.t('sessionList.confirm.deleteSession', { name: session.name }))) {
       this.sessionService.deleteSession(session.id);
-      this.snackBar.open('Session deleted', 'Close', { duration: 3000 });
+      this.snackBar.open(this.i18n.t('sessionList.snackbar.deleted'), this.i18n.t('common.close'), {
+        duration: 3000
+      });
     }
   }
 
@@ -67,9 +76,13 @@ export class SessionList implements OnInit, OnDestroy {
       const json = this.sessionService.exportSession(session.id);
       const filename = this.exportImportService.generateExportFilename(session.name);
       this.exportImportService.downloadAsFile(json, filename);
-      this.snackBar.open('Session exported successfully', 'Close', { duration: 3000 });
+      this.snackBar.open(this.i18n.t('sessionList.snackbar.exported'), this.i18n.t('common.close'), {
+        duration: 3000
+      });
     } catch (error) {
-      this.snackBar.open('Failed to export session', 'Close', { duration: 3000 });
+      this.snackBar.open(this.i18n.t('sessionList.snackbar.exportFailed'), this.i18n.t('common.close'), {
+        duration: 3000
+      });
     }
   }
 
@@ -82,10 +95,14 @@ export class SessionList implements OnInit, OnDestroy {
       if (file) {
         try {
           const content = await this.exportImportService.readFileContent(file);
-          const session = this.sessionService.importSession(content);
-          this.snackBar.open('Session imported successfully', 'Close', { duration: 3000 });
+          this.sessionService.importSession(content);
+          this.snackBar.open(this.i18n.t('sessionList.snackbar.imported'), this.i18n.t('common.close'), {
+            duration: 3000
+          });
         } catch (error) {
-          this.snackBar.open('Failed to import session: Invalid file', 'Close', { duration: 5000 });
+          this.snackBar.open(this.i18n.t('sessionList.snackbar.importFailed'), this.i18n.t('common.close'), {
+            duration: 5000
+          });
         }
       }
     };

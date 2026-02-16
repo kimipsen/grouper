@@ -44,7 +44,7 @@ export class GroupingService {
 
       case GroupingStrategy.PREFERENCE_BASED:
         if (!preferences) {
-          throw new Error('Preferences are required for preference-based grouping');
+          throw { message: 'grouping.errors.preferencesRequired' };
         }
         const result = PreferenceGroupingAlgorithm.createGroups(
           people,
@@ -57,7 +57,7 @@ export class GroupingService {
         break;
 
       default:
-        throw new Error(`Unknown grouping strategy: ${settings.strategy}`);
+        throw { message: 'grouping.errors.unknownStrategy', params: { strategy: settings.strategy } };
     }
 
     return {
@@ -76,32 +76,46 @@ export class GroupingService {
    * @returns Validation result with any warnings or errors
    */
   validateSettings(peopleCount: number, settings: GroupingSettings): ValidationResult {
-    const errors: string[] = [];
-    const warnings: string[] = [];
+    const errors: ValidationMessage[] = [];
+    const warnings: ValidationMessage[] = [];
 
     if (peopleCount === 0) {
-      errors.push('No people to group');
+      errors.push({ key: 'grouping.errors.noPeople' });
     }
 
     if (settings.groupSize < 1) {
-      errors.push('Group size must be at least 1');
+      errors.push({ key: 'grouping.errors.groupSizeMin' });
     }
 
     if (settings.groupSize > peopleCount) {
-      warnings.push(`Group size (${settings.groupSize}) is larger than number of people (${peopleCount})`);
+      warnings.push({
+        key: 'grouping.warnings.groupSizeLargerThanPeople',
+        params: { groupSize: settings.groupSize, peopleCount }
+      });
     }
 
     const remainder = peopleCount % settings.groupSize;
     if (remainder !== 0 && !settings.allowPartialGroups) {
-      warnings.push(
-        `${peopleCount} people cannot be evenly divided into groups of ${settings.groupSize}. ` +
-        `${remainder} ${remainder === 1 ? 'person' : 'people'} will be distributed across groups.`
-      );
+      warnings.push({
+        key: remainder === 1
+          ? 'grouping.warnings.unevenDistributionOne'
+          : 'grouping.warnings.unevenDistributionMany',
+        params: {
+          peopleCount,
+          groupSize: settings.groupSize,
+          remainder
+        }
+      });
     } else if (remainder !== 0) {
-      warnings.push(
-        `One group will have ${remainder} ${remainder === 1 ? 'person' : 'people'} ` +
-        `instead of ${settings.groupSize}`
-      );
+      warnings.push({
+        key: remainder === 1
+          ? 'grouping.warnings.partialGroupOne'
+          : 'grouping.warnings.partialGroupMany',
+        params: {
+          remainder,
+          groupSize: settings.groupSize
+        }
+      });
     }
 
     const isValid = errors.length === 0;
@@ -191,8 +205,13 @@ export class GroupingService {
  */
 export interface ValidationResult {
   isValid: boolean;
-  errors: string[];
-  warnings: string[];
+  errors: ValidationMessage[];
+  warnings: ValidationMessage[];
+}
+
+export interface ValidationMessage {
+  key: string;
+  params?: Record<string, string | number>;
 }
 
 /**

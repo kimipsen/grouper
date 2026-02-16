@@ -1,4 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
+import { I18nService, LocaleCode } from './core/services/i18n.service';
+import { ThemeService } from './core/services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -7,5 +9,16 @@ import { Component, signal } from '@angular/core';
   styleUrl: './app.scss'
 })
 export class App {
-  protected readonly title = signal('grouper-app');
+  constructor(
+    readonly themeService: ThemeService,
+    readonly i18nService: I18nService
+  ) {}
+
+  get availableLocales(): LocaleCode[] {
+    return this.i18nService.getAvailableLocales();
+  }
+
+  async onLocaleChange(locale: string): Promise<void> {
+    await this.i18nService.setLocale(locale as LocaleCode);
+  }
 }
