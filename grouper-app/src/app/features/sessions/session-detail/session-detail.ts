@@ -56,6 +56,8 @@ export class SessionDetail implements OnInit, OnDestroy {
   genderMode: GenderMode = 'mixed';
   selectedWeightIds: string[] = [];
   newWeightName = '';
+  selectedPerson: Person | null = null;
+  readonly genderWeightId = '__gender__';
 
   // Current grouping result
   currentResult: GroupingResult | null = null;
@@ -165,6 +167,14 @@ export class SessionDetail implements OnInit, OnDestroy {
   updatePersonWeight(person: Person, weightId: string, value: number): void {
     if (!this.session) return;
     this.sessionService.setPersonWeight(this.session.id, person.id, weightId, value);
+  }
+
+  openPersonWeights(person: Person): void {
+    this.selectedPerson = person;
+  }
+
+  closePersonWeights(): void {
+    this.selectedPerson = null;
   }
 
   toggleWeightSelection(weightId: string): void {

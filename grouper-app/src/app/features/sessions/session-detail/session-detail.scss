@@ -14,6 +14,12 @@
   }
 }
 
+.content-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -42,6 +48,7 @@
     gap: 10px;
     padding: 8px;
     border-bottom: 1px solid var(--mat-sys-outline-variant);
+    flex-wrap: wrap;
 
     mat-icon {
       color: var(--mat-sys-on-surface-variant);
@@ -51,10 +58,6 @@
       flex: 1;
     }
   }
-}
-
-.gender-select {
-  min-width: 140px;
 }
 
 .add-button {
@@ -194,6 +197,95 @@
   border-radius: 4px;
   background: var(--mat-sys-surface);
   color: var(--mat-sys-on-surface);
+}
+
+.person-drawer {
+  position: sticky;
+  top: 20px;
+  align-self: start;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--mat-sys-surface-container-low);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100vh - 80px);
+  overflow: auto;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  h3 {
+    margin: 0;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.drawer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  h4 {
+    margin: 0;
+  }
+}
+
+.drawer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.drawer-muted {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.drawer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.person-name {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--mat-sys-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.person-name:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 1100px) {
+  .content-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .person-drawer {
+    position: static;
+    max-height: none;
+  }
 }
 
 .weight-selection {

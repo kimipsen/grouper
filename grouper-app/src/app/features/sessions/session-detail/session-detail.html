@@ -7,7 +7,8 @@
       <h1>{{ session.name }}</h1>
     </div>
 
-    <div class="content-grid">
+    <div class="content-layout">
+      <div class="content-grid">
       <!-- People Management -->
       <mat-card class="section-card">
         <mat-card-header>
@@ -18,16 +19,9 @@
             @for (person of session.people; track person.id) {
               <div class="person-item">
                 <mat-icon>person</mat-icon>
-                <span>{{ person.name }}</span>
-                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="gender-select">
-                  <mat-label>{{ 'sessionDetail.gender.label' | t }}</mat-label>
-                  <select matNativeControl [ngModel]="person.gender ?? 'unspecified'" (ngModelChange)="updatePersonGender(person, $event)">
-                    <option value="female">{{ 'sessionDetail.gender.female' | t }}</option>
-                    <option value="male">{{ 'sessionDetail.gender.male' | t }}</option>
-                    <option value="nonbinary">{{ 'sessionDetail.gender.nonbinary' | t }}</option>
-                    <option value="unspecified">{{ 'sessionDetail.gender.unspecified' | t }}</option>
-                  </select>
-                </mat-form-field>
+                <button class="person-name" type="button" (click)="openPersonWeights(person)">
+                  {{ person.name }}
+                </button>
                 <button mat-icon-button color="warn" (click)="removePerson(person)">
                   <mat-icon>close</mat-icon>
                 </button>
@@ -43,22 +37,6 @@
             <mat-icon>add</mat-icon>
             {{ 'sessionDetail.addPerson' | t }}
           </button>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="section-card">
-        <mat-card-header>
-          <mat-card-title>{{ 'sessionDetail.genderMode.title' | t }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <mat-form-field>
-            <mat-label>{{ 'sessionDetail.genderMode.label' | t }}</mat-label>
-            <select matNativeControl [ngModel]="genderMode" (ngModelChange)="updateGenderMode($event)">
-              <option value="mixed">{{ 'sessionDetail.genderMode.mixed' | t }}</option>
-              <option value="single">{{ 'sessionDetail.genderMode.single' | t }}</option>
-              <option value="ignore">{{ 'sessionDetail.genderMode.ignore' | t }}</option>
-            </select>
-          </mat-form-field>
         </mat-card-content>
       </mat-card>
 
@@ -130,64 +108,21 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Preferences Matrix -->
-      <mat-card class="section-card preferences-card">
-        <mat-card-header>
-          <mat-card-title>{{ 'sessionDetail.preferencesTitle' | t }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          @if (session.people.length >= 2) {
-            <div class="preferences-matrix">
-              <div class="matrix-scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th></th>
-                      @for (targetPerson of session.people; track targetPerson.id) {
-                        <th>{{ targetPerson.name }}</th>
-                      }
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (person of session.people; track person.id) {
-                      <tr>
-                        <td class="row-header">{{ person.name }}</td>
-                        @for (targetPerson of session.people; track targetPerson.id) {
-                          <td>
-                            @if (person.id !== targetPerson.id) {
-                              <select
-                                [value]="getPreference(person.id, targetPerson.id)"
-                                (change)="onPreferenceChange(person.id, targetPerson.id, $any($event.target).value)"
-                                class="preference-select">
-                                <option value="none">{{ 'sessionDetail.preferenceNone' | t }}</option>
-                                <option value="wantWith">{{ 'sessionDetail.preferenceWantWith' | t }}</option>
-                                <option value="avoid">{{ 'sessionDetail.preferenceAvoid' | t }}</option>
-                              </select>
-                            } @else {
-                              <span class="diagonal">{{ 'sessionDetail.preferenceNone' | t }}</span>
-                            }
-                          </td>
-                        }
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          } @else {
-            <div class="empty-state">
-              <p>{{ 'sessionDetail.preferencesMinPeople' | t }}</p>
-            </div>
-          }
-        </mat-card-content>
-      </mat-card>
-
       <!-- Grouping Configuration -->
       <mat-card class="section-card">
         <mat-card-header>
           <mat-card-title>{{ 'sessionDetail.createGroupsTitle' | t }}</mat-card-title>
         </mat-card-header>
         <mat-card-content class="grouping-config">
+          <mat-form-field>
+            <mat-label>{{ 'sessionDetail.genderMode.label' | t }}</mat-label>
+            <select matNativeControl [ngModel]="genderMode" (ngModelChange)="updateGenderMode($event)">
+              <option value="mixed">{{ 'sessionDetail.genderMode.mixed' | t }}</option>
+              <option value="single">{{ 'sessionDetail.genderMode.single' | t }}</option>
+              <option value="ignore">{{ 'sessionDetail.genderMode.ignore' | t }}</option>
+            </select>
+          </mat-form-field>
+
           <mat-form-field>
             <mat-label>{{ 'sessionDetail.strategy' | t }}</mat-label>
             <select matNativeControl [(ngModel)]="groupingStrategy">
@@ -215,6 +150,13 @@
             <div class="weight-selection">
               <p class="weight-help">{{ 'sessionDetail.customWeights.selectHelp' | t }}</p>
               <div class="weight-select-list">
+                <label class="weight-select-item">
+                  <input
+                    type="checkbox"
+                    [checked]="selectedWeightIds.includes(genderWeightId)"
+                    (change)="toggleWeightSelection(genderWeightId)" />
+                  <span>{{ 'sessionDetail.customWeights.genderWeight' | t }}</span>
+                </label>
                 @for (weight of session.customWeights; track weight.id) {
                   <label class="weight-select-item">
                     <input
@@ -276,6 +218,78 @@
             </div>
           </mat-card-content>
         </mat-card>
+      }
+      </div>
+
+      @if (selectedPerson) {
+        <aside class="person-drawer">
+          <div class="drawer-header">
+            <div>
+              <h3>{{ selectedPerson.name }}</h3>
+              <p>{{ 'sessionDetail.customWeights.personWeightsTitle' | t }}</p>
+            </div>
+            <button mat-icon-button (click)="closePersonWeights()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <div class="drawer-content">
+            <div class="drawer-section">
+              <h4>{{ 'sessionDetail.gender.label' | t }}</h4>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>{{ 'sessionDetail.gender.label' | t }}</mat-label>
+                <select matNativeControl [ngModel]="selectedPerson.gender ?? 'unspecified'" (ngModelChange)="updatePersonGender(selectedPerson, $event)">
+                  <option value="female">{{ 'sessionDetail.gender.female' | t }}</option>
+                  <option value="male">{{ 'sessionDetail.gender.male' | t }}</option>
+                  <option value="nonbinary">{{ 'sessionDetail.gender.nonbinary' | t }}</option>
+                  <option value="unspecified">{{ 'sessionDetail.gender.unspecified' | t }}</option>
+                </select>
+              </mat-form-field>
+            </div>
+
+            <div class="drawer-section">
+              <h4>{{ 'sessionDetail.preferencesTitle' | t }}</h4>
+              @if (session.people.length < 2) {
+                <p class="drawer-muted">{{ 'sessionDetail.preferencesMinPeople' | t }}</p>
+              } @else {
+                <div class="drawer-list">
+                  @for (targetPerson of session.people; track targetPerson.id) {
+                    @if (targetPerson.id !== selectedPerson.id) {
+                      <div class="drawer-row">
+                        <span>{{ targetPerson.name }}</span>
+                        <select
+                          class="preference-select"
+                          [value]="getPreference(selectedPerson.id, targetPerson.id)"
+                          (change)="onPreferenceChange(selectedPerson.id, targetPerson.id, $any($event.target).value)">
+                          <option value="none">{{ 'sessionDetail.preferenceNone' | t }}</option>
+                          <option value="wantWith">{{ 'sessionDetail.preferenceWantWith' | t }}</option>
+                          <option value="avoid">{{ 'sessionDetail.preferenceAvoid' | t }}</option>
+                        </select>
+                      </div>
+                    }
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="drawer-section">
+              <h4>{{ 'sessionDetail.customWeights.personWeightsTitle' | t }}</h4>
+              @if (session.customWeights.length === 0) {
+                <p class="drawer-muted">{{ 'sessionDetail.customWeights.empty' | t }}</p>
+              } @else {
+                @for (weight of session.customWeights; track weight.id) {
+                  <div class="drawer-row">
+                    <span>{{ weight.name }}</span>
+                    <input
+                      type="number"
+                      class="weight-input"
+                      [value]="selectedPerson.weights?.[weight.id] ?? 0"
+                      (change)="updatePersonWeight(selectedPerson, weight.id, $any($event.target).valueAsNumber || 0)" />
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        </aside>
       }
     </div>
   </div>

@@ -23,10 +23,12 @@ class MockI18nService {
       'sessionDetail.addPerson': 'Add Person',
       'sessionDetail.preferencesTitle': 'Preferences',
       'sessionDetail.preferencesMinPeople': 'Add at least 2 people to set preferences',
+      'sessionDetail.customWeights.title': 'Custom Weights',
       'sessionDetail.createGroupsTitle': 'Create Groups',
       'sessionDetail.strategy': 'Strategy',
       'sessionDetail.strategyRandom': 'Random',
       'sessionDetail.strategyPreferenceBased': 'Preference-Based',
+      'sessionDetail.strategyWeighted': 'Weighted',
       'sessionDetail.groupSize': 'Group Size',
       'sessionDetail.allowPartialGroups': 'Allow partial groups',
       'sessionDetail.generateGroups': 'Generate Groups',
@@ -92,6 +94,6 @@ describe('SessionDetail', () => {
 
     const content = fixture.nativeElement.textContent;
     expect(content).toContain('Create Groups');
-    expect(content).toContain('Preferences');
+    expect(content).toContain('Custom Weights');
   });
 });

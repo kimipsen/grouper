@@ -152,7 +152,7 @@ export class GroupingService {
   }
 
   private createWeightedGroups(session: Session, settings: GroupingSettings): GroupingResult {
-    const weightIds = settings.weightIds ?? [];
+    const weightIds = this.expandWeightIds(settings.weightIds ?? []);
     if (weightIds.length === 0) {
       throw { message: 'grouping.errors.noWeightsSelected' };
     }
@@ -178,6 +178,16 @@ export class GroupingService {
       timestamp: new Date(),
       overallSatisfaction: undefined
     };
+  }
+
+  private expandWeightIds(weightIds: string[]): string[] {
+    if (!weightIds.includes('__gender__')) {
+      return weightIds;
+    }
+
+    const expanded = weightIds.filter(id => id !== '__gender__');
+    expanded.push('gender:female', 'gender:male', 'gender:nonbinary', 'gender:unspecified');
+    return expanded;
   }
 
   private applyGenderMode(groups: Group[], people: Person[], mode: 'mixed' | 'single' | 'ignore'): void {
@@ -329,7 +339,13 @@ export class GroupingService {
       const person = personById.get(resolvedId);
       if (!person) continue;
       for (const weightId of weightIds) {
-        totals[weightId] += person.weights?.[weightId] ?? 0;
+        if (weightId.startsWith('gender:')) {
+          const genderKey = weightId.split(':')[1];
+          const gender = person.gender ?? 'unspecified';
+          totals[weightId] += gender === genderKey ? 1 : 0;
+        } else {
+          totals[weightId] += person.weights?.[weightId] ?? 0;
+        }
       }
     }
     return totals;

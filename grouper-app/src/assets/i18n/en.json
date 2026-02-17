@@ -67,7 +67,10 @@
       "add": "Add Weight",
       "weightLabel": "Weight",
       "empty": "No custom weights yet",
-      "selectHelp": "Select weights to use for weighted grouping"
+      "selectHelp": "Select weights to use for weighted grouping",
+      "genderWeight": "Balance gender",
+      "editPerson": "Edit weights",
+      "personWeightsTitle": "Weights for person"
     },
     "preferencesTitle": "Preferences",
     "preferenceNone": "-",
