@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Person } from '../../models/person.model';
 import { Group, GroupingResult, GroupingSettings, GroupingStrategy } from '../../models/group.model';
-import { Session } from '../../models/session.model';
+import { DEFAULT_PREFERENCE_SCORING, PreferenceScoring, Session } from '../../models/session.model';
 import { PreferenceMap } from '../../models/preference.model';
 import { RandomGroupingAlgorithm } from '../algorithms/random-grouping.algorithm';
 import { PreferenceGroupingAlgorithm } from '../algorithms/preference-grouping.algorithm';
@@ -18,7 +18,12 @@ export class GroupingService {
    * @param preferences Preference map (required for preference-based strategy)
    * @returns Grouping result
    */
-  createGroups(people: Person[], settings: GroupingSettings, preferences?: PreferenceMap): GroupingResult {
+  createGroups(
+    people: Person[],
+    settings: GroupingSettings,
+    preferences?: PreferenceMap,
+    preferenceScoring?: PreferenceScoring
+  ): GroupingResult {
     if (people.length === 0) {
       return {
         groups: [],
@@ -50,7 +55,8 @@ export class GroupingService {
             people,
             preferences,
             settings.groupSize,
-            settings.allowPartialGroups ?? true
+            settings.allowPartialGroups ?? true,
+            preferenceScoring ?? DEFAULT_PREFERENCE_SCORING
           );
           groups = result.groups;
           overallSatisfaction = result.overallSatisfaction;
@@ -73,25 +79,27 @@ export class GroupingService {
     };
   }
 
-  createGroupsWithSession(session: Session, settings: GroupingSettings): GroupingResult {
+  createGroupsWithSession(session: Session, settings: GroupingSettings, locale = 'en-US'): GroupingResult {
     const genderMode = settings.genderMode ?? session.genderMode ?? 'mixed';
+    const preferenceScoring = session.preferenceScoring ?? DEFAULT_PREFERENCE_SCORING;
 
+    let result: GroupingResult;
     if (settings.strategy === GroupingStrategy.WEIGHTED) {
-      return this.createWeightedGroups(session, settings);
+      result = this.createWeightedGroups(session, settings);
+    } else {
+      result = this.createGroups(session.people, settings, session.preferences, preferenceScoring);
     }
-
-    const result = this.createGroups(session.people, settings, session.preferences);
 
     if (genderMode === 'single') {
       result.groups = this.createSingleGenderGroups(session.people, settings);
-      if (settings.strategy === GroupingStrategy.PREFERENCE_BASED && session.preferences) {
-        result.overallSatisfaction = this.calculateSatisfaction(result.groups, session.preferences);
-      }
-      return result;
+    } else if (genderMode === 'mixed') {
+      this.applyGenderMode(result.groups, session.people, genderMode);
     }
 
-    if (genderMode === 'mixed') {
-      this.applyGenderMode(result.groups, session.people, genderMode);
+    this.normalizeGroupMemberOrder(result.groups, session.people, locale);
+
+    if (settings.strategy === GroupingStrategy.PREFERENCE_BASED && session.preferences) {
+      result.overallSatisfaction = this.calculateSatisfaction(result.groups, session.preferences, preferenceScoring);
     }
 
     return result;
@@ -351,14 +359,30 @@ export class GroupingService {
     return totals;
   }
 
+  private normalizeGroupMemberOrder(groups: Group[], people: Person[], locale: string): void {
+    const nameById = new Map(people.map((person) => [person.id, person.name ?? '']));
+
+    for (const group of groups) {
+      group.memberIds.sort((idA, idB) => {
+        const nameA = nameById.get(idA) ?? '';
+        const nameB = nameById.get(idB) ?? '';
+        const byName = nameA.localeCompare(nameB, locale, { sensitivity: 'base' });
+        if (byName !== 0) {
+          return byName;
+        }
+        return idA.localeCompare(idB);
+      });
+    }
+  }
+
   /**
    * Calculate satisfaction score for existing groups
    * @param groups Array of groups
    * @param preferences Preference map
    * @returns Overall satisfaction score
    */
-  calculateSatisfaction(groups: Group[], preferences: PreferenceMap): number {
-    return PreferenceGroupingAlgorithm.calculateTotalSatisfaction(groups, preferences);
+  calculateSatisfaction(groups: Group[], preferences: PreferenceMap, scoring?: PreferenceScoring): number {
+    return PreferenceGroupingAlgorithm.calculateTotalSatisfaction(groups, preferences, scoring);
   }
 
   /**

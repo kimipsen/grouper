@@ -9,7 +9,8 @@
     },
     "languageLabel": "Language",
     "languages": {
-      "en": "English"
+      "en": "English",
+      "da": "Danish"
     }
   },
   "common": {
@@ -74,8 +75,13 @@
     },
     "preferencesTitle": "Preferences",
     "preferenceNone": "-",
-    "preferenceWantWith": "Want with",
+    "preferenceWantWith": "Prefer",
     "preferenceAvoid": "Avoid",
+    "preferenceScoring": {
+      "title": "Preference scoring",
+      "wantWith": "Prefer score",
+      "avoid": "Avoid score"
+    },
     "preferencesMinPeople": "Add at least 2 people to set preferences",
     "createGroupsTitle": "Create Groups",
     "strategy": "Strategy",

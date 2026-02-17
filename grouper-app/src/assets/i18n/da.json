@@ -1,0 +1,134 @@
+{
+  "app": {
+    "title": "Grouper",
+    "sessionsNav": "Sessioner",
+    "themeToggleAria": "Skift mørk tilstand",
+    "themeToggle": {
+      "light": "Lys",
+      "dark": "Mørk"
+    },
+    "languageLabel": "Sprog",
+    "languages": {
+      "en": "Engelsk",
+      "da": "Dansk"
+    }
+  },
+  "common": {
+    "close": "Luk",
+    "open": "Åbn",
+    "delete": "Slet",
+    "export": "Eksporter",
+    "import": "Importer",
+    "back": "Tilbage"
+  },
+  "sessionList": {
+    "title": "Sessioner",
+    "newSession": "Ny session",
+    "emptyTitle": "Ingen sessioner endnu",
+    "emptyDescription": "Opret en ny session for at begynde at gruppere personer",
+    "createFirstSession": "Opret første session",
+    "peopleCount": "{{count}} personer",
+    "groupingsCount": "{{count}} grupperinger",
+    "snackbar": {
+      "created": "Session oprettet",
+      "deleted": "Session slettet",
+      "exported": "Session eksporteret",
+      "exportFailed": "Kunne ikke eksportere session",
+      "imported": "Session importeret",
+      "importFailed": "Kunne ikke importere session: Ugyldig fil"
+    },
+    "prompt": {
+      "sessionName": "Indtast sessionsnavn:"
+    },
+    "confirm": {
+      "deleteSession": "Er du sikker på, at du vil slette sessionen \"{{name}}\"?"
+    }
+  },
+  "sessionDetail": {
+    "peopleTitle": "Personer ({{count}})",
+    "noPeople": "Ingen personer endnu",
+    "addPerson": "Tilføj person",
+    "gender": {
+      "label": "Køn",
+      "female": "Kvinde",
+      "male": "Mand",
+      "nonbinary": "Ikke-binær",
+      "unspecified": "Ikke angivet"
+    },
+    "genderMode": {
+      "title": "Kønstilstand",
+      "label": "Gruppens kønstilstand",
+      "mixed": "Blandet køn",
+      "single": "Samme køn",
+      "ignore": "Ignorer køn"
+    },
+    "customWeights": {
+      "title": "Brugerdefinerede vægte",
+      "nameLabel": "Vægtnavn",
+      "add": "Tilføj vægt",
+      "weightLabel": "Vægt",
+      "empty": "Ingen brugerdefinerede vægte endnu",
+      "selectHelp": "Vælg vægte til vægtet gruppering",
+      "genderWeight": "Balancer køn",
+      "editPerson": "Rediger vægte",
+      "personWeightsTitle": "Vægte for person"
+    },
+    "preferencesTitle": "Præferencer",
+    "preferenceNone": "-",
+    "preferenceWantWith": "Foretræk",
+    "preferenceAvoid": "Undgå",
+    "preferenceScoring": {
+      "title": "Præferencescore",
+      "wantWith": "Foretræk-score",
+      "avoid": "Undgå-score"
+    },
+    "preferencesMinPeople": "Tilføj mindst 2 personer for at sætte præferencer",
+    "createGroupsTitle": "Opret grupper",
+    "strategy": "Strategi",
+    "strategyRandom": "Tilfældig",
+    "strategyPreferenceBased": "Præferencebaseret",
+    "strategyWeighted": "Vægtet",
+    "groupSize": "Gruppestørrelse",
+    "allowPartialGroups": "Tillad delvise grupper",
+    "generateGroups": "Generer grupper",
+    "generatedGroups": "Genererede grupper",
+    "satisfaction": "Tilfredshed: {{score}}",
+    "regenerateGroupsAria": "Generer grupper igen",
+    "groupLabel": "Gruppe {{index}}",
+    "score": "Score: {{score}}",
+    "prompt": {
+      "personName": "Indtast personnavn:",
+      "gender": "Indtast køn (kvinde, mand, ikke-binær, ikke angivet):"
+    },
+    "confirm": {
+      "removePerson": "Fjern {{name}}?",
+      "resetSession": "Nulstil sessionen \"{{name}}\"? Dette fjerner alle personer, præferencer og gruppehistorik."
+    },
+    "snackbar": {
+      "personAdded": "Person tilføjet",
+      "personRemoved": "Person fjernet",
+      "addPeopleFirst": "Tilføj venligst personer først",
+      "groupsGenerated": "Grupper genereret",
+      "sessionReset": "Session nulstillet",
+      "failedGenerateGroups": "Kunne ikke generere grupper"
+    },
+    "resetSession": "Nulstil session"
+  },
+  "grouping": {
+    "errors": {
+      "preferencesRequired": "Præferencer er påkrævet for præferencebaseret gruppering",
+      "unknownStrategy": "Ukendt grupperingsstrategi: {{strategy}}",
+      "groupSizeMin": "Gruppestørrelse skal være mindst 1",
+      "noPeople": "Ingen personer at gruppere",
+      "weightedRequiresSession": "Vægtet gruppering kræver sessionskontekst",
+      "noWeightsSelected": "Vælg mindst en vægt til vægtet gruppering"
+    },
+    "warnings": {
+      "groupSizeLargerThanPeople": "Gruppestørrelse ({{groupSize}}) er større end antallet af personer ({{peopleCount}})",
+      "unevenDistributionOne": "{{peopleCount}} personer kan ikke fordeles ligeligt i grupper på {{groupSize}}. {{remainder}} person fordeles på grupperne.",
+      "unevenDistributionMany": "{{peopleCount}} personer kan ikke fordeles ligeligt i grupper på {{groupSize}}. {{remainder}} personer fordeles på grupperne.",
+      "partialGroupOne": "En gruppe vil have {{remainder}} person i stedet for {{groupSize}}",
+      "partialGroupMany": "En gruppe vil have {{remainder}} personer i stedet for {{groupSize}}"
+    }
+  }
+}

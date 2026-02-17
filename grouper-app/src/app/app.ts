@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,11 +15,11 @@ import { ThemeService } from './core/services/theme.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
-  standalone: true,
   styleUrl: './app.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     RouterLink,
     RouterOutlet,
     MatToolbarModule,
@@ -32,13 +33,20 @@ import { ThemeService } from './core/services/theme.service';
 export class App {
   readonly themeService = inject(ThemeService);
   readonly i18nService = inject(I18nService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly localeControl = new FormControl<LocaleCode>('en', { nonNullable: true });
+  readonly availableLocales = this.i18nService.getAvailableLocales();
 
+  constructor() {
+    this.localeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((locale) => {
+      void this.i18nService.setLocale(locale);
+    });
 
-  get availableLocales(): LocaleCode[] {
-    return this.i18nService.getAvailableLocales();
-  }
-
-  async onLocaleChange(locale: string): Promise<void> {
-    await this.i18nService.setLocale(locale as LocaleCode);
+    effect(() => {
+      const currentLocale = this.i18nService.currentLocale();
+      if (this.localeControl.value !== currentLocale) {
+        this.localeControl.setValue(currentLocale, { emitEvent: false });
+      }
+    });
   }
 }

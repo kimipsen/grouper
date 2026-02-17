@@ -38,6 +38,14 @@ class MockI18nService {
       'sessionDetail.preferenceAvoid': 'Avoid',
       'common.back': 'Back',
       'sessionDetail.regenerateGroupsAria': 'Regenerate groups',
+      'sessionDetail.genderMode.label': 'Gender mode',
+      'sessionDetail.genderMode.mixed': 'Mixed',
+      'sessionDetail.genderMode.single': 'Single',
+      'sessionDetail.genderMode.ignore': 'Ignore',
+      'sessionDetail.preferenceScoring.title': 'Preference scoring',
+      'sessionDetail.preferenceScoring.wantWith': 'Prefer score',
+      'sessionDetail.preferenceScoring.avoid': 'Avoid score',
+      'sessionDetail.resetSession': 'Reset Session',
     };
     return labels[key] ?? key;
   }
@@ -47,8 +55,8 @@ class MockI18nService {
   }
 }
 
-describe('SessionDetail', () => {
-  it('renders localized group configuration title', async () => {
+describe('SessionDetail accessibility', () => {
+  it('renders labeled controls for grouping configuration', async () => {
     const params$ = new BehaviorSubject({ id: 'session-1' });
     const currentSession = signal<Session | null>({
       id: 'session-1',
@@ -56,6 +64,7 @@ describe('SessionDetail', () => {
       description: '',
       people: [],
       preferences: {},
+      preferenceScoring: { wantWith: 2, avoid: -2 },
       groupingHistory: [],
       customWeights: [],
       genderMode: 'mixed',
@@ -98,8 +107,20 @@ describe('SessionDetail', () => {
     const fixture = TestBed.createComponent(SessionDetail);
     fixture.detectChanges();
 
-    const content = fixture.nativeElement.textContent;
-    expect(content).toContain('Create Groups');
-    expect(content).toContain('Custom Weights');
+    const root = fixture.nativeElement as HTMLElement;
+    const backButton = root.querySelector('button[aria-label]');
+    expect(backButton?.getAttribute('aria-label')).toBe('Back');
+
+    const labels = root.textContent ?? '';
+    expect(labels).toContain('Create Groups');
+    expect(labels).toContain('Strategy');
+    expect(labels).toContain('Group Size');
+
+    const unlabeledButton = Array.from(root.querySelectorAll('button')).find((button) => {
+      const aria = button.getAttribute('aria-label')?.trim();
+      const text = button.textContent?.trim();
+      return !aria && !text;
+    });
+    expect(unlabeledButton).toBeUndefined();
   });
 });

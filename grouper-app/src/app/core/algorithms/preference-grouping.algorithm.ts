@@ -1,17 +1,13 @@
 import { Person } from '../../models/person.model';
 import { Group } from '../../models/group.model';
 import { PreferenceMap } from '../../models/preference.model';
+import { DEFAULT_PREFERENCE_SCORING, PreferenceScoring } from '../../models/session.model';
 import { RandomGroupingAlgorithm } from './random-grouping.algorithm';
 
 /**
  * Preference-based grouping algorithm using simulated annealing
- * Balanced scoring: +2 for WANT_WITH satisfied, -2 for AVOID violated
  */
 export class PreferenceGroupingAlgorithm {
-
-  // Scoring constants
-  private static readonly WANT_WITH_SCORE = 2;
-  private static readonly AVOID_PENALTY = -2;
 
   // Annealing parameters
   private static readonly INITIAL_TEMPERATURE = 100;
@@ -31,7 +27,8 @@ export class PreferenceGroupingAlgorithm {
     people: Person[],
     preferences: PreferenceMap,
     groupSize: number,
-    allowPartialGroups = true
+    allowPartialGroups = true,
+    scoring?: PreferenceScoring
   ): { groups: Group[], overallSatisfaction: number } {
 
     if (people.length === 0) {
@@ -44,7 +41,7 @@ export class PreferenceGroupingAlgorithm {
 
     // Start with random grouping as initial solution
     let currentGroups = RandomGroupingAlgorithm.createGroups(people, groupSize, allowPartialGroups);
-    let currentScore = this.calculateTotalSatisfaction(currentGroups, preferences);
+    let currentScore = this.calculateTotalSatisfaction(currentGroups, preferences, scoring);
 
     let bestGroups = this.deepCopyGroups(currentGroups);
     let bestScore = currentScore;
@@ -56,7 +53,7 @@ export class PreferenceGroupingAlgorithm {
     while (temperature > this.MIN_TEMPERATURE && iterations < this.MAX_ITERATIONS) {
       // Generate neighbor solution by swapping two people between groups
       const neighborGroups = this.generateNeighbor(currentGroups);
-      const neighborScore = this.calculateTotalSatisfaction(neighborGroups, preferences);
+      const neighborScore = this.calculateTotalSatisfaction(neighborGroups, preferences, scoring);
 
       // Calculate delta
       const delta = neighborScore - currentScore;
@@ -81,7 +78,7 @@ export class PreferenceGroupingAlgorithm {
     // Calculate individual group scores for the best solution
     const finalGroups = bestGroups.map(group => ({
       ...group,
-      satisfactionScore: this.calculateGroupSatisfaction(group, preferences)
+      satisfactionScore: this.calculateGroupSatisfaction(group, preferences, scoring)
     }));
 
     return {
@@ -96,9 +93,9 @@ export class PreferenceGroupingAlgorithm {
    * @param preferences Preference map
    * @returns Total satisfaction score
    */
-  static calculateTotalSatisfaction(groups: Group[], preferences: PreferenceMap): number {
+  static calculateTotalSatisfaction(groups: Group[], preferences: PreferenceMap, scoring?: PreferenceScoring): number {
     return groups.reduce((total, group) =>
-      total + this.calculateGroupSatisfaction(group, preferences), 0
+      total + this.calculateGroupSatisfaction(group, preferences, scoring), 0
     );
   }
 
@@ -108,7 +105,8 @@ export class PreferenceGroupingAlgorithm {
    * @param preferences Preference map
    * @returns Satisfaction score for the group
    */
-  static calculateGroupSatisfaction(group: Group, preferences: PreferenceMap): number {
+  static calculateGroupSatisfaction(group: Group, preferences: PreferenceMap, scoring?: PreferenceScoring): number {
+    const resolvedScoring = this.resolveScoring(scoring);
     let score = 0;
     const members = group.memberIds;
 
@@ -121,20 +119,20 @@ export class PreferenceGroupingAlgorithm {
         // Check personA's preferences about personB
         if (preferences[personA]) {
           if (preferences[personA].wantWith.includes(personB)) {
-            score += this.WANT_WITH_SCORE;
+            score += resolvedScoring.wantWith;
           }
           if (preferences[personA].avoid.includes(personB)) {
-            score += this.AVOID_PENALTY;
+            score += resolvedScoring.avoid;
           }
         }
 
         // Check personB's preferences about personA
         if (preferences[personB]) {
           if (preferences[personB].wantWith.includes(personA)) {
-            score += this.WANT_WITH_SCORE;
+            score += resolvedScoring.wantWith;
           }
           if (preferences[personB].avoid.includes(personA)) {
-            score += this.AVOID_PENALTY;
+            score += resolvedScoring.avoid;
           }
         }
       }
@@ -202,9 +200,21 @@ export class PreferenceGroupingAlgorithm {
    * @param groupSize Group size
    * @returns Maximum possible score
    */
-  static calculateMaxPossibleScore(peopleCount: number, groupSize: number): number {
+  static calculateMaxPossibleScore(peopleCount: number, groupSize: number, scoring?: PreferenceScoring): number {
+    const resolvedScoring = this.resolveScoring(scoring);
     const numberOfGroups = Math.ceil(peopleCount / groupSize);
     const pairsPerGroup = (groupSize * (groupSize - 1)) / 2;
-    return numberOfGroups * pairsPerGroup * this.WANT_WITH_SCORE * 2; // *2 because both can prefer each other
+    return numberOfGroups * pairsPerGroup * resolvedScoring.wantWith * 2; // *2 because both can prefer each other
+  }
+
+  private static resolveScoring(scoring?: PreferenceScoring): PreferenceScoring {
+    return {
+      wantWith: Number.isFinite(scoring?.wantWith)
+        ? (scoring?.wantWith as number)
+        : DEFAULT_PREFERENCE_SCORING.wantWith,
+      avoid: Number.isFinite(scoring?.avoid)
+        ? (scoring?.avoid as number)
+        : DEFAULT_PREFERENCE_SCORING.avoid,
+    };
   }
 }

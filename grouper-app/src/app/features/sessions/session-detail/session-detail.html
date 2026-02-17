@@ -8,288 +8,285 @@
     </div>
 
     <div class="content-layout">
-      <div class="content-grid">
-      <!-- People Management -->
-      <mat-card class="section-card">
-        <mat-card-header>
-          <mat-card-title>{{ 'sessionDetail.peopleTitle' | t:{ count: session.people.length } }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="people-list">
-            @for (person of session.people; track person.id) {
-              <div class="person-item">
-                <mat-icon>person</mat-icon>
-                <button class="person-name" type="button" (click)="openPersonWeights(person)">
-                  {{ person.name }}
-                </button>
-                <button mat-icon-button color="warn" (click)="removePerson(person)">
-                  <mat-icon>close</mat-icon>
-                </button>
-              </div>
-            }
-            @if (session.people.length === 0) {
-              <div class="empty-state">
-                <p>{{ 'sessionDetail.noPeople' | t }}</p>
-              </div>
-            }
-          </div>
-          <button mat-raised-button color="primary" (click)="addPerson()" class="add-button">
-            <mat-icon>add</mat-icon>
-            {{ 'sessionDetail.addPerson' | t }}
-          </button>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="section-card">
-        <mat-card-header>
-          <mat-card-title>{{ 'sessionDetail.customWeights.title' | t }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="weight-editor">
-            <mat-form-field>
-              <mat-label>{{ 'sessionDetail.customWeights.nameLabel' | t }}</mat-label>
-              <input matNativeControl [(ngModel)]="newWeightName" />
-            </mat-form-field>
-            <button mat-stroked-button color="primary" (click)="addCustomWeight()">
-              <mat-icon>add</mat-icon>
-              {{ 'sessionDetail.customWeights.add' | t }}
-            </button>
-          </div>
-
-          <div class="weight-list">
-            @for (weight of session.customWeights; track weight.id) {
-              <div class="weight-row">
-                <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                  <mat-label>{{ 'sessionDetail.customWeights.weightLabel' | t }}</mat-label>
-                  <input matNativeControl [ngModel]="weight.name" (ngModelChange)="renameCustomWeight(weight, $event)" />
-                </mat-form-field>
-                <button mat-icon-button color="warn" (click)="removeCustomWeight(weight)">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-            }
-            @if (session.customWeights.length === 0) {
-              <div class="empty-state">
-                <p>{{ 'sessionDetail.customWeights.empty' | t }}</p>
-              </div>
-            }
-          </div>
-
-          @if (session.customWeights.length > 0 && session.people.length > 0) {
-            <div class="weights-matrix">
-              <table>
-                <thead>
-                  <tr>
-                    <th></th>
-                    @for (weight of session.customWeights; track weight.id) {
-                      <th>{{ weight.name }}</th>
-                    }
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (person of session.people; track person.id) {
-                    <tr>
-                      <td class="row-header">{{ person.name }}</td>
-                      @for (weight of session.customWeights; track weight.id) {
-                        <td>
-                          <input
-                            type="number"
-                            class="weight-input"
-                            [value]="person.weights?.[weight.id] ?? 0"
-                            (change)="updatePersonWeight(person, weight.id, $any($event.target).valueAsNumber || 0)" />
-                        </td>
-                      }
-                    </tr>
-                  }
-                </tbody>
-              </table>
+      <div class="layout-row top-row">
+        <!-- People Management -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>{{ 'sessionDetail.peopleTitle' | t:{ count: session.people.length } }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="people-list">
+              @for (person of sortedPeople; track person.id) {
+                <div class="person-item">
+                  <mat-icon>person</mat-icon>
+                  <button class="person-name" type="button" (click)="openPersonWeights(person)">
+                    {{ person.name }}
+                  </button>
+                  <button mat-icon-button color="warn" (click)="removePerson(person)">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              }
+              @if (session.people.length === 0) {
+                <div class="empty-state">
+                  <p>{{ 'sessionDetail.noPeople' | t }}</p>
+                </div>
+              }
             </div>
-          }
-        </mat-card-content>
-      </mat-card>
+            <button mat-raised-button color="primary" (click)="addPerson()" class="add-button">
+              <mat-icon>add</mat-icon>
+              {{ 'sessionDetail.addPerson' | t }}
+            </button>
+          </mat-card-content>
+        </mat-card>
 
-      <!-- Grouping Configuration -->
-      <mat-card class="section-card">
-        <mat-card-header>
-          <mat-card-title>{{ 'sessionDetail.createGroupsTitle' | t }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content class="grouping-config">
-          <mat-form-field>
-            <mat-label>{{ 'sessionDetail.genderMode.label' | t }}</mat-label>
-            <select matNativeControl [ngModel]="genderMode" (ngModelChange)="updateGenderMode($event)">
-              <option value="mixed">{{ 'sessionDetail.genderMode.mixed' | t }}</option>
-              <option value="single">{{ 'sessionDetail.genderMode.single' | t }}</option>
-              <option value="ignore">{{ 'sessionDetail.genderMode.ignore' | t }}</option>
-            </select>
-          </mat-form-field>
+        @if (selectedPerson) {
+          <aside class="person-drawer">
+            <div class="drawer-header">
+              <div>
+                <h3>{{ selectedPerson.name }}</h3>
+                <p>{{ 'sessionDetail.customWeights.personWeightsTitle' | t }}</p>
+              </div>
+              <button mat-icon-button (click)="closePersonWeights()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <div class="drawer-content">
+              <div class="drawer-section">
+                <h4>{{ 'sessionDetail.gender.label' | t }}</h4>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>{{ 'sessionDetail.gender.label' | t }}</mat-label>
+                  <select #genderSelect matNativeControl [value]="selectedPerson.gender ?? 'unspecified'" (change)="updatePersonGender(selectedPerson, genderSelect.value)">
+                    <option value="female">{{ 'sessionDetail.gender.female' | t }}</option>
+                    <option value="male">{{ 'sessionDetail.gender.male' | t }}</option>
+                    <option value="nonbinary">{{ 'sessionDetail.gender.nonbinary' | t }}</option>
+                    <option value="unspecified">{{ 'sessionDetail.gender.unspecified' | t }}</option>
+                  </select>
+                </mat-form-field>
+              </div>
 
-          <mat-form-field>
-            <mat-label>{{ 'sessionDetail.strategy' | t }}</mat-label>
-            <select matNativeControl [(ngModel)]="groupingStrategy">
-              <option [value]="GroupingStrategy.RANDOM">{{ 'sessionDetail.strategyRandom' | t }}</option>
-              <option [value]="GroupingStrategy.PREFERENCE_BASED">{{ 'sessionDetail.strategyPreferenceBased' | t }}</option>
-              <option [value]="GroupingStrategy.WEIGHTED">{{ 'sessionDetail.strategyWeighted' | t }}</option>
-            </select>
-          </mat-form-field>
+              <div class="drawer-section">
+                <h4>{{ 'sessionDetail.preferencesTitle' | t }}</h4>
+                @if (sortedPeople.length < 2) {
+                  <p class="drawer-muted">{{ 'sessionDetail.preferencesMinPeople' | t }}</p>
+                } @else {
+                  <div class="drawer-list">
+                    @for (targetPerson of sortedPeople; track targetPerson.id) {
+                      @if (targetPerson.id !== selectedPerson.id) {
+                        <div class="drawer-row">
+                          <span>{{ targetPerson.name }}</span>
+                          <select
+                            #preferenceSelect
+                            class="preference-select"
+                            [value]="getPreference(selectedPerson.id, targetPerson.id)"
+                            (change)="onPreferenceChange(selectedPerson.id, targetPerson.id, preferenceSelect.value)">
+                            <option value="none">{{ 'sessionDetail.preferenceNone' | t }}</option>
+                            <option value="wantWith">{{ 'sessionDetail.preferenceWantWith' | t }}</option>
+                            <option value="avoid">{{ 'sessionDetail.preferenceAvoid' | t }}</option>
+                          </select>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              </div>
 
-          <mat-form-field>
-            <mat-label>{{ 'sessionDetail.groupSize' | t }}</mat-label>
-            <input matNativeControl type="number" [(ngModel)]="groupSize" min="1" [max]="session.people.length">
-          </mat-form-field>
-
-          <mat-checkbox [(ngModel)]="allowPartialGroups">
-            {{ 'sessionDetail.allowPartialGroups' | t }}
-          </mat-checkbox>
-
-          <button mat-raised-button color="primary" (click)="generateGroups()" [disabled]="session.people.length === 0">
-            <mat-icon>shuffle</mat-icon>
-            {{ 'sessionDetail.generateGroups' | t }}
-          </button>
-
-          @if (groupingStrategy === GroupingStrategy.WEIGHTED) {
-            <div class="weight-selection">
-              <p class="weight-help">{{ 'sessionDetail.customWeights.selectHelp' | t }}</p>
-              <div class="weight-select-list">
-                <label class="weight-select-item">
-                  <input
-                    type="checkbox"
-                    [checked]="selectedWeightIds.includes(genderWeightId)"
-                    (change)="toggleWeightSelection(genderWeightId)" />
-                  <span>{{ 'sessionDetail.customWeights.genderWeight' | t }}</span>
-                </label>
-                @for (weight of session.customWeights; track weight.id) {
-                  <label class="weight-select-item">
-                    <input
-                      type="checkbox"
-                      [checked]="selectedWeightIds.includes(weight.id)"
-                      (change)="toggleWeightSelection(weight.id)" />
-                    <span>{{ weight.name }}</span>
-                  </label>
+              <div class="drawer-section">
+                <h4>{{ 'sessionDetail.customWeights.personWeightsTitle' | t }}</h4>
+                @if (session.customWeights.length === 0) {
+                  <p class="drawer-muted">{{ 'sessionDetail.customWeights.empty' | t }}</p>
+                } @else {
+                  @for (weight of session.customWeights; track weight.id) {
+                    <div class="drawer-row">
+                      <span>{{ weight.name }}</span>
+                      <input
+                        #drawerWeightInput
+                        type="number"
+                        class="weight-input"
+                        [value]="selectedPerson.weights?.[weight.id] ?? 0"
+                        (change)="updatePersonWeight(selectedPerson, weight.id, drawerWeightInput.valueAsNumber || 0)" />
+                    </div>
+                  }
                 }
               </div>
             </div>
-          }
+          </aside>
+        }
+      </div>
 
-          <button mat-stroked-button color="warn" (click)="resetSession()">
-            <mat-icon>restart_alt</mat-icon>
-            {{ 'sessionDetail.resetSession' | t }}
-          </button>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Generated Groups Display -->
-      @if (currentResult) {
-        <mat-card class="section-card groups-display">
+      <div class="layout-row middle-row">
+        <!-- Grouping Configuration -->
+        <mat-card class="section-card">
           <mat-card-header>
-            <mat-card-title>
-              {{ 'sessionDetail.generatedGroups' | t }}
-              @if (currentResult.overallSatisfaction !== undefined) {
-                <span class="satisfaction-badge">
-                  {{ 'sessionDetail.satisfaction' | t:{ score: currentResult.overallSatisfaction } }}
-                </span>
-              }
-            </mat-card-title>
-            <button mat-icon-button (click)="regenerateGroups()" [attr.aria-label]="'sessionDetail.regenerateGroupsAria' | t">
-              <mat-icon>refresh</mat-icon>
+            <mat-card-title>{{ 'sessionDetail.createGroupsTitle' | t }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="grouping-config">
+            <mat-form-field>
+              <mat-label>{{ 'sessionDetail.genderMode.label' | t }}</mat-label>
+              <select matNativeControl [formControl]="genderModeControl">
+                <option value="mixed">{{ 'sessionDetail.genderMode.mixed' | t }}</option>
+                <option value="single">{{ 'sessionDetail.genderMode.single' | t }}</option>
+                <option value="ignore">{{ 'sessionDetail.genderMode.ignore' | t }}</option>
+              </select>
+            </mat-form-field>
+
+            <mat-form-field>
+              <mat-label>{{ 'sessionDetail.strategy' | t }}</mat-label>
+              <select matNativeControl [formControl]="groupingStrategyControl">
+                <option [value]="GroupingStrategy.RANDOM">{{ 'sessionDetail.strategyRandom' | t }}</option>
+                <option [value]="GroupingStrategy.PREFERENCE_BASED">{{ 'sessionDetail.strategyPreferenceBased' | t }}</option>
+                <option [value]="GroupingStrategy.WEIGHTED">{{ 'sessionDetail.strategyWeighted' | t }}</option>
+              </select>
+            </mat-form-field>
+
+            @if (groupingStrategyControl.value === GroupingStrategy.PREFERENCE_BASED) {
+              <div class="preference-scoring">
+                <p class="weight-help">{{ 'sessionDetail.preferenceScoring.title' | t }}</p>
+                <div class="preference-scoring-grid">
+                  <mat-form-field>
+                    <mat-label>{{ 'sessionDetail.preferenceScoring.wantWith' | t }}</mat-label>
+                    <input
+                      matNativeControl
+                      type="number"
+                      [formControl]="preferenceWantWithControl" />
+                  </mat-form-field>
+                  <mat-form-field>
+                    <mat-label>{{ 'sessionDetail.preferenceScoring.avoid' | t }}</mat-label>
+                    <input
+                      matNativeControl
+                      type="number"
+                      [formControl]="preferenceAvoidControl" />
+                  </mat-form-field>
+                </div>
+              </div>
+            }
+
+            <mat-form-field>
+              <mat-label>{{ 'sessionDetail.groupSize' | t }}</mat-label>
+              <input matNativeControl type="number" [formControl]="groupSizeControl" min="1" [max]="session.people.length">
+            </mat-form-field>
+
+            <mat-checkbox [formControl]="allowPartialGroupsControl">
+              {{ 'sessionDetail.allowPartialGroups' | t }}
+            </mat-checkbox>
+
+            <button mat-raised-button color="primary" (click)="generateGroups()" [disabled]="session.people.length === 0">
+              <mat-icon>shuffle</mat-icon>
+              {{ 'sessionDetail.generateGroups' | t }}
             </button>
+
+            @if (groupingStrategyControl.value === GroupingStrategy.WEIGHTED) {
+              <div class="weight-selection">
+                <p class="weight-help">{{ 'sessionDetail.customWeights.selectHelp' | t }}</p>
+                <div class="weight-select-list">
+                  <label class="weight-select-item">
+                    <input
+                      type="checkbox"
+                      [checked]="selectedWeightIds.includes(genderWeightId)"
+                      (change)="toggleWeightSelection(genderWeightId)" />
+                    <span>{{ 'sessionDetail.customWeights.genderWeight' | t }}</span>
+                  </label>
+                  @for (weight of session.customWeights; track weight.id) {
+                    <label class="weight-select-item">
+                      <input
+                        type="checkbox"
+                        [checked]="selectedWeightIds.includes(weight.id)"
+                        (change)="toggleWeightSelection(weight.id)" />
+                      <span>{{ weight.name }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+            }
+
+            <button mat-stroked-button color="warn" (click)="resetSession()">
+              <mat-icon>restart_alt</mat-icon>
+              {{ 'sessionDetail.resetSession' | t }}
+            </button>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>{{ 'sessionDetail.customWeights.title' | t }}</mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <div class="groups-grid">
-              @for (group of currentResult.groups; track group.id; let i = $index) {
-                <div class="group-card">
-                  <div class="group-header">
-                    <h3>{{ 'sessionDetail.groupLabel' | t:{ index: i + 1 } }}</h3>
-                    @if (group.satisfactionScore !== undefined) {
-                      <span class="score">
-                        {{ 'sessionDetail.score' | t:{ score: group.satisfactionScore } }}
-                      </span>
-                    }
-                  </div>
-                  <div class="group-members">
-                    @for (memberId of group.memberIds; track memberId) {
-                      <div class="member">
-                        <mat-icon>person</mat-icon>
-                        <span>{{ getPersonName(memberId) }}</span>
-                      </div>
-                    }
-                  </div>
+            <div class="weight-editor">
+              <mat-form-field>
+                <mat-label>{{ 'sessionDetail.customWeights.nameLabel' | t }}</mat-label>
+                <input matNativeControl [formControl]="newWeightNameControl" />
+              </mat-form-field>
+              <button mat-stroked-button color="primary" (click)="addCustomWeight()">
+                <mat-icon>add</mat-icon>
+                {{ 'sessionDetail.customWeights.add' | t }}
+              </button>
+            </div>
+
+            <div class="weight-list">
+              @for (weight of session.customWeights; track weight.id) {
+                <div class="weight-row">
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>{{ 'sessionDetail.customWeights.weightLabel' | t }}</mat-label>
+                    <input #weightNameInput matNativeControl [value]="weight.name" (input)="renameCustomWeight(weight, weightNameInput.value)" />
+                  </mat-form-field>
+                  <button mat-icon-button color="warn" (click)="removeCustomWeight(weight)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              }
+              @if (session.customWeights.length === 0) {
+                <div class="empty-state">
+                  <p>{{ 'sessionDetail.customWeights.empty' | t }}</p>
                 </div>
               }
             </div>
           </mat-card-content>
         </mat-card>
-      }
       </div>
 
-      @if (selectedPerson) {
-        <aside class="person-drawer">
-          <div class="drawer-header">
-            <div>
-              <h3>{{ selectedPerson.name }}</h3>
-              <p>{{ 'sessionDetail.customWeights.personWeightsTitle' | t }}</p>
-            </div>
-            <button mat-icon-button (click)="closePersonWeights()">
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-          <div class="drawer-content">
-            <div class="drawer-section">
-              <h4>{{ 'sessionDetail.gender.label' | t }}</h4>
-              <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ 'sessionDetail.gender.label' | t }}</mat-label>
-                <select matNativeControl [ngModel]="selectedPerson.gender ?? 'unspecified'" (ngModelChange)="updatePersonGender(selectedPerson, $event)">
-                  <option value="female">{{ 'sessionDetail.gender.female' | t }}</option>
-                  <option value="male">{{ 'sessionDetail.gender.male' | t }}</option>
-                  <option value="nonbinary">{{ 'sessionDetail.gender.nonbinary' | t }}</option>
-                  <option value="unspecified">{{ 'sessionDetail.gender.unspecified' | t }}</option>
-                </select>
-              </mat-form-field>
-            </div>
-
-            <div class="drawer-section">
-              <h4>{{ 'sessionDetail.preferencesTitle' | t }}</h4>
-              @if (session.people.length < 2) {
-                <p class="drawer-muted">{{ 'sessionDetail.preferencesMinPeople' | t }}</p>
-              } @else {
-                <div class="drawer-list">
-                  @for (targetPerson of session.people; track targetPerson.id) {
-                    @if (targetPerson.id !== selectedPerson.id) {
-                      <div class="drawer-row">
-                        <span>{{ targetPerson.name }}</span>
-                        <select
-                          class="preference-select"
-                          [value]="getPreference(selectedPerson.id, targetPerson.id)"
-                          (change)="onPreferenceChange(selectedPerson.id, targetPerson.id, $any($event.target).value)">
-                          <option value="none">{{ 'sessionDetail.preferenceNone' | t }}</option>
-                          <option value="wantWith">{{ 'sessionDetail.preferenceWantWith' | t }}</option>
-                          <option value="avoid">{{ 'sessionDetail.preferenceAvoid' | t }}</option>
-                        </select>
-                      </div>
-                    }
-                  }
-                </div>
-              }
-            </div>
-
-            <div class="drawer-section">
-              <h4>{{ 'sessionDetail.customWeights.personWeightsTitle' | t }}</h4>
-              @if (session.customWeights.length === 0) {
-                <p class="drawer-muted">{{ 'sessionDetail.customWeights.empty' | t }}</p>
-              } @else {
-                @for (weight of session.customWeights; track weight.id) {
-                  <div class="drawer-row">
-                    <span>{{ weight.name }}</span>
-                    <input
-                      type="number"
-                      class="weight-input"
-                      [value]="selectedPerson.weights?.[weight.id] ?? 0"
-                      (change)="updatePersonWeight(selectedPerson, weight.id, $any($event.target).valueAsNumber || 0)" />
+      <!-- Generated Groups Display -->
+      @if (currentResult) {
+        <div class="layout-row bottom-row">
+          <mat-card class="section-card groups-display">
+            <mat-card-header>
+              <mat-card-title>
+                {{ 'sessionDetail.generatedGroups' | t }}
+                @if (currentResult.overallSatisfaction !== undefined) {
+                  <span class="satisfaction-badge">
+                    {{ 'sessionDetail.satisfaction' | t:{ score: currentResult.overallSatisfaction } }}
+                  </span>
+                }
+              </mat-card-title>
+              <button mat-icon-button (click)="regenerateGroups()" [attr.aria-label]="'sessionDetail.regenerateGroupsAria' | t">
+                <mat-icon>refresh</mat-icon>
+              </button>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="groups-grid">
+                @for (group of currentResult.groups; track group.id; let i = $index) {
+                  <div class="group-card">
+                    <div class="group-header">
+                      <h3>{{ 'sessionDetail.groupLabel' | t:{ index: i + 1 } }}</h3>
+                      @if (group.satisfactionScore !== undefined) {
+                        <span class="score">
+                          {{ 'sessionDetail.score' | t:{ score: group.satisfactionScore } }}
+                        </span>
+                      }
+                    </div>
+                    <div class="group-members">
+                      @for (memberId of group.memberIds; track memberId) {
+                        <div class="member">
+                          <mat-icon>person</mat-icon>
+                          <span>{{ getPersonName(memberId) }}</span>
+                        </div>
+                      }
+                    </div>
                   </div>
                 }
-              }
-            </div>
-          </div>
-        </aside>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
       }
     </div>
   </div>

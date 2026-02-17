@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, signal, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-export type LocaleCode = 'en';
+export type LocaleCode = 'en' | 'da';
 
 export interface TranslationDictionary {
   [key: string]: string | TranslationDictionary;
@@ -16,9 +16,10 @@ export class I18nService {
 
   private static readonly STORAGE_KEY = 'grouper.locale';
 
-  private readonly supportedLocales: LocaleCode[] = ['en'];
+  private readonly supportedLocales: LocaleCode[] = ['en', 'da'];
   private readonly dateLocaleMap: Record<LocaleCode, string> = {
     en: 'en-US',
+    da: 'da-DK',
   };
 
   private readonly localeSignal = signal<LocaleCode>('en');

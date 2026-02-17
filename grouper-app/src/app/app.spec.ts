@@ -15,7 +15,7 @@ class MockThemeService {
 }
 
 class MockI18nService {
-  private readonly localeSignal = signal<'en'>('en');
+  private readonly localeSignal = signal<'en' | 'da'>('en');
   readonly currentLocale = this.localeSignal.asReadonly();
 
   t(key: string): string {
@@ -30,15 +30,22 @@ class MockI18nService {
     return labels[key] ?? key;
   }
 
-  getAvailableLocales(): 'en'[] {
-    return ['en'];
+  getAvailableLocales(): ('en' | 'da')[] {
+    return ['en', 'da'];
   }
 
   getLocaleDisplayName(locale: string): string {
-    return locale === 'en' ? 'English' : locale;
+    if (locale === 'en') {
+      return 'English';
+    }
+    if (locale === 'da') {
+      return 'Danish';
+    }
+    return locale;
   }
 
-  setLocale(): Promise<void> {
+  setLocale(locale: 'en' | 'da'): Promise<void> {
+    this.localeSignal.set(locale);
     return Promise.resolve();
   }
 }
@@ -78,5 +85,15 @@ describe('App', () => {
     buttons[1].click();
 
     expect(themeService.currentTheme()).toBe('dark');
+  });
+
+  it('should list both supported locales in selector', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+
+    const options = Array.from(fixture.nativeElement.querySelectorAll('select option')) as HTMLOptionElement[];
+    const values = options.map((option) => option.value);
+
+    expect(values).toEqual(['en', 'da']);
   });
 });

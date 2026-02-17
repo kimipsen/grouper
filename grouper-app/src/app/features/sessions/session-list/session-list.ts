@@ -1,8 +1,6 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,36 +13,22 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-session-list',
-  standalone: true,
   templateUrl: './session-list.html',
   styleUrl: './session-list.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, TranslatePipe]
 })
-export class SessionList implements OnInit, OnDestroy {
+export class SessionList {
   private sessionService = inject(SessionService);
   private exportImportService = inject(ExportImportService);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
   private i18n = inject(I18nService);
 
-  sessions: Session[] = [];
-  private destroy$ = new Subject<void>();
+  readonly sessions = this.sessionService.sessions;
 
   get currentDateLocale(): string {
     return this.i18n.getCurrentDateLocale();
-  }
-
-  ngOnInit(): void {
-    this.sessionService.sessions$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(sessions => {
-        this.sessions = sessions;
-      });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   createNewSession(): void {

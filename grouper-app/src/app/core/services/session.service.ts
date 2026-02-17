@@ -1,8 +1,7 @@
-import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { Injectable, inject, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { v4 as uuidv4 } from 'uuid';
-import { Session } from '../../models/session.model';
+import { DEFAULT_PREFERENCE_SCORING, PreferenceScoring, Session } from '../../models/session.model';
 import { Gender, Person } from '../../models/person.model';
 import { PreferenceMap, PreferenceType } from '../../models/preference.model';
 import { GroupingResult } from '../../models/group.model';
@@ -15,23 +14,18 @@ export class SessionService {
   private sessionStorageService = inject(SessionStorageService);
 
   // State management
-  private sessionsSubject = new BehaviorSubject<Session[]>([]);
-  public sessions$ = this.sessionsSubject.asObservable();
+  private readonly sessionsSignal = signal<Session[]>([]);
+  readonly sessions = this.sessionsSignal.asReadonly();
+  readonly sessions$ = toObservable(this.sessions);
 
-  private currentSessionSubject = new BehaviorSubject<Session | null>(null);
-  public currentSession$ = this.currentSessionSubject.asObservable();
+  private readonly currentSessionSignal = signal<Session | null>(null);
+  readonly currentSession = this.currentSessionSignal.asReadonly();
+  readonly currentSession$ = toObservable(this.currentSession);
 
-  // Auto-save trigger
-  private saveTriggered = new Subject<void>();
+  // Auto-save timer
+  private saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
-    // Set up auto-save with debouncing
-    this.saveTriggered.pipe(
-      debounceTime(500)
-    ).subscribe(() => {
-      this.persistSessions();
-    });
-
     // Load sessions on initialization
     this.loadAllSessions();
   }
@@ -41,14 +35,14 @@ export class SessionService {
    */
   loadAllSessions(): void {
     const sessions = this.sessionStorageService.loadSessions();
-    this.sessionsSubject.next(sessions);
+    this.sessionsSignal.set(sessions);
 
     // Restore current session
     const currentSessionId = this.sessionStorageService.getCurrentSessionId();
     if (currentSessionId) {
       const currentSession = sessions.find(s => s.id === currentSessionId);
       if (currentSession) {
-        this.currentSessionSubject.next(currentSession);
+        this.currentSessionSignal.set(currentSession);
       }
     }
   }
@@ -66,6 +60,7 @@ export class SessionService {
       description,
       people: [],
       preferences: {},
+      preferenceScoring: { ...DEFAULT_PREFERENCE_SCORING },
       groupingHistory: [],
       customWeights: [],
       genderMode: 'mixed',
@@ -73,9 +68,9 @@ export class SessionService {
       updatedAt: new Date()
     };
 
-    const sessions = this.sessionsSubject.value;
+    const sessions = [...this.sessionsSignal()];
     sessions.push(newSession);
-    this.sessionsSubject.next([...sessions]);
+    this.sessionsSignal.set(sessions);
     this.triggerSave();
 
     return newSession;
@@ -87,16 +82,16 @@ export class SessionService {
    */
   updateSession(session: Session): void {
     session.updatedAt = new Date();
-    const sessions = this.sessionsSubject.value;
+    const sessions = [...this.sessionsSignal()];
     const index = sessions.findIndex(s => s.id === session.id);
 
     if (index !== -1) {
       sessions[index] = session;
-      this.sessionsSubject.next([...sessions]);
+      this.sessionsSignal.set(sessions);
 
       // Update current session if it's the one being updated
-      if (this.currentSessionSubject.value?.id === session.id) {
-        this.currentSessionSubject.next(session);
+      if (this.currentSessionSignal()?.id === session.id) {
+        this.currentSessionSignal.set(session);
       }
 
       this.triggerSave();
@@ -109,12 +104,12 @@ export class SessionService {
    */
   deleteSession(id: string): void {
     this.sessionStorageService.deleteSession(id);
-    const sessions = this.sessionsSubject.value.filter(s => s.id !== id);
-    this.sessionsSubject.next(sessions);
+    const sessions = this.sessionsSignal().filter(s => s.id !== id);
+    this.sessionsSignal.set(sessions);
 
     // Clear current session if it was deleted
-    if (this.currentSessionSubject.value?.id === id) {
-      this.currentSessionSubject.next(null);
+    if (this.currentSessionSignal()?.id === id) {
+      this.currentSessionSignal.set(null);
     }
   }
 
@@ -123,9 +118,9 @@ export class SessionService {
    * @param id Session ID
    */
   setCurrentSession(id: string): void {
-    const session = this.sessionsSubject.value.find(s => s.id === id);
+    const session = this.sessionsSignal().find(s => s.id === id);
     if (session) {
-      this.currentSessionSubject.next(session);
+      this.currentSessionSignal.set(session);
       this.sessionStorageService.saveCurrentSessionId(id);
     }
   }
@@ -140,6 +135,7 @@ export class SessionService {
 
     session.people = [];
     session.preferences = {};
+    session.preferenceScoring = { ...DEFAULT_PREFERENCE_SCORING };
     session.groupingHistory = [];
     session.customWeights = [];
     session.genderMode = 'mixed';
@@ -150,7 +146,7 @@ export class SessionService {
    * Clear the current session
    */
   clearCurrentSession(): void {
-    this.currentSessionSubject.next(null);
+    this.currentSessionSignal.set(null);
     this.sessionStorageService.clearCurrentSessionId();
   }
 
@@ -159,7 +155,7 @@ export class SessionService {
    * @returns Current session or null
    */
   getCurrentSession(): Session | null {
-    return this.currentSessionSubject.value;
+    return this.currentSessionSignal();
   }
 
   /**
@@ -306,6 +302,17 @@ export class SessionService {
     }
   }
 
+  updatePreferenceScoring(sessionId: string, scoring: PreferenceScoring): void {
+    const session = this.getSessionById(sessionId);
+    if (!session) return;
+
+    session.preferenceScoring = {
+      wantWith: Number.isFinite(scoring.wantWith) ? scoring.wantWith : DEFAULT_PREFERENCE_SCORING.wantWith,
+      avoid: Number.isFinite(scoring.avoid) ? scoring.avoid : DEFAULT_PREFERENCE_SCORING.avoid,
+    };
+    this.updateSession(session);
+  }
+
   /**
    * Set a preference for a person
    * @param sessionId Session ID
@@ -372,7 +379,7 @@ export class SessionService {
    * @returns Session or undefined
    */
   private getSessionById(id: string): Session | undefined {
-    return this.sessionsSubject.value.find(s => s.id === id);
+    return this.sessionsSignal().find(s => s.id === id);
   }
 
   /**
@@ -396,14 +403,20 @@ export class SessionService {
    * Trigger auto-save
    */
   private triggerSave(): void {
-    this.saveTriggered.next();
+    if (this.saveTimeout !== null) {
+      clearTimeout(this.saveTimeout);
+    }
+    this.saveTimeout = setTimeout(() => {
+      this.persistSessions();
+      this.saveTimeout = null;
+    }, 500);
   }
 
   /**
    * Persist all sessions to storage
    */
   private persistSessions(): void {
-    this.sessionStorageService.saveSessions(this.sessionsSubject.value);
+    this.sessionStorageService.saveSessions(this.sessionsSignal());
   }
 
   /**
@@ -431,9 +444,9 @@ export class SessionService {
     session.id = uuidv4();
     session.updatedAt = new Date();
 
-    const sessions = this.sessionsSubject.value;
+    const sessions = [...this.sessionsSignal()];
     sessions.push(session);
-    this.sessionsSubject.next([...sessions]);
+    this.sessionsSignal.set(sessions);
     this.triggerSave();
 
     return session;

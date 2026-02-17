@@ -1,9 +1,8 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnInit, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { v4 as uuidv4 } from 'uuid';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -11,7 +10,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { Session, CustomWeightDefinition } from '../../../models/session.model';
+import { DEFAULT_PREFERENCE_SCORING, Session, CustomWeightDefinition } from '../../../models/session.model';
 import { Gender, Person } from '../../../models/person.model';
 import { PreferenceType } from '../../../models/preference.model';
 import { GenderMode, GroupingStrategy, GroupingSettings, GroupingResult } from '../../../models/group.model';
@@ -23,12 +22,12 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-session-detail',
-  standalone: true,
   templateUrl: './session-detail.html',
   styleUrl: './session-detail.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     MatCardModule,
     MatFormFieldModule,
     MatCheckboxModule,
@@ -38,24 +37,27 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
     TranslatePipe
   ]
 })
-export class SessionDetail implements OnInit, OnDestroy {
+export class SessionDetail implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
   private sessionService = inject(SessionService);
   private groupingService = inject(GroupingService);
   private snackBar = inject(MatSnackBar);
   private i18n = inject(I18nService);
 
   session: Session | null = null;
-  private destroy$ = new Subject<void>();
 
   // Grouping settings
-  groupingStrategy: GroupingStrategy = GroupingStrategy.RANDOM;
-  groupSize = 3;
-  allowPartialGroups = true;
-  genderMode: GenderMode = 'mixed';
+  readonly groupingStrategyControl = new FormControl<GroupingStrategy>(GroupingStrategy.RANDOM, { nonNullable: true });
+  readonly groupSizeControl = new FormControl<number>(3, { nonNullable: true });
+  readonly allowPartialGroupsControl = new FormControl<boolean>(true, { nonNullable: true });
+  readonly genderModeControl = new FormControl<GenderMode>('mixed', { nonNullable: true });
+  readonly preferenceWantWithControl = new FormControl<number>(DEFAULT_PREFERENCE_SCORING.wantWith, { nonNullable: true });
+  readonly preferenceAvoidControl = new FormControl<number>(DEFAULT_PREFERENCE_SCORING.avoid, { nonNullable: true });
+  readonly newWeightNameControl = new FormControl<string>('', { nonNullable: true });
   selectedWeightIds: string[] = [];
-  newWeightName = '';
   selectedPerson: Person | null = null;
   readonly genderWeightId = '__gender__';
 
@@ -65,9 +67,24 @@ export class SessionDetail implements OnInit, OnDestroy {
   // Enum for template
   GroupingStrategy = GroupingStrategy;
 
+  get sortedPeople(): Person[] {
+    if (!this.session) {
+      return [];
+    }
+
+    const locale = this.i18n.getCurrentDateLocale();
+    return [...this.session.people].sort((a, b) => {
+      const byName = a.name.localeCompare(b.name, locale, { sensitivity: 'base' });
+      if (byName !== 0) {
+        return byName;
+      }
+      return a.id.localeCompare(b.id);
+    });
+  }
+
   ngOnInit(): void {
     this.route.params
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(params => {
         const sessionId = params['id'];
         if (sessionId) {
@@ -75,21 +92,32 @@ export class SessionDetail implements OnInit, OnDestroy {
         }
       });
 
-    this.sessionService.currentSession$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(session => {
-        this.session = session;
-        if (!session) {
-          this.router.navigate(['/sessions']);
-        } else {
-          this.genderMode = session.genderMode ?? 'mixed';
-        }
-      });
-  }
+    effect(() => {
+      const session = this.sessionService.currentSession();
+      this.session = session;
+      if (!session) {
+        this.router.navigate(['/sessions']);
+        return;
+      }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+      this.genderModeControl.setValue(session.genderMode ?? 'mixed', { emitEvent: false });
+      const scoring = session.preferenceScoring ?? DEFAULT_PREFERENCE_SCORING;
+      this.preferenceWantWithControl.setValue(scoring.wantWith, { emitEvent: false });
+      this.preferenceAvoidControl.setValue(scoring.avoid, { emitEvent: false });
+    }, { injector: this.injector });
+
+    this.genderModeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(mode => {
+      if (!this.session) return;
+      this.sessionService.updateSessionGenderMode(this.session.id, mode);
+    });
+
+    this.preferenceWantWithControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
+      this.updatePreferenceScore('wantWith', value);
+    });
+
+    this.preferenceAvoidControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
+      this.updatePreferenceScore('avoid', value);
+    });
   }
 
   // People management
@@ -129,19 +157,13 @@ export class SessionDetail implements OnInit, OnDestroy {
     }
   }
 
-  updateGenderMode(mode: GenderMode): void {
-    if (!this.session) return;
-    this.genderMode = mode;
-    this.sessionService.updateSessionGenderMode(this.session.id, mode);
-  }
-
   addCustomWeight(): void {
     if (!this.session) return;
-    const name = this.newWeightName.trim();
+    const name = this.newWeightNameControl.value.trim();
     if (!name) return;
 
     this.sessionService.addCustomWeight(this.session.id, name);
-    this.newWeightName = '';
+    this.newWeightNameControl.setValue('');
   }
 
   renameCustomWeight(weight: CustomWeightDefinition, name: string): void {
@@ -158,9 +180,12 @@ export class SessionDetail implements OnInit, OnDestroy {
     }
   }
 
-  updatePersonGender(person: Person, gender: Gender): void {
+  updatePersonGender(person: Person, gender: Gender | string): void {
     if (!this.session) return;
-    const updated: Person = { ...person, gender };
+    const normalizedGender: Gender = gender === 'female' || gender === 'male' || gender === 'nonbinary' || gender === 'unspecified'
+      ? gender
+      : 'unspecified';
+    const updated: Person = { ...person, gender: normalizedGender };
     this.sessionService.updatePersonInSession(this.session.id, updated);
   }
 
@@ -220,6 +245,17 @@ export class SessionDetail implements OnInit, OnDestroy {
     }
   }
 
+  updatePreferenceScore(type: 'wantWith' | 'avoid', value: number): void {
+    if (!this.session) return;
+    const nextValue = Number.isFinite(value) ? value : 0;
+    const current = this.session.preferenceScoring ?? DEFAULT_PREFERENCE_SCORING;
+
+    this.sessionService.updatePreferenceScoring(this.session.id, {
+      ...current,
+      [type]: nextValue,
+    });
+  }
+
   // Grouping
   generateGroups(): void {
     if (!this.session) return;
@@ -230,10 +266,10 @@ export class SessionDetail implements OnInit, OnDestroy {
     }
 
     const settings: GroupingSettings = {
-      strategy: this.groupingStrategy,
-      groupSize: this.groupSize,
-      allowPartialGroups: this.allowPartialGroups,
-      genderMode: this.genderMode,
+      strategy: this.groupingStrategyControl.value,
+      groupSize: this.groupSizeControl.value,
+      allowPartialGroups: this.allowPartialGroupsControl.value,
+      genderMode: this.genderModeControl.value,
       weightIds: this.selectedWeightIds
     };
 
@@ -244,7 +280,11 @@ export class SessionDetail implements OnInit, OnDestroy {
     }
 
     try {
-      this.currentResult = this.groupingService.createGroupsWithSession(this.session, settings);
+      this.currentResult = this.groupingService.createGroupsWithSession(
+        this.session,
+        settings,
+        this.i18n.getCurrentDateLocale()
+      );
 
       this.sessionService.addGroupingResult(this.session.id, this.currentResult);
       this.showSnack('sessionDetail.snackbar.groupsGenerated', 2000);

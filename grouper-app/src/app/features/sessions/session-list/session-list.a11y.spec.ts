@@ -35,8 +35,8 @@ class MockI18nService {
   }
 }
 
-describe('SessionList', () => {
-  it('renders localized heading text', async () => {
+describe('SessionList accessibility', () => {
+  it('renders accessible controls in the empty state', async () => {
     const sessions = signal<Session[]>([]);
 
     await TestBed.configureTestingModule({
@@ -54,8 +54,15 @@ describe('SessionList', () => {
     const fixture = TestBed.createComponent(SessionList);
     fixture.detectChanges();
 
-    const content = fixture.nativeElement.textContent;
-    expect(content).toContain('Sessions');
-    expect(content).toContain('No sessions yet');
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('h1')?.textContent?.trim()).toBe('Sessions');
+
+    const buttons = Array.from(root.querySelectorAll('button')) as HTMLButtonElement[];
+    const unlabeledButton = buttons.find((button) => {
+      const aria = button.getAttribute('aria-label')?.trim();
+      const text = button.textContent?.trim();
+      return !aria && !text;
+    });
+    expect(unlabeledButton).toBeUndefined();
   });
 });

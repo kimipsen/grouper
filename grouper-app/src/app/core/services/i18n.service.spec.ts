@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { I18nService } from './i18n.service';
+import { I18nService, LocaleCode } from './i18n.service';
 
 describe('I18nService', () => {
   let service: I18nService;
@@ -72,5 +72,56 @@ describe('I18nService', () => {
     await localePromise;
 
     expect(localStorage.getItem('grouper.locale')).toBe('en');
+  });
+
+  it('loads da locale and persists selection', async () => {
+    const localePromise = service.setLocale('da');
+
+    httpMock.expectOne('assets/i18n/da.json').flush({
+      app: { title: 'Grouper' },
+    });
+
+    await localePromise;
+
+    expect(service.currentLocale()).toBe('da');
+    expect(localStorage.getItem('grouper.locale')).toBe('da');
+  });
+
+  it('uses supported stored da locale on init', async () => {
+    localStorage.setItem('grouper.locale', 'da');
+
+    const initPromise = service.init();
+
+    httpMock.expectOne('assets/i18n/da.json').flush({
+      common: { close: 'Luk' },
+    });
+
+    await initPromise;
+
+    expect(service.currentLocale()).toBe('da');
+  });
+
+  it('normalizes da-DK locale string to da', async () => {
+    const localePromise = service.setLocale('da-DK' as LocaleCode);
+
+    httpMock.expectOne('assets/i18n/da.json').flush({
+      common: { close: 'Luk' },
+    });
+
+    await localePromise;
+
+    expect(service.currentLocale()).toBe('da');
+  });
+
+  it('returns da-DK for current date locale when da is active', async () => {
+    const localePromise = service.setLocale('da');
+
+    httpMock.expectOne('assets/i18n/da.json').flush({
+      app: { title: 'Grouper' },
+    });
+
+    await localePromise;
+
+    expect(service.getCurrentDateLocale()).toBe('da-DK');
   });
 });

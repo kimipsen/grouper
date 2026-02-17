@@ -12,10 +12,7 @@
   </button>
   <mat-form-field subscriptSizing="dynamic" appearance="outline" class="locale-select">
     <mat-label>{{ 'app.languageLabel' | t }}</mat-label>
-    <select
-      matNativeControl
-      [ngModel]="i18nService.currentLocale()"
-      (ngModelChange)="onLocaleChange($event)">
+    <select matNativeControl [formControl]="localeControl">
       @for (locale of availableLocales; track locale) {
         <option [value]="locale">{{ i18nService.getLocaleDisplayName(locale) }}</option>
       }

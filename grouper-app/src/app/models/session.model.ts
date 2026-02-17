@@ -2,6 +2,16 @@ import { Person, PersonDTO } from './person.model';
 import { PreferenceMap } from './preference.model';
 import { GroupingResult, GroupingResultDTO } from './group.model';
 
+export interface PreferenceScoring {
+  wantWith: number;
+  avoid: number;
+}
+
+export const DEFAULT_PREFERENCE_SCORING: PreferenceScoring = {
+  wantWith: 2,
+  avoid: -2,
+};
+
 export interface CustomWeightDefinition {
   id: string;
   name: string;
@@ -13,6 +23,7 @@ export interface Session {
   description?: string;
   people: Person[];
   preferences: PreferenceMap;
+  preferenceScoring?: PreferenceScoring;
   groupingHistory: GroupingResult[];
   customWeights: CustomWeightDefinition[];
   genderMode?: 'mixed' | 'single' | 'ignore';
@@ -26,6 +37,7 @@ export interface SessionDTO {
   description?: string;
   people: PersonDTO[];
   preferences: PreferenceMap;
+  preferenceScoring?: PreferenceScoring;
   groupingHistory: GroupingResultDTO[];
   customWeights: CustomWeightDefinition[];
   genderMode?: 'mixed' | 'single' | 'ignore';

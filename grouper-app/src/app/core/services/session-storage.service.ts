@@ -1,9 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { StorageService } from './storage.service';
-import { Session, SessionDTO } from '../../models/session.model';
+import {
+  DEFAULT_PREFERENCE_SCORING,
+  PreferenceScoring,
+  Session,
+  SessionDTO,
+} from '../../models/session.model';
 
 const SESSIONS_STORAGE_KEY = 'grouper_sessions';
 const CURRENT_SESSION_ID_KEY = 'grouper_current_session_id';
+const MAX_EXPORTED_GROUPING_HISTORY = 5;
 
 @Injectable({
   providedIn: 'root'
@@ -96,7 +102,10 @@ export class SessionStorageService {
    * @returns JSON string
    */
   exportSession(session: Session): string {
-    const dto = this.sessionToDTO(session);
+    const dto = this.sessionToDTO({
+      ...session,
+      groupingHistory: session.groupingHistory.slice(-MAX_EXPORTED_GROUPING_HISTORY),
+    });
     return JSON.stringify(dto, null, 2);
   }
 
@@ -134,6 +143,7 @@ export class SessionStorageService {
         createdAt: p.createdAt.toISOString()
       })),
       preferences: session.preferences,
+      preferenceScoring: this.normalizePreferenceScoring(session.preferenceScoring),
       groupingHistory: session.groupingHistory.map(gr => ({
         groups: gr.groups,
         strategy: gr.strategy,
@@ -165,6 +175,7 @@ export class SessionStorageService {
         createdAt: new Date(p.createdAt)
       })),
       preferences: dto.preferences || {},
+      preferenceScoring: this.normalizePreferenceScoring(dto.preferenceScoring),
       groupingHistory: dto.groupingHistory.map(gr => ({
         groups: gr.groups,
         strategy: gr.strategy,
@@ -203,8 +214,30 @@ export class SessionStorageService {
     if (!Array.isArray(session.groupingHistory)) {
       throw new Error('Invalid session data: groupingHistory must be an array');
     }
+    if (session.preferenceScoring !== undefined) {
+      if (typeof session.preferenceScoring !== 'object' || session.preferenceScoring === null) {
+        throw new Error('Invalid session data: preferenceScoring must be an object');
+      }
+      if (typeof session.preferenceScoring.wantWith !== 'number' || !Number.isFinite(session.preferenceScoring.wantWith)) {
+        throw new Error('Invalid session data: preferenceScoring.wantWith must be a finite number');
+      }
+      if (typeof session.preferenceScoring.avoid !== 'number' || !Number.isFinite(session.preferenceScoring.avoid)) {
+        throw new Error('Invalid session data: preferenceScoring.avoid must be a finite number');
+      }
+    }
     if (session.customWeights !== undefined && !Array.isArray(session.customWeights)) {
       throw new Error('Invalid session data: customWeights must be an array');
     }
+  }
+
+  private normalizePreferenceScoring(scoring?: PreferenceScoring): PreferenceScoring {
+    return {
+      wantWith: Number.isFinite(scoring?.wantWith)
+        ? (scoring?.wantWith as number)
+        : DEFAULT_PREFERENCE_SCORING.wantWith,
+      avoid: Number.isFinite(scoring?.avoid)
+        ? (scoring?.avoid as number)
+        : DEFAULT_PREFERENCE_SCORING.avoid,
+    };
   }
 }
