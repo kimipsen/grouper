@@ -75,6 +75,8 @@ describe('SessionDetail', () => {
             setCurrentSession: vi.fn(),
             updateSessionGenderMode: vi.fn(),
             updatePreferenceScoring: vi.fn(),
+            addPersonToSession: vi.fn(),
+            updatePersonInSession: vi.fn(),
           },
         },
         {
@@ -101,5 +103,67 @@ describe('SessionDetail', () => {
     const content = fixture.nativeElement.textContent;
     expect(content).toContain('Create Groups');
     expect(content).toContain('Custom Weights');
+  });
+
+  it('adds a blank person with unspecified gender without prompts', async () => {
+    const params$ = new BehaviorSubject({ id: 'session-1' });
+    const addPersonToSession = vi.fn();
+    const currentSession = signal<Session | null>({
+      id: 'session-1',
+      name: 'Demo Session',
+      description: '',
+      people: [],
+      preferences: {},
+      groupingHistory: [],
+      customWeights: [],
+      genderMode: 'mixed',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [SessionDetail],
+      providers: [
+        { provide: ActivatedRoute, useValue: { params: params$ } },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        {
+          provide: SessionService,
+          useValue: {
+            currentSession,
+            setCurrentSession: vi.fn(),
+            updateSessionGenderMode: vi.fn(),
+            updatePreferenceScoring: vi.fn(),
+            addPersonToSession,
+            updatePersonInSession: vi.fn(),
+          },
+        },
+        {
+          provide: GroupingService,
+          useValue: {
+            validateSettings: vi.fn().mockReturnValue({ isValid: true, errors: [], warnings: [] }),
+            createGroups: vi.fn().mockReturnValue({
+              groups: [],
+              strategy: GroupingStrategy.RANDOM,
+              settings: { strategy: GroupingStrategy.RANDOM, groupSize: 3, allowPartialGroups: true },
+              timestamp: new Date(),
+            }),
+          },
+        },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: I18nService, useClass: MockI18nService },
+      ],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(SessionDetail);
+    fixture.detectChanges();
+
+    fixture.componentInstance.addPerson();
+
+    expect(addPersonToSession).toHaveBeenCalledTimes(1);
+    const addedPerson = addPersonToSession.mock.calls[0][1] as { name: string; gender: string };
+    expect(addedPerson.name).toBe('');
+    expect(addedPerson.gender).toBe('unspecified');
+    expect(fixture.componentInstance.selectedPerson).toEqual(expect.objectContaining({ name: '', gender: 'unspecified' }));
   });
 });

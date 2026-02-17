@@ -1,0 +1,81 @@
+<aside class="person-drawer">
+  <div class="drawer-header">
+    <div>
+      <h3>{{ selectedPerson().name?.length ? selectedPerson().name : ('sessionDetail.unnamedPerson' | t) }}</h3>
+      <p>{{ 'sessionDetail.customWeights.personWeightsTitle' | t }}</p>
+    </div>
+    <button mat-icon-button (click)="close.emit()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <div class="drawer-content">
+    <div class="drawer-section">
+      <h4>{{ 'sessionDetail.nameLabel' | t }}</h4>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'sessionDetail.nameLabel' | t }}</mat-label>
+        <input
+          #nameInput
+          matInput
+          type="text"
+          [value]="selectedPerson().name"
+          (input)="updateName.emit(nameInput.value)" />
+      </mat-form-field>
+    </div>
+
+    <div class="drawer-section">
+      <h4>{{ 'sessionDetail.gender.label' | t }}</h4>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'sessionDetail.gender.label' | t }}</mat-label>
+        <select #genderSelect matNativeControl [value]="selectedPerson().gender ?? 'unspecified'" (change)="onGenderChange(genderSelect.value)">
+          <option value="female">{{ 'sessionDetail.gender.female' | t }}</option>
+          <option value="male">{{ 'sessionDetail.gender.male' | t }}</option>
+          <option value="nonbinary">{{ 'sessionDetail.gender.nonbinary' | t }}</option>
+          <option value="unspecified">{{ 'sessionDetail.gender.unspecified' | t }}</option>
+        </select>
+      </mat-form-field>
+    </div>
+
+    <div class="drawer-section">
+      <h4>{{ 'sessionDetail.preferencesTitle' | t }}</h4>
+      @if (people().length < 2) {
+        <p class="drawer-muted">{{ 'sessionDetail.preferencesMinPeople' | t }}</p>
+      } @else {
+        <div class="drawer-list">
+          @for (targetPerson of otherPeople(); track targetPerson.id) {
+            <div class="drawer-row">
+              <span>{{ targetPerson.name }}</span>
+              <select
+                #preferenceSelect
+                class="preference-select"
+                [value]="getPreference(targetPerson.id)"
+                (change)="updatePreference.emit({ targetPersonId: targetPerson.id, value: preferenceSelect.value })">
+                <option value="none">{{ 'sessionDetail.preferenceNone' | t }}</option>
+                <option value="wantWith">{{ 'sessionDetail.preferenceWantWith' | t }}</option>
+                <option value="avoid">{{ 'sessionDetail.preferenceAvoid' | t }}</option>
+              </select>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="drawer-section">
+      <h4>{{ 'sessionDetail.customWeights.personWeightsTitle' | t }}</h4>
+      @if (customWeights().length === 0) {
+        <p class="drawer-muted">{{ 'sessionDetail.customWeights.empty' | t }}</p>
+      } @else {
+        @for (weight of customWeights(); track weight.id) {
+          <div class="drawer-row">
+            <span>{{ weight.name }}</span>
+            <input
+              #drawerWeightInput
+              type="number"
+              class="weight-input"
+              [value]="selectedPerson().weights?.[weight.id] ?? 0"
+              (change)="updateWeight.emit({ weightId: weight.id, value: drawerWeightInput.valueAsNumber || 0 })" />
+          </div>
+        }
+      }
+    </div>
+  </div>
+</aside>

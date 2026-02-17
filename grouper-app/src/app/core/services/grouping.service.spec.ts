@@ -85,14 +85,93 @@ describe('GroupingService member ordering', () => {
   });
 });
 
-function buildSession(peopleInput: Array<{ id: string; name: string }>): Session {
+describe('GroupingService mixed gender distribution', () => {
+  let service: GroupingService;
+
+  beforeEach(() => {
+    service = new GroupingService();
+  });
+
+  it('avoids single-gender groups for random mixed mode when distribution allows mixing', () => {
+    const people = [
+      ...Array.from({ length: 15 }, (_, i) => ({ id: `m-${i + 1}`, name: `Male ${i + 1}`, gender: 'male' as const })),
+      ...Array.from({ length: 15 }, (_, i) => ({ id: `f-${i + 1}`, name: `Female ${i + 1}`, gender: 'female' as const })),
+    ];
+    const session = buildSession(people);
+
+    const result = service.createGroupsWithSession(
+      session,
+      {
+        strategy: GroupingStrategy.RANDOM,
+        groupSize: 3,
+        allowPartialGroups: true,
+        genderMode: 'mixed',
+      },
+      'en-US'
+    );
+
+    const personById = new Map(session.people.map((person) => [person.id, person]));
+    const singleGenderGroups = result.groups.filter((group) => {
+      const genders = new Set(
+        group.memberIds.map((memberId) => personById.get(memberId)?.gender ?? 'unspecified')
+      );
+      return genders.size <= 1;
+    });
+
+    expect(result.groups.length).toBe(10);
+    expect(singleGenderGroups.length).toBe(0);
+  });
+});
+
+describe('GroupingService preference scores', () => {
+  let service: GroupingService;
+
+  beforeEach(() => {
+    service = new GroupingService();
+  });
+
+  it('sets per-group satisfactionScore for single-gender preference strategy', () => {
+    const session = buildSession([
+      { id: 'm-1', name: 'M1', gender: 'male' },
+      { id: 'm-2', name: 'M2', gender: 'male' },
+      { id: 'f-1', name: 'F1', gender: 'female' },
+      { id: 'f-2', name: 'F2', gender: 'female' },
+    ]);
+    session.preferences = {
+      'm-1': { wantWith: ['m-2'], avoid: [] },
+      'm-2': { wantWith: ['m-1'], avoid: [] },
+      'f-1': { wantWith: ['f-2'], avoid: [] },
+      'f-2': { wantWith: ['f-1'], avoid: [] },
+    };
+
+    const result = service.createGroupsWithSession(
+      session,
+      {
+        strategy: GroupingStrategy.PREFERENCE_BASED,
+        groupSize: 2,
+        allowPartialGroups: true,
+        genderMode: 'single',
+      },
+      'en-US'
+    );
+
+    expect(result.groups.length).toBe(2);
+    for (const group of result.groups) {
+      expect(typeof group.satisfactionScore).toBe('number');
+    }
+  });
+});
+
+function buildSession(
+  peopleInput: Array<{ id: string; name: string; gender?: 'female' | 'male' | 'nonbinary' | 'unspecified' }>
+): Session {
   const now = new Date('2024-01-01T00:00:00.000Z');
   return {
     id: 'session-1',
     name: 'Session',
     people: peopleInput.map((person) => ({
       ...person,
-      gender: 'unspecified',
+      gender: person.gender ?? 'unspecified',
       weights: {},
       createdAt: now,
     })),

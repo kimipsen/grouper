@@ -1,0 +1,36 @@
+<mat-card class="section-card">
+  <mat-card-header>
+    <mat-card-title>{{ 'sessionDetail.customWeights.title' | t }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="weight-editor">
+      <mat-form-field>
+        <mat-label>{{ 'sessionDetail.customWeights.nameLabel' | t }}</mat-label>
+        <input matNativeControl [formControl]="newWeightNameControl()" />
+      </mat-form-field>
+      <button mat-stroked-button color="primary" (click)="addWeight.emit()">
+        <mat-icon>add</mat-icon>
+        {{ 'sessionDetail.customWeights.add' | t }}
+      </button>
+    </div>
+
+    <div class="weight-list">
+      @for (weight of customWeights(); track weight.id) {
+        <div class="weight-row">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'sessionDetail.customWeights.weightLabel' | t }}</mat-label>
+            <input #weightNameInput matNativeControl [value]="weight.name" (input)="renameWeight.emit({ weight, name: weightNameInput.value })" />
+          </mat-form-field>
+          <button mat-icon-button color="warn" (click)="removeWeight.emit(weight)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      }
+      @if (customWeights().length === 0) {
+        <div class="empty-state">
+          <p>{{ 'sessionDetail.customWeights.empty' | t }}</p>
+        </div>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

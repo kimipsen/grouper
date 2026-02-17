@@ -5,6 +5,7 @@ import { DEFAULT_PREFERENCE_SCORING, PreferenceScoring, Session } from '../../mo
 import { PreferenceMap } from '../../models/preference.model';
 import { RandomGroupingAlgorithm } from '../algorithms/random-grouping.algorithm';
 import { PreferenceGroupingAlgorithm } from '../algorithms/preference-grouping.algorithm';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable({
   providedIn: 'root'
@@ -93,12 +94,17 @@ export class GroupingService {
     if (genderMode === 'single') {
       result.groups = this.createSingleGenderGroups(session.people, settings);
     } else if (genderMode === 'mixed') {
-      this.applyGenderMode(result.groups, session.people, genderMode);
+      if (settings.strategy === GroupingStrategy.RANDOM || settings.strategy === GroupingStrategy.WEIGHTED) {
+        result.groups = this.createMixedGenderGroups(session.people, settings);
+      } else {
+        this.applyGenderMode(result.groups, session.people);
+      }
     }
 
     this.normalizeGroupMemberOrder(result.groups, session.people, locale);
 
     if (settings.strategy === GroupingStrategy.PREFERENCE_BASED && session.preferences) {
+      this.assignGroupSatisfactionScores(result.groups, session.preferences, preferenceScoring);
       result.overallSatisfaction = this.calculateSatisfaction(result.groups, session.preferences, preferenceScoring);
     }
 
@@ -168,14 +174,16 @@ export class GroupingService {
     const genderMode = settings.genderMode ?? session.genderMode ?? 'mixed';
     const groups = genderMode === 'single'
       ? this.createSingleGenderGroups(session.people, settings)
-      : RandomGroupingAlgorithm.createGroups(
-          session.people,
-          settings.groupSize,
-          settings.allowPartialGroups ?? true
-        );
+      : genderMode === 'mixed'
+        ? this.createMixedGenderGroups(session.people, settings)
+        : RandomGroupingAlgorithm.createGroups(
+            session.people,
+            settings.groupSize,
+            settings.allowPartialGroups ?? true
+          );
 
     if (genderMode === 'mixed') {
-      this.applyGenderMode(groups, session.people, genderMode);
+      this.applyGenderMode(groups, session.people);
     }
     this.balanceWeights(groups, session.people, weightIds);
 
@@ -198,17 +206,11 @@ export class GroupingService {
     return expanded;
   }
 
-  private applyGenderMode(groups: Group[], people: Person[], mode: 'mixed' | 'single' | 'ignore'): void {
-    if (mode === 'ignore') return;
-
+  private applyGenderMode(groups: Group[], people: Person[]): void {
     const genderOf = (personId: string): string => {
       const person = people.find(p => p.id === personId);
       return person?.gender ?? 'unspecified';
     };
-
-    if (mode === 'single') {
-      return;
-    }
 
     // mixed mode: attempt to reduce same-gender clustering
     for (let i = 0; i < groups.length; i++) {
@@ -256,6 +258,144 @@ export class GroupingService {
     }
 
     return groups;
+  }
+
+  private assignGroupSatisfactionScores(
+    groups: Group[],
+    preferences: PreferenceMap,
+    scoring?: PreferenceScoring
+  ): void {
+    for (const group of groups) {
+      group.satisfactionScore = PreferenceGroupingAlgorithm.calculateGroupSatisfaction(group, preferences, scoring);
+    }
+  }
+
+  private createMixedGenderGroups(people: Person[], settings: GroupingSettings): Group[] {
+    const groupSizes = this.calculateTargetGroupSizes(
+      people.length,
+      settings.groupSize,
+      settings.allowPartialGroups ?? true
+    );
+
+    const groups = groupSizes.map((size, index) => ({
+      id: uuidv4(),
+      name: `Group ${index + 1}`,
+      memberIds: [] as string[],
+      targetSize: size,
+      genderCounts: new Map<string, number>(),
+    }));
+
+    const peopleByGender = new Map<string, Person[]>();
+    for (const person of people) {
+      const gender = person.gender ?? 'unspecified';
+      const bucket = peopleByGender.get(gender) ?? [];
+      bucket.push(person);
+      peopleByGender.set(gender, bucket);
+    }
+
+    for (const bucket of peopleByGender.values()) {
+      this.shuffleInPlace(bucket);
+    }
+
+    const buckets = [...peopleByGender.entries()].sort((a, b) => b[1].length - a[1].length);
+
+    for (const [gender, bucket] of buckets) {
+      while (bucket.length > 0) {
+        const person = bucket.pop();
+        if (!person) {
+          break;
+        }
+        const target = this.selectBestMixedGenderGroup(groups, gender);
+        target.memberIds.push(person.id);
+        target.genderCounts.set(gender, (target.genderCounts.get(gender) ?? 0) + 1);
+      }
+    }
+
+    return groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      memberIds: group.memberIds,
+    }));
+  }
+
+  private calculateTargetGroupSizes(totalPeople: number, groupSize: number, allowPartialGroups: boolean): number[] {
+    if (totalPeople === 0) {
+      return [];
+    }
+
+    const remainder = totalPeople % groupSize;
+    const numberOfFullGroups = Math.floor(totalPeople / groupSize);
+    const sizes: number[] = [];
+
+    if (allowPartialGroups || remainder === 0) {
+      for (let i = 0; i < totalPeople; i += groupSize) {
+        sizes.push(Math.min(groupSize, totalPeople - i));
+      }
+      return sizes;
+    }
+
+    for (let i = 0; i < numberOfFullGroups; i++) {
+      sizes.push(i < remainder ? groupSize + 1 : groupSize);
+    }
+    return sizes;
+  }
+
+  private selectBestMixedGenderGroup(
+    groups: Array<{
+      memberIds: string[];
+      targetSize: number;
+      genderCounts: Map<string, number>;
+    }>,
+    gender: string
+  ): {
+    memberIds: string[];
+    targetSize: number;
+    genderCounts: Map<string, number>;
+  } {
+    const candidates = groups.filter((group) => group.memberIds.length < group.targetSize);
+    if (candidates.length === 0) {
+      return groups[0];
+    }
+
+    let best = candidates[0];
+    let bestGenderCount = best.genderCounts.get(gender) ?? 0;
+    let bestCurrentSize = best.memberIds.length;
+
+    for (let i = 1; i < candidates.length; i++) {
+      const candidate = candidates[i];
+      const candidateGenderCount = candidate.genderCounts.get(gender) ?? 0;
+      const candidateSize = candidate.memberIds.length;
+
+      if (candidateGenderCount < bestGenderCount) {
+        best = candidate;
+        bestGenderCount = candidateGenderCount;
+        bestCurrentSize = candidateSize;
+        continue;
+      }
+
+      if (candidateGenderCount === bestGenderCount && candidateSize < bestCurrentSize) {
+        best = candidate;
+        bestCurrentSize = candidateSize;
+        continue;
+      }
+
+      if (
+        candidateGenderCount === bestGenderCount &&
+        candidateSize === bestCurrentSize &&
+        Math.random() < 0.5
+      ) {
+        best = candidate;
+      }
+    }
+
+    return best;
+  }
+
+  private shuffleInPlace<T>(array: T[]): void {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
   }
 
   private getDominantGender(genders: string[]): string | null {

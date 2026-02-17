@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink, RouterOutlet } from '@angular/router';
@@ -16,7 +16,7 @@ import { ThemeService } from './core/services/theme.service';
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.Default,
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -33,6 +33,7 @@ import { ThemeService } from './core/services/theme.service';
 export class App {
   readonly themeService = inject(ThemeService);
   readonly i18nService = inject(I18nService);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   readonly localeControl = new FormControl<LocaleCode>('en', { nonNullable: true });
   readonly availableLocales = this.i18nService.getAvailableLocales();
@@ -48,5 +49,9 @@ export class App {
         this.localeControl.setValue(currentLocale, { emitEvent: false });
       }
     });
+  }
+
+  onRouteActivate(): void {
+    queueMicrotask(() => this.cdr.detectChanges());
   }
 }

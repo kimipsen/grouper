@@ -1,0 +1,29 @@
+<mat-card class="section-card">
+  <mat-card-header>
+    <mat-card-title>{{ 'sessionDetail.peopleTitle' | t:{ count: people().length } }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="people-list">
+      @for (person of people(); track person.id) {
+        <div class="person-item">
+          <mat-icon>{{ getPersonIcon(person) }}</mat-icon>
+          <button class="person-name" type="button" (click)="openPerson.emit(person)">
+            {{ person.name || 'Unnamed person' }}
+          </button>
+          <button mat-icon-button color="warn" (click)="removePerson.emit(person)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      }
+      @if (people().length === 0) {
+        <div class="empty-state">
+          <p>{{ 'sessionDetail.noPeople' | t }}</p>
+        </div>
+      }
+    </div>
+    <button mat-raised-button color="primary" (click)="addPerson.emit()" class="add-button">
+      <mat-icon>add</mat-icon>
+      {{ 'sessionDetail.addPerson' | t }}
+    </button>
+  </mat-card-content>
+</mat-card>

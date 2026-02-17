@@ -48,6 +48,8 @@
     "peopleTitle": "Personer ({{count}})",
     "noPeople": "Ingen personer endnu",
     "addPerson": "Tilføj person",
+    "nameLabel": "Navn",
+    "unnamedPerson": "Unavngiven person",
     "gender": {
       "label": "Køn",
       "female": "Kvinde",

@@ -1,0 +1,83 @@
+<mat-card class="section-card">
+  <mat-card-header>
+    <mat-card-title>{{ 'sessionDetail.createGroupsTitle' | t }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content class="grouping-config">
+    <mat-form-field>
+      <mat-label>{{ 'sessionDetail.genderMode.label' | t }}</mat-label>
+      <select matNativeControl [formControl]="genderModeControl()">
+        <option value="mixed">{{ 'sessionDetail.genderMode.mixed' | t }}</option>
+        <option value="single">{{ 'sessionDetail.genderMode.single' | t }}</option>
+        <option value="ignore">{{ 'sessionDetail.genderMode.ignore' | t }}</option>
+      </select>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>{{ 'sessionDetail.strategy' | t }}</mat-label>
+      <select matNativeControl [formControl]="groupingStrategyControl()">
+        <option [value]="GroupingStrategy.RANDOM">{{ 'sessionDetail.strategyRandom' | t }}</option>
+        <option [value]="GroupingStrategy.PREFERENCE_BASED">{{ 'sessionDetail.strategyPreferenceBased' | t }}</option>
+        <option [value]="GroupingStrategy.WEIGHTED">{{ 'sessionDetail.strategyWeighted' | t }}</option>
+      </select>
+    </mat-form-field>
+
+    @if (groupingStrategyControl().value === GroupingStrategy.PREFERENCE_BASED) {
+      <div class="preference-scoring">
+        <p class="weight-help">{{ 'sessionDetail.preferenceScoring.title' | t }}</p>
+        <div class="preference-scoring-grid">
+          <mat-form-field>
+            <mat-label>{{ 'sessionDetail.preferenceScoring.wantWith' | t }}</mat-label>
+            <input matNativeControl type="number" [formControl]="preferenceWantWithControl()" />
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>{{ 'sessionDetail.preferenceScoring.avoid' | t }}</mat-label>
+            <input matNativeControl type="number" [formControl]="preferenceAvoidControl()" />
+          </mat-form-field>
+        </div>
+      </div>
+    }
+
+    <mat-form-field>
+      <mat-label>{{ 'sessionDetail.groupSize' | t }}</mat-label>
+      <input matNativeControl type="number" [formControl]="groupSizeControl()" min="1" [max]="peopleCount()">
+    </mat-form-field>
+
+    <mat-checkbox [formControl]="allowPartialGroupsControl()">
+      {{ 'sessionDetail.allowPartialGroups' | t }}
+    </mat-checkbox>
+
+    <button mat-raised-button color="primary" (click)="generateGroups.emit()" [disabled]="peopleCount() === 0">
+      <mat-icon>shuffle</mat-icon>
+      {{ 'sessionDetail.generateGroups' | t }}
+    </button>
+
+    @if (groupingStrategyControl().value === GroupingStrategy.WEIGHTED) {
+      <div class="weight-selection">
+        <p class="weight-help">{{ 'sessionDetail.customWeights.selectHelp' | t }}</p>
+        <div class="weight-select-list">
+          <label class="weight-select-item">
+            <input
+              type="checkbox"
+              [checked]="selectedWeightIds().includes(genderWeightId())"
+              (change)="toggleWeightSelection.emit(genderWeightId())" />
+            <span>{{ 'sessionDetail.customWeights.genderWeight' | t }}</span>
+          </label>
+          @for (weight of customWeights(); track weight.id) {
+            <label class="weight-select-item">
+              <input
+                type="checkbox"
+                [checked]="selectedWeightIds().includes(weight.id)"
+                (change)="toggleWeightSelection.emit(weight.id)" />
+              <span>{{ weight.name }}</span>
+            </label>
+          }
+        </div>
+      </div>
+    }
+
+    <button mat-stroked-button color="warn" (click)="resetSession.emit()">
+      <mat-icon>restart_alt</mat-icon>
+      {{ 'sessionDetail.resetSession' | t }}
+    </button>
+  </mat-card-content>
+</mat-card>

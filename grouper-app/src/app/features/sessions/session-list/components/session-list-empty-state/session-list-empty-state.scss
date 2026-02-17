@@ -1,0 +1,20 @@
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+mat-icon {
+  font-size: 80px;
+  width: 80px;
+  height: 80px;
+  color: var(--mat-sys-outline-variant);
+}
+
+h2 {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+p {
+  color: var(--mat-sys-on-surface-variant);
+  margin-bottom: 20px;
+}

@@ -1,0 +1,39 @@
+<mat-card class="section-card groups-display">
+  <mat-card-header>
+    <mat-card-title>
+      {{ 'sessionDetail.generatedGroups' | t }}
+      @if (result().overallSatisfaction !== undefined) {
+        <span class="satisfaction-badge">
+          {{ 'sessionDetail.satisfaction' | t:{ score: result().overallSatisfaction ?? 0 } }}
+        </span>
+      }
+    </mat-card-title>
+    <button mat-icon-button (click)="regenerate.emit()" [attr.aria-label]="'sessionDetail.regenerateGroupsAria' | t">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="groups-grid">
+      @for (group of result().groups; track group.id; let i = $index) {
+        <div class="group-card">
+          <div class="group-header">
+            <h3>{{ 'sessionDetail.groupLabel' | t:{ index: i + 1 } }}</h3>
+            @if (group.satisfactionScore !== undefined) {
+              <span class="score">
+                {{ 'sessionDetail.score' | t:{ score: group.satisfactionScore } }}
+              </span>
+            }
+          </div>
+          <div class="group-members">
+            @for (memberId of group.memberIds; track memberId) {
+              <div class="member">
+                <mat-icon>{{ getPersonIcon(memberId) }}</mat-icon>
+                <span>{{ getPersonName(memberId) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

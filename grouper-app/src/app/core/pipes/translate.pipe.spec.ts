@@ -1,12 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { I18nService } from '../services/i18n.service';
 import { TranslatePipe } from './translate.pipe';
 
 class MockI18nService {
-  locale = 'en';
+  private readonly localeSignal = signal('en');
+  readonly currentLocale = this.localeSignal.asReadonly();
 
   t(key: string): string {
-    return `${this.locale}:${key}`;
+    return `${this.localeSignal()}:${key}`;
+  }
+
+  setLocale(locale: string): void {
+    this.localeSignal.set(locale);
   }
 }
 
@@ -32,7 +38,7 @@ describe('TranslatePipe', () => {
 
     expect(pipe.transform('app.title')).toBe('en:app.title');
 
-    i18n.locale = 'es';
+    i18n.setLocale('es');
 
     expect(pipe.transform('app.title')).toBe('es:app.title');
   });

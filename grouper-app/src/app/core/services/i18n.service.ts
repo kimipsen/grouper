@@ -62,6 +62,8 @@ export class I18nService {
   }
 
   t(key: string, params?: Record<string, string | number>): string {
+    // Track locale reads so OnPush views using translations are rechecked on locale updates.
+    this.localeSignal();
     const template = this.resolveKey(key);
 
     if (!template) {

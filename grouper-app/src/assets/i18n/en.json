@@ -48,6 +48,8 @@
     "peopleTitle": "People ({{count}})",
     "noPeople": "No people yet",
     "addPerson": "Add Person",
+    "nameLabel": "Name",
+    "unnamedPerson": "Unnamed person",
     "gender": {
       "label": "Gender",
       "female": "Female",

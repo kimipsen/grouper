@@ -5,11 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { v4 as uuidv4 } from 'uuid';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { DEFAULT_PREFERENCE_SCORING, Session, CustomWeightDefinition } from '../../../models/session.model';
 import { Gender, Person } from '../../../models/person.model';
 import { PreferenceType } from '../../../models/preference.model';
@@ -19,6 +15,11 @@ import { SessionService } from '../../../core/services/session.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { I18nService } from '../../../core/services/i18n.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { SessionPeopleCard } from './components/session-people-card/session-people-card';
+import { PersonDrawer } from './components/person-drawer/person-drawer';
+import { GroupingConfigCard } from './components/grouping-config-card/grouping-config-card';
+import { CustomWeightsCard } from './components/custom-weights-card/custom-weights-card';
+import { GroupsResultCard } from './components/groups-result-card/groups-result-card';
 
 @Component({
   selector: 'app-session-detail',
@@ -27,14 +28,14 @@ import { TranslatePipe } from '../../../core/pipes/translate.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatCheckboxModule,
     MatButtonModule,
     MatIconModule,
-    MatInputModule,
-    TranslatePipe
+    TranslatePipe,
+    SessionPeopleCard,
+    PersonDrawer,
+    GroupingConfigCard,
+    CustomWeightsCard,
+    GroupsResultCard,
   ]
 })
 export class SessionDetail implements OnInit {
@@ -104,6 +105,10 @@ export class SessionDetail implements OnInit {
       const scoring = session.preferenceScoring ?? DEFAULT_PREFERENCE_SCORING;
       this.preferenceWantWithControl.setValue(scoring.wantWith, { emitEvent: false });
       this.preferenceAvoidControl.setValue(scoring.avoid, { emitEvent: false });
+
+      if (this.selectedPerson) {
+        this.selectedPerson = session.people.find(person => person.id === this.selectedPerson?.id) ?? null;
+      }
     }, { injector: this.injector });
 
     this.genderModeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(mode => {
@@ -124,28 +129,22 @@ export class SessionDetail implements OnInit {
   addPerson(): void {
     if (!this.session) return;
 
-    const name = prompt(this.i18n.t('sessionDetail.prompt.personName'));
-    if (name && name.trim()) {
-      const gender = this.promptGender();
-      if (!gender) return;
-      const person: Person = {
-        id: uuidv4(),
-        name: name.trim(),
-        gender,
-        createdAt: new Date()
-      };
-      this.sessionService.addPersonToSession(this.session.id, person);
-      this.showSnack('sessionDetail.snackbar.personAdded', 2000);
-    }
+    const person: Person = {
+      id: uuidv4(),
+      name: '',
+      gender: 'unspecified',
+      createdAt: new Date()
+    };
+    this.sessionService.addPersonToSession(this.session.id, person);
+    this.selectedPerson = person;
+    this.showSnack('sessionDetail.snackbar.personAdded', 2000);
   }
 
   removePerson(person: Person): void {
     if (!this.session) return;
 
-    if (confirm(this.i18n.t('sessionDetail.confirm.removePerson', { name: person.name }))) {
-      this.sessionService.removePersonFromSession(this.session.id, person.id);
-      this.showSnack('sessionDetail.snackbar.personRemoved', 2000);
-    }
+    this.sessionService.removePersonFromSession(this.session.id, person.id);
+    this.showSnack('sessionDetail.snackbar.personRemoved', 2000);
   }
 
   resetSession(): void {
@@ -180,8 +179,10 @@ export class SessionDetail implements OnInit {
     }
   }
 
-  updatePersonGender(person: Person, gender: Gender | string): void {
+  updatePersonGender(personId: string, gender: Gender | string): void {
     if (!this.session) return;
+    const person = this.getPersonById(personId);
+    if (!person) return;
     const normalizedGender: Gender = gender === 'female' || gender === 'male' || gender === 'nonbinary' || gender === 'unspecified'
       ? gender
       : 'unspecified';
@@ -189,9 +190,17 @@ export class SessionDetail implements OnInit {
     this.sessionService.updatePersonInSession(this.session.id, updated);
   }
 
-  updatePersonWeight(person: Person, weightId: string, value: number): void {
+  updatePersonName(personId: string, name: string): void {
     if (!this.session) return;
-    this.sessionService.setPersonWeight(this.session.id, person.id, weightId, value);
+    const person = this.getPersonById(personId);
+    if (!person) return;
+    const updated: Person = { ...person, name };
+    this.sessionService.updatePersonInSession(this.session.id, updated);
+  }
+
+  updatePersonWeight(personId: string, weightId: string, value: number): void {
+    if (!this.session) return;
+    this.sessionService.setPersonWeight(this.session.id, personId, weightId, value);
   }
 
   openPersonWeights(person: Person): void {
@@ -219,20 +228,6 @@ export class SessionDetail implements OnInit {
     } else {
       this.sessionService.setPreference(this.session.id, personId, targetPersonId, type);
     }
-  }
-
-  getPreference(personId: string, targetPersonId: string): string {
-    if (!this.session || !this.session.preferences[personId]) {
-      return 'none';
-    }
-
-    const prefs = this.session.preferences[personId];
-    if (prefs.wantWith.includes(targetPersonId)) {
-      return 'wantWith';
-    } else if (prefs.avoid.includes(targetPersonId)) {
-      return 'avoid';
-    }
-    return 'none';
   }
 
   onPreferenceChange(personId: string, targetPersonId: string, value: string): void {
@@ -298,12 +293,6 @@ export class SessionDetail implements OnInit {
     this.generateGroups();
   }
 
-  getPersonName(personId: string): string {
-    if (!this.session) return '';
-    const person = this.session.people.find(p => p.id === personId);
-    return person ? person.name : '';
-  }
-
   back(): void {
     this.router.navigate(['/sessions']);
   }
@@ -329,27 +318,11 @@ export class SessionDetail implements OnInit {
     return this.i18n.t('sessionDetail.snackbar.failedGenerateGroups');
   }
 
-  private promptGender(): Gender | null {
-    const response = prompt(
-      this.i18n.t('sessionDetail.prompt.gender'),
-      this.i18n.t('sessionDetail.gender.unspecified')
-    );
-    if (!response) return null;
-    const normalized = response.trim().toLowerCase();
-
-    if (normalized === this.i18n.t('sessionDetail.gender.female').toLowerCase() || normalized === 'female' || normalized === 'f') {
-      return 'female';
+  private getPersonById(personId: string): Person | null {
+    if (!this.session) {
+      return null;
     }
-    if (normalized === this.i18n.t('sessionDetail.gender.male').toLowerCase() || normalized === 'male' || normalized === 'm') {
-      return 'male';
-    }
-    if (normalized === this.i18n.t('sessionDetail.gender.nonbinary').toLowerCase() || normalized === 'nonbinary' || normalized === 'nb') {
-      return 'nonbinary';
-    }
-    if (normalized === this.i18n.t('sessionDetail.gender.unspecified').toLowerCase() || normalized === 'unspecified' || normalized === 'u') {
-      return 'unspecified';
-    }
-
-    return 'unspecified';
+    return this.session.people.find((person) => person.id === personId) ?? null;
   }
+
 }

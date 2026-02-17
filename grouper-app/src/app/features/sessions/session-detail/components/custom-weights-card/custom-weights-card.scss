@@ -1,0 +1,35 @@
+.section-card {
+  mat-card-header {
+    margin-bottom: 16px;
+  }
+
+  mat-card-content {
+    padding-top: 0;
+  }
+}
+
+.weight-editor {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.weight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.weight-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 20px;
+  color: var(--mat-sys-on-surface-variant);
+}

@@ -1,0 +1,8 @@
+<div class="empty-state">
+  <mat-icon>folder_open</mat-icon>
+  <h2>{{ 'sessionList.emptyTitle' | t }}</h2>
+  <p>{{ 'sessionList.emptyDescription' | t }}</p>
+  <button mat-raised-button color="primary" (click)="create.emit()">
+    {{ 'sessionList.createFirstSession' | t }}
+  </button>
+</div>

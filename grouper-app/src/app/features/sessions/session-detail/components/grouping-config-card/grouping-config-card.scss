@@ -1,0 +1,64 @@
+.section-card {
+  mat-card-header {
+    margin-bottom: 16px;
+  }
+
+  mat-card-content {
+    padding-top: 0;
+  }
+}
+
+.grouping-config {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+
+.weight-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preference-scoring {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preference-scoring-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.weight-help {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.weight-select-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.weight-select-item {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .preference-scoring-grid {
+    grid-template-columns: 1fr;
+  }
+}
