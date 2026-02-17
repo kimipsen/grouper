@@ -11,10 +11,10 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { Session } from '../../../models/session.model';
-import { Person } from '../../../models/person.model';
+import { Session, CustomWeightDefinition } from '../../../models/session.model';
+import { Gender, Person } from '../../../models/person.model';
 import { PreferenceType } from '../../../models/preference.model';
-import { GroupingStrategy, GroupingSettings, GroupingResult } from '../../../models/group.model';
+import { GenderMode, GroupingStrategy, GroupingSettings, GroupingResult } from '../../../models/group.model';
 import { GroupingService, ValidationMessage } from '../../../core/services/grouping.service';
 import { SessionService } from '../../../core/services/session.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -53,6 +53,9 @@ export class SessionDetail implements OnInit, OnDestroy {
   groupingStrategy: GroupingStrategy = GroupingStrategy.RANDOM;
   groupSize = 3;
   allowPartialGroups = true;
+  genderMode: GenderMode = 'mixed';
+  selectedWeightIds: string[] = [];
+  newWeightName = '';
 
   // Current grouping result
   currentResult: GroupingResult | null = null;
@@ -76,6 +79,8 @@ export class SessionDetail implements OnInit, OnDestroy {
         this.session = session;
         if (!session) {
           this.router.navigate(['/sessions']);
+        } else {
+          this.genderMode = session.genderMode ?? 'mixed';
         }
       });
   }
@@ -91,9 +96,12 @@ export class SessionDetail implements OnInit, OnDestroy {
 
     const name = prompt(this.i18n.t('sessionDetail.prompt.personName'));
     if (name && name.trim()) {
+      const gender = this.promptGender();
+      if (!gender) return;
       const person: Person = {
         id: uuidv4(),
         name: name.trim(),
+        gender,
         createdAt: new Date()
       };
       this.sessionService.addPersonToSession(this.session.id, person);
@@ -116,6 +124,54 @@ export class SessionDetail implements OnInit, OnDestroy {
     if (confirm(this.i18n.t('sessionDetail.confirm.resetSession', { name: this.session.name }))) {
       this.sessionService.resetSession(this.session.id);
       this.showSnack('sessionDetail.snackbar.sessionReset', 2000);
+    }
+  }
+
+  updateGenderMode(mode: GenderMode): void {
+    if (!this.session) return;
+    this.genderMode = mode;
+    this.sessionService.updateSessionGenderMode(this.session.id, mode);
+  }
+
+  addCustomWeight(): void {
+    if (!this.session) return;
+    const name = this.newWeightName.trim();
+    if (!name) return;
+
+    this.sessionService.addCustomWeight(this.session.id, name);
+    this.newWeightName = '';
+  }
+
+  renameCustomWeight(weight: CustomWeightDefinition, name: string): void {
+    if (!this.session) return;
+    this.sessionService.renameCustomWeight(this.session.id, weight.id, name);
+  }
+
+  removeCustomWeight(weight: CustomWeightDefinition): void {
+    if (!this.session) return;
+    this.sessionService.removeCustomWeight(this.session.id, weight.id);
+
+    if (this.selectedWeightIds.includes(weight.id)) {
+      this.selectedWeightIds = this.selectedWeightIds.filter(id => id !== weight.id);
+    }
+  }
+
+  updatePersonGender(person: Person, gender: Gender): void {
+    if (!this.session) return;
+    const updated: Person = { ...person, gender };
+    this.sessionService.updatePersonInSession(this.session.id, updated);
+  }
+
+  updatePersonWeight(person: Person, weightId: string, value: number): void {
+    if (!this.session) return;
+    this.sessionService.setPersonWeight(this.session.id, person.id, weightId, value);
+  }
+
+  toggleWeightSelection(weightId: string): void {
+    if (this.selectedWeightIds.includes(weightId)) {
+      this.selectedWeightIds = this.selectedWeightIds.filter(id => id !== weightId);
+    } else {
+      this.selectedWeightIds = [...this.selectedWeightIds, weightId];
     }
   }
 
@@ -166,7 +222,9 @@ export class SessionDetail implements OnInit, OnDestroy {
     const settings: GroupingSettings = {
       strategy: this.groupingStrategy,
       groupSize: this.groupSize,
-      allowPartialGroups: this.allowPartialGroups
+      allowPartialGroups: this.allowPartialGroups,
+      genderMode: this.genderMode,
+      weightIds: this.selectedWeightIds
     };
 
     const validation = this.groupingService.validateSettings(this.session.people.length, settings);
@@ -176,11 +234,7 @@ export class SessionDetail implements OnInit, OnDestroy {
     }
 
     try {
-      this.currentResult = this.groupingService.createGroups(
-        this.session.people,
-        settings,
-        this.session.preferences
-      );
+      this.currentResult = this.groupingService.createGroupsWithSession(this.session, settings);
 
       this.sessionService.addGroupingResult(this.session.id, this.currentResult);
       this.showSnack('sessionDetail.snackbar.groupsGenerated', 2000);
@@ -223,5 +277,29 @@ export class SessionDetail implements OnInit, OnDestroy {
       }
     }
     return this.i18n.t('sessionDetail.snackbar.failedGenerateGroups');
+  }
+
+  private promptGender(): Gender | null {
+    const response = prompt(
+      this.i18n.t('sessionDetail.prompt.gender'),
+      this.i18n.t('sessionDetail.gender.unspecified')
+    );
+    if (!response) return null;
+    const normalized = response.trim().toLowerCase();
+
+    if (normalized === this.i18n.t('sessionDetail.gender.female').toLowerCase() || normalized === 'female' || normalized === 'f') {
+      return 'female';
+    }
+    if (normalized === this.i18n.t('sessionDetail.gender.male').toLowerCase() || normalized === 'male' || normalized === 'm') {
+      return 'male';
+    }
+    if (normalized === this.i18n.t('sessionDetail.gender.nonbinary').toLowerCase() || normalized === 'nonbinary' || normalized === 'nb') {
+      return 'nonbinary';
+    }
+    if (normalized === this.i18n.t('sessionDetail.gender.unspecified').toLowerCase() || normalized === 'unspecified' || normalized === 'u') {
+      return 'unspecified';
+    }
+
+    return 'unspecified';
   }
 }

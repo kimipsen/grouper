@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Person } from '../../models/person.model';
 import { Group, GroupingResult, GroupingSettings, GroupingStrategy } from '../../models/group.model';
+import { Session } from '../../models/session.model';
 import { PreferenceMap } from '../../models/preference.model';
 import { RandomGroupingAlgorithm } from '../algorithms/random-grouping.algorithm';
 import { PreferenceGroupingAlgorithm } from '../algorithms/preference-grouping.algorithm';
@@ -56,6 +57,9 @@ export class GroupingService {
         }
         break;
 
+      case GroupingStrategy.WEIGHTED:
+        throw { message: 'grouping.errors.weightedRequiresSession' };
+
       default:
         throw { message: 'grouping.errors.unknownStrategy', params: { strategy: settings.strategy } };
     }
@@ -67,6 +71,30 @@ export class GroupingService {
       timestamp: new Date(),
       overallSatisfaction
     };
+  }
+
+  createGroupsWithSession(session: Session, settings: GroupingSettings): GroupingResult {
+    const genderMode = settings.genderMode ?? session.genderMode ?? 'mixed';
+
+    if (settings.strategy === GroupingStrategy.WEIGHTED) {
+      return this.createWeightedGroups(session, settings);
+    }
+
+    const result = this.createGroups(session.people, settings, session.preferences);
+
+    if (genderMode === 'single') {
+      result.groups = this.createSingleGenderGroups(session.people, settings);
+      if (settings.strategy === GroupingStrategy.PREFERENCE_BASED && session.preferences) {
+        result.overallSatisfaction = this.calculateSatisfaction(result.groups, session.preferences);
+      }
+      return result;
+    }
+
+    if (genderMode === 'mixed') {
+      this.applyGenderMode(result.groups, session.people, genderMode);
+    }
+
+    return result;
   }
 
   /**
@@ -121,6 +149,190 @@ export class GroupingService {
     const isValid = errors.length === 0;
 
     return { isValid, errors, warnings };
+  }
+
+  private createWeightedGroups(session: Session, settings: GroupingSettings): GroupingResult {
+    const weightIds = settings.weightIds ?? [];
+    if (weightIds.length === 0) {
+      throw { message: 'grouping.errors.noWeightsSelected' };
+    }
+
+    const genderMode = settings.genderMode ?? session.genderMode ?? 'mixed';
+    const groups = genderMode === 'single'
+      ? this.createSingleGenderGroups(session.people, settings)
+      : RandomGroupingAlgorithm.createGroups(
+          session.people,
+          settings.groupSize,
+          settings.allowPartialGroups ?? true
+        );
+
+    if (genderMode === 'mixed') {
+      this.applyGenderMode(groups, session.people, genderMode);
+    }
+    this.balanceWeights(groups, session.people, weightIds);
+
+    return {
+      groups,
+      strategy: settings.strategy,
+      settings,
+      timestamp: new Date(),
+      overallSatisfaction: undefined
+    };
+  }
+
+  private applyGenderMode(groups: Group[], people: Person[], mode: 'mixed' | 'single' | 'ignore'): void {
+    if (mode === 'ignore') return;
+
+    const genderOf = (personId: string): string => {
+      const person = people.find(p => p.id === personId);
+      return person?.gender ?? 'unspecified';
+    };
+
+    if (mode === 'single') {
+      return;
+    }
+
+    // mixed mode: attempt to reduce same-gender clustering
+    for (let i = 0; i < groups.length; i++) {
+      for (let j = i + 1; j < groups.length; j++) {
+        const groupA = groups[i];
+        const groupB = groups[j];
+
+        const gendersA = groupA.memberIds.map(genderOf);
+        const gendersB = groupB.memberIds.map(genderOf);
+
+        const dominantA = this.getDominantGender(gendersA);
+        const dominantB = this.getDominantGender(gendersB);
+
+        if (dominantA && dominantB && dominantA === dominantB) {
+          const swapA = groupA.memberIds.find(id => genderOf(id) === dominantA);
+          const swapB = groupB.memberIds.find(id => genderOf(id) !== dominantB);
+          if (swapA && swapB) {
+            const indexA = groupA.memberIds.indexOf(swapA);
+            const indexB = groupB.memberIds.indexOf(swapB);
+            groupA.memberIds[indexA] = swapB;
+            groupB.memberIds[indexB] = swapA;
+          }
+        }
+      }
+    }
+  }
+
+  private createSingleGenderGroups(people: Person[], settings: GroupingSettings): Group[] {
+    const genderBuckets = new Map<string, Person[]>();
+    for (const person of people) {
+      const gender = person.gender ?? 'unspecified';
+      const bucket = genderBuckets.get(gender) ?? [];
+      bucket.push(person);
+      genderBuckets.set(gender, bucket);
+    }
+
+    const groups: Group[] = [];
+    for (const bucket of genderBuckets.values()) {
+      const bucketGroups = RandomGroupingAlgorithm.createGroups(
+        bucket,
+        settings.groupSize,
+        settings.allowPartialGroups ?? true
+      );
+      groups.push(...bucketGroups);
+    }
+
+    return groups;
+  }
+
+  private getDominantGender(genders: string[]): string | null {
+    const counts = new Map<string, number>();
+    for (const gender of genders) {
+      counts.set(gender, (counts.get(gender) ?? 0) + 1);
+    }
+    let dominant: string | null = null;
+    let max = 0;
+    counts.forEach((count, gender) => {
+      if (count > max) {
+        dominant = gender;
+        max = count;
+      }
+    });
+    return dominant;
+  }
+
+  private balanceWeights(groups: Group[], people: Person[], weightIds: string[]): void {
+    const personById = new Map(people.map(person => [person.id, person]));
+
+    for (let iteration = 0; iteration < 150; iteration++) {
+      let improved = false;
+      for (let i = 0; i < groups.length; i++) {
+        for (let j = i + 1; j < groups.length; j++) {
+          const groupA = groups[i];
+          const groupB = groups[j];
+
+          const diffBefore = this.groupWeightDiff(groupA, groupB, personById, weightIds);
+          let bestSwap: { a: string; b: string; diff: number } | null = null;
+
+          for (const memberA of groupA.memberIds) {
+            for (const memberB of groupB.memberIds) {
+              const diffAfter = this.groupWeightDiffWithSwap(groupA, groupB, personById, weightIds, memberA, memberB);
+              if (diffAfter < diffBefore && (!bestSwap || diffAfter < bestSwap.diff)) {
+                bestSwap = { a: memberA, b: memberB, diff: diffAfter };
+              }
+            }
+          }
+
+          if (bestSwap) {
+            const indexA = groupA.memberIds.indexOf(bestSwap.a);
+            const indexB = groupB.memberIds.indexOf(bestSwap.b);
+            groupA.memberIds[indexA] = bestSwap.b;
+            groupB.memberIds[indexB] = bestSwap.a;
+            improved = true;
+          }
+        }
+      }
+
+      if (!improved) break;
+    }
+  }
+
+  private groupWeightDiff(groupA: Group, groupB: Group, personById: Map<string, Person>, weightIds: string[]): number {
+    const totalsA = this.sumGroupWeights(groupA, personById, weightIds);
+    const totalsB = this.sumGroupWeights(groupB, personById, weightIds);
+    return weightIds.reduce((sum, weightId) => sum + Math.abs(totalsA[weightId] - totalsB[weightId]), 0);
+  }
+
+  private groupWeightDiffWithSwap(
+    groupA: Group,
+    groupB: Group,
+    personById: Map<string, Person>,
+    weightIds: string[],
+    memberA: string,
+    memberB: string
+  ): number {
+    const totalsA = this.sumGroupWeights(groupA, personById, weightIds, memberA, memberB);
+    const totalsB = this.sumGroupWeights(groupB, personById, weightIds, memberB, memberA);
+    return weightIds.reduce((sum, weightId) => sum + Math.abs(totalsA[weightId] - totalsB[weightId]), 0);
+  }
+
+  private sumGroupWeights(
+    group: Group,
+    personById: Map<string, Person>,
+    weightIds: string[],
+    swapOut?: string,
+    swapIn?: string
+  ): Record<string, number> {
+    const totals: Record<string, number> = {};
+    for (const weightId of weightIds) {
+      totals[weightId] = 0;
+    }
+
+    for (const memberId of group.memberIds) {
+      const resolvedId = memberId === swapOut ? swapIn : memberId;
+      if (!resolvedId) continue;
+      const person = personById.get(resolvedId);
+      if (!person) continue;
+      for (const weightId of weightIds) {
+        totals[weightId] += person.weights?.[weightId] ?? 0;
+      }
+    }
+    return totals;
   }
 
   /**

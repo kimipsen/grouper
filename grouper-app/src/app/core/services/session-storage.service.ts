@@ -129,6 +129,8 @@ export class SessionStorageService {
         id: p.id,
         name: p.name,
         email: p.email,
+        gender: p.gender,
+        weights: p.weights,
         createdAt: p.createdAt.toISOString()
       })),
       preferences: session.preferences,
@@ -139,6 +141,8 @@ export class SessionStorageService {
         timestamp: gr.timestamp.toISOString(),
         overallSatisfaction: gr.overallSatisfaction
       })),
+      customWeights: session.customWeights,
+      genderMode: session.genderMode,
       createdAt: session.createdAt.toISOString(),
       updatedAt: session.updatedAt.toISOString()
     };
@@ -156,6 +160,8 @@ export class SessionStorageService {
         id: p.id,
         name: p.name,
         email: p.email,
+        gender: p.gender ?? 'unspecified',
+        weights: p.weights ?? {},
         createdAt: new Date(p.createdAt)
       })),
       preferences: dto.preferences || {},
@@ -166,6 +172,8 @@ export class SessionStorageService {
         timestamp: new Date(gr.timestamp),
         overallSatisfaction: gr.overallSatisfaction
       })),
+      customWeights: dto.customWeights ?? [],
+      genderMode: dto.genderMode ?? 'mixed',
       createdAt: new Date(dto.createdAt),
       updatedAt: new Date(dto.updatedAt)
     };
@@ -194,6 +202,9 @@ export class SessionStorageService {
     }
     if (!Array.isArray(session.groupingHistory)) {
       throw new Error('Invalid session data: groupingHistory must be an array');
+    }
+    if (session.customWeights !== undefined && !Array.isArray(session.customWeights)) {
+      throw new Error('Invalid session data: customWeights must be an array');
     }
   }
 }

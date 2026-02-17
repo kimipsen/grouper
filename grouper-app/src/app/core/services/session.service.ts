@@ -3,7 +3,7 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 import { Session } from '../../models/session.model';
-import { Person } from '../../models/person.model';
+import { Gender, Person } from '../../models/person.model';
 import { PreferenceMap, PreferenceType } from '../../models/preference.model';
 import { GroupingResult } from '../../models/group.model';
 import { SessionStorageService } from './session-storage.service';
@@ -67,6 +67,8 @@ export class SessionService {
       people: [],
       preferences: {},
       groupingHistory: [],
+      customWeights: [],
+      genderMode: 'mixed',
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -139,6 +141,8 @@ export class SessionService {
     session.people = [];
     session.preferences = {};
     session.groupingHistory = [];
+    session.customWeights = [];
+    session.genderMode = 'mixed';
     this.updateSession(session);
   }
 
@@ -167,6 +171,8 @@ export class SessionService {
     const session = this.getSessionById(sessionId);
     if (session) {
       person.createdAt = new Date();
+      person.gender = person.gender ?? 'unspecified';
+      person.weights = this.ensurePersonWeights(session, person.weights);
       session.people.push(person);
       this.updateSession(session);
     }
@@ -182,10 +188,92 @@ export class SessionService {
     if (session) {
       const index = session.people.findIndex(p => p.id === person.id);
       if (index !== -1) {
-        session.people[index] = person;
+        session.people[index] = {
+          ...person,
+          gender: person.gender ?? 'unspecified',
+          weights: this.ensurePersonWeights(session, person.weights)
+        };
         this.updateSession(session);
       }
     }
+  }
+
+  updateSessionGenderMode(sessionId: string, genderMode: 'mixed' | 'single' | 'ignore'): void {
+    const session = this.getSessionById(sessionId);
+    if (!session) return;
+
+    session.genderMode = genderMode;
+    this.updateSession(session);
+  }
+
+  addCustomWeight(sessionId: string, name: string): string | null {
+    const session = this.getSessionById(sessionId);
+    if (!session) return null;
+
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+
+    const id = uuidv4();
+    session.customWeights.push({ id, name: trimmed });
+
+    session.people = session.people.map(person => ({
+      ...person,
+      weights: { ...this.ensurePersonWeights(session, person.weights), [id]: 0 }
+    }));
+
+    this.updateSession(session);
+    return id;
+  }
+
+  renameCustomWeight(sessionId: string, weightId: string, name: string): void {
+    const session = this.getSessionById(sessionId);
+    if (!session) return;
+
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    const weight = session.customWeights.find(item => item.id === weightId);
+    if (!weight) return;
+
+    weight.name = trimmed;
+    this.updateSession(session);
+  }
+
+  removeCustomWeight(sessionId: string, weightId: string): void {
+    const session = this.getSessionById(sessionId);
+    if (!session) return;
+
+    session.customWeights = session.customWeights.filter(weight => weight.id !== weightId);
+    session.people = session.people.map(person => {
+      const weights = { ...this.ensurePersonWeights(session, person.weights) };
+      delete weights[weightId];
+      return { ...person, weights };
+    });
+
+    this.updateSession(session);
+  }
+
+  setPersonWeight(sessionId: string, personId: string, weightId: string, value: number): void {
+    const session = this.getSessionById(sessionId);
+    if (!session) return;
+
+    const person = session.people.find(p => p.id === personId);
+    if (!person) return;
+
+    const weights = this.ensurePersonWeights(session, person.weights);
+    weights[weightId] = value;
+    person.weights = weights;
+    this.updateSession(session);
+  }
+
+  private ensurePersonWeights(session: Session, weights?: Record<string, number>): Record<string, number> {
+    const normalized: Record<string, number> = { ...weights };
+    for (const weight of session.customWeights) {
+      if (normalized[weight.id] === undefined) {
+        normalized[weight.id] = 0;
+      }
+    }
+    return normalized;
   }
 
   /**

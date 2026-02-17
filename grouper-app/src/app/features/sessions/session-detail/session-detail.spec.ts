@@ -51,6 +51,8 @@ describe('SessionDetail', () => {
       people: [],
       preferences: {},
       groupingHistory: [],
+      customWeights: [],
+      genderMode: 'mixed',
       createdAt: new Date(),
       updatedAt: new Date(),
     });

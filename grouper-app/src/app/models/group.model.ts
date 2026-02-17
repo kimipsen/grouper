@@ -23,11 +23,16 @@ export interface GroupingResultDTO {
 
 export enum GroupingStrategy {
   RANDOM = 'RANDOM',
-  PREFERENCE_BASED = 'PREFERENCE_BASED'
+  PREFERENCE_BASED = 'PREFERENCE_BASED',
+  WEIGHTED = 'WEIGHTED'
 }
 
 export interface GroupingSettings {
   strategy: GroupingStrategy;
   groupSize: number;
   allowPartialGroups?: boolean;
+  genderMode?: GenderMode;
+  weightIds?: string[];
 }
+
+export type GenderMode = 'mixed' | 'single' | 'ignore';

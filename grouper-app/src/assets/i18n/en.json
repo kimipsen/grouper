@@ -47,6 +47,28 @@
     "peopleTitle": "People ({{count}})",
     "noPeople": "No people yet",
     "addPerson": "Add Person",
+    "gender": {
+      "label": "Gender",
+      "female": "Female",
+      "male": "Male",
+      "nonbinary": "Non-binary",
+      "unspecified": "Unspecified"
+    },
+    "genderMode": {
+      "title": "Gender Mode",
+      "label": "Group gender mode",
+      "mixed": "Mixed-gender",
+      "single": "Single-gender",
+      "ignore": "Ignore gender"
+    },
+    "customWeights": {
+      "title": "Custom Weights",
+      "nameLabel": "Weight name",
+      "add": "Add Weight",
+      "weightLabel": "Weight",
+      "empty": "No custom weights yet",
+      "selectHelp": "Select weights to use for weighted grouping"
+    },
     "preferencesTitle": "Preferences",
     "preferenceNone": "-",
     "preferenceWantWith": "Want with",
@@ -56,6 +78,7 @@
     "strategy": "Strategy",
     "strategyRandom": "Random",
     "strategyPreferenceBased": "Preference-Based",
+    "strategyWeighted": "Weighted",
     "groupSize": "Group Size",
     "allowPartialGroups": "Allow partial groups",
     "generateGroups": "Generate Groups",
@@ -65,7 +88,8 @@
     "groupLabel": "Group {{index}}",
     "score": "Score: {{score}}",
     "prompt": {
-      "personName": "Enter person name:"
+      "personName": "Enter person name:",
+      "gender": "Enter gender (female, male, nonbinary, unspecified):"
     },
     "confirm": {
       "removePerson": "Remove {{name}}?",
@@ -86,7 +110,9 @@
       "preferencesRequired": "Preferences are required for preference-based grouping",
       "unknownStrategy": "Unknown grouping strategy: {{strategy}}",
       "groupSizeMin": "Group size must be at least 1",
-      "noPeople": "No people to group"
+      "noPeople": "No people to group",
+      "weightedRequiresSession": "Weighted grouping requires session context",
+      "noWeightsSelected": "Select at least one weight for weighted grouping"
     },
     "warnings": {
       "groupSizeLargerThanPeople": "Group size ({{groupSize}}) is larger than number of people ({{peopleCount}})",
