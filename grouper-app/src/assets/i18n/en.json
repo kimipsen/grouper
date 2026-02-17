@@ -7,7 +7,10 @@
       "light": "Light",
       "dark": "Dark"
     },
-    "languageLabel": "Language"
+    "languageLabel": "Language",
+    "languages": {
+      "en": "English"
+    }
   },
   "common": {
     "close": "Close",
@@ -65,15 +68,18 @@
       "personName": "Enter person name:"
     },
     "confirm": {
-      "removePerson": "Remove {{name}}?"
+      "removePerson": "Remove {{name}}?",
+      "resetSession": "Reset session \"{{name}}\"? This will remove all people, preferences, and group history."
     },
     "snackbar": {
       "personAdded": "Person added",
       "personRemoved": "Person removed",
       "addPeopleFirst": "Please add people first",
       "groupsGenerated": "Groups generated successfully",
+      "sessionReset": "Session reset",
       "failedGenerateGroups": "Failed to generate groups"
-    }
+    },
+    "resetSession": "Reset Session"
   },
   "grouping": {
     "errors": {

@@ -1,12 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { BehaviorSubject } from 'rxjs';
-import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { GroupingService } from '../../../core/services/grouping.service';
 import { I18nService } from '../../../core/services/i18n.service';
 import { SessionService } from '../../../core/services/session.service';
@@ -60,8 +56,7 @@ describe('SessionDetail', () => {
     });
 
     await TestBed.configureTestingModule({
-      imports: [CommonModule, FormsModule, MatCheckboxModule],
-      declarations: [SessionDetail, TranslatePipe],
+      imports: [SessionDetail],
       providers: [
         { provide: ActivatedRoute, useValue: { params: params$ } },
         { provide: Router, useValue: { navigate: vi.fn() } },

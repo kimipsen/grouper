@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 export type LocaleCode = 'en';
@@ -12,6 +12,8 @@ export interface TranslationDictionary {
   providedIn: 'root',
 })
 export class I18nService {
+  private readonly http = inject(HttpClient);
+
   private static readonly STORAGE_KEY = 'grouper.locale';
 
   private readonly supportedLocales: LocaleCode[] = ['en'];
@@ -24,8 +26,6 @@ export class I18nService {
 
   readonly currentLocale = this.localeSignal.asReadonly();
 
-  constructor(private readonly http: HttpClient) {}
-
   async init(): Promise<void> {
     const savedLocale = this.readStoredLocale();
     const browserLocale = this.normalizeLocale(window.navigator.language);
@@ -36,6 +36,12 @@ export class I18nService {
 
   getAvailableLocales(): LocaleCode[] {
     return [...this.supportedLocales];
+  }
+
+  getLocaleDisplayName(locale: LocaleCode): string {
+    const key = `app.languages.${locale}`;
+    const translated = this.t(key);
+    return translated === key ? locale.toUpperCase() : translated;
   }
 
   getCurrentDateLocale(): string {

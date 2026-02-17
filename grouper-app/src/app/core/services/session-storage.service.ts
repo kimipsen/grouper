@@ -1,8 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { StorageService } from './storage.service';
 import { Session, SessionDTO } from '../../models/session.model';
-import { PersonDTO } from '../../models/person.model';
-import { GroupingResultDTO } from '../../models/group.model';
 
 const SESSIONS_STORAGE_KEY = 'grouper_sessions';
 const CURRENT_SESSION_ID_KEY = 'grouper_current_session_id';
@@ -11,8 +9,8 @@ const CURRENT_SESSION_ID_KEY = 'grouper_current_session_id';
   providedIn: 'root'
 })
 export class SessionStorageService {
+  private storageService = inject(StorageService);
 
-  constructor(private storageService: StorageService) { }
 
   /**
    * Save all sessions to localStorage
@@ -177,23 +175,24 @@ export class SessionStorageService {
    * Validate SessionDTO structure
    * @throws Error if validation fails
    */
-  private validateSessionDTO(dto: any): void {
+  private validateSessionDTO(dto: unknown): void {
     if (!dto || typeof dto !== 'object') {
       throw new Error('Invalid session data: not an object');
     }
-    if (!dto.id || typeof dto.id !== 'string') {
+    const session = dto as SessionDTO;
+    if (!session.id || typeof session.id !== 'string') {
       throw new Error('Invalid session data: missing or invalid id');
     }
-    if (!dto.name || typeof dto.name !== 'string') {
+    if (!session.name || typeof session.name !== 'string') {
       throw new Error('Invalid session data: missing or invalid name');
     }
-    if (!Array.isArray(dto.people)) {
+    if (!Array.isArray(session.people)) {
       throw new Error('Invalid session data: people must be an array');
     }
-    if (typeof dto.preferences !== 'object') {
+    if (typeof session.preferences !== 'object') {
       throw new Error('Invalid session data: preferences must be an object');
     }
-    if (!Array.isArray(dto.groupingHistory)) {
+    if (!Array.isArray(session.groupingHistory)) {
       throw new Error('Invalid session data: groupingHistory must be an array');
     }
   }

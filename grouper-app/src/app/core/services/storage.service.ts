@@ -5,8 +5,6 @@ import { Injectable } from '@angular/core';
 })
 export class StorageService {
 
-  constructor() { }
-
   /**
    * Get an item from localStorage
    * @param key The key to retrieve
@@ -110,8 +108,8 @@ export class StorageService {
   getStorageSize(): number {
     let total = 0;
     try {
-      for (let key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
+      for (const key in localStorage) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
           total += localStorage[key].length + key.length;
         }
       }

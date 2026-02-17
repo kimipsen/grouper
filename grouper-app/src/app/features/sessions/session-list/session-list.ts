@@ -1,30 +1,34 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { Session } from '../../../models/session.model';
 import { SessionService } from '../../../core/services/session.service';
 import { ExportImportService } from '../../../core/services/export-import.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { I18nService } from '../../../core/services/i18n.service';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-session-list',
-  standalone: false,
+  standalone: true,
   templateUrl: './session-list.html',
   styleUrl: './session-list.scss',
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, TranslatePipe]
 })
 export class SessionList implements OnInit, OnDestroy {
+  private sessionService = inject(SessionService);
+  private exportImportService = inject(ExportImportService);
+  private snackBar = inject(MatSnackBar);
+  private router = inject(Router);
+  private i18n = inject(I18nService);
+
   sessions: Session[] = [];
   private destroy$ = new Subject<void>();
-
-  constructor(
-    private sessionService: SessionService,
-    private exportImportService: ExportImportService,
-    private snackBar: MatSnackBar,
-    private router: Router,
-    private i18n: I18nService
-  ) {}
 
   get currentDateLocale(): string {
     return this.i18n.getCurrentDateLocale();
@@ -79,7 +83,7 @@ export class SessionList implements OnInit, OnDestroy {
       this.snackBar.open(this.i18n.t('sessionList.snackbar.exported'), this.i18n.t('common.close'), {
         duration: 3000
       });
-    } catch (error) {
+    } catch {
       this.snackBar.open(this.i18n.t('sessionList.snackbar.exportFailed'), this.i18n.t('common.close'), {
         duration: 3000
       });
@@ -90,8 +94,9 @@ export class SessionList implements OnInit, OnDestroy {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
-    input.onchange = async (e: any) => {
-      const file = e.target.files[0];
+    input.onchange = async (event: Event) => {
+      const target = event.target as HTMLInputElement | null;
+      const file = target?.files?.[0];
       if (file) {
         try {
           const content = await this.exportImportService.readFileContent(file);
@@ -99,7 +104,7 @@ export class SessionList implements OnInit, OnDestroy {
           this.snackBar.open(this.i18n.t('sessionList.snackbar.imported'), this.i18n.t('common.close'), {
             duration: 3000
           });
-        } catch (error) {
+        } catch {
           this.snackBar.open(this.i18n.t('sessionList.snackbar.importFailed'), this.i18n.t('common.close'), {
             duration: 5000
           });

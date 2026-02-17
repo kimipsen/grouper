@@ -16,7 +16,9 @@
       matNativeControl
       [ngModel]="i18nService.currentLocale()"
       (ngModelChange)="onLocaleChange($event)">
-      <option *ngFor="let locale of availableLocales" [value]="locale">{{ locale | uppercase }}</option>
+      @for (locale of availableLocales; track locale) {
+        <option [value]="locale">{{ i18nService.getLocaleDisplayName(locale) }}</option>
+      }
     </select>
   </mat-form-field>
 </mat-toolbar>

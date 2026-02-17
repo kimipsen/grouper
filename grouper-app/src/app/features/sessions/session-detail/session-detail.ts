@@ -1,8 +1,16 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { Session } from '../../../models/session.model';
 import { Person } from '../../../models/person.model';
 import { PreferenceType } from '../../../models/preference.model';
@@ -11,36 +19,46 @@ import { GroupingService, ValidationMessage } from '../../../core/services/group
 import { SessionService } from '../../../core/services/session.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { I18nService } from '../../../core/services/i18n.service';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-session-detail',
-  standalone: false,
+  standalone: true,
   templateUrl: './session-detail.html',
   styleUrl: './session-detail.scss',
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatCheckboxModule,
+    MatButtonModule,
+    MatIconModule,
+    MatInputModule,
+    TranslatePipe
+  ]
 })
 export class SessionDetail implements OnInit, OnDestroy {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private sessionService = inject(SessionService);
+  private groupingService = inject(GroupingService);
+  private snackBar = inject(MatSnackBar);
+  private i18n = inject(I18nService);
+
   session: Session | null = null;
   private destroy$ = new Subject<void>();
 
   // Grouping settings
   groupingStrategy: GroupingStrategy = GroupingStrategy.RANDOM;
-  groupSize: number = 3;
-  allowPartialGroups: boolean = true;
+  groupSize = 3;
+  allowPartialGroups = true;
 
   // Current grouping result
   currentResult: GroupingResult | null = null;
 
   // Enum for template
   GroupingStrategy = GroupingStrategy;
-
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private sessionService: SessionService,
-    private groupingService: GroupingService,
-    private snackBar: MatSnackBar,
-    private i18n: I18nService
-  ) {}
 
   ngOnInit(): void {
     this.route.params
@@ -89,6 +107,15 @@ export class SessionDetail implements OnInit, OnDestroy {
     if (confirm(this.i18n.t('sessionDetail.confirm.removePerson', { name: person.name }))) {
       this.sessionService.removePersonFromSession(this.session.id, person.id);
       this.showSnack('sessionDetail.snackbar.personRemoved', 2000);
+    }
+  }
+
+  resetSession(): void {
+    if (!this.session) return;
+
+    if (confirm(this.i18n.t('sessionDetail.confirm.resetSession', { name: this.session.name }))) {
+      this.sessionService.resetSession(this.session.id);
+      this.showSnack('sessionDetail.snackbar.sessionReset', 2000);
     }
   }
 
@@ -157,10 +184,8 @@ export class SessionDetail implements OnInit, OnDestroy {
 
       this.sessionService.addGroupingResult(this.session.id, this.currentResult);
       this.showSnack('sessionDetail.snackbar.groupsGenerated', 2000);
-    } catch (error: any) {
-      const message = typeof error?.message === 'string'
-        ? this.i18n.t(error.message, error.params)
-        : this.i18n.t('sessionDetail.snackbar.failedGenerateGroups');
+    } catch (error: unknown) {
+      const message = this.getGroupingErrorMessage(error);
       this.snackBar.open(message, this.i18n.t('common.close'), { duration: 3000 });
     }
   }
@@ -187,5 +212,16 @@ export class SessionDetail implements OnInit, OnDestroy {
     this.snackBar.open(this.i18n.t(message.key, message.params), this.i18n.t('common.close'), {
       duration: 3000
     });
+  }
+
+  private getGroupingErrorMessage(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'message' in error) {
+      const message = (error as { message?: unknown }).message;
+      if (typeof message === 'string') {
+        const params = (error as { params?: Record<string, string | number> }).params;
+        return this.i18n.t(message, params);
+      }
+    }
+    return this.i18n.t('sessionDetail.snackbar.failedGenerateGroups');
   }
 }

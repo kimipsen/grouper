@@ -1,139 +1,171 @@
-<div class="session-detail-container" *ngIf="session">
-  <div class="header">
-    <button mat-icon-button (click)="back()" [attr.aria-label]="'common.back' | t">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <h1>{{ session.name }}</h1>
-  </div>
+@if (session) {
+  <div class="session-detail-container">
+    <div class="header">
+      <button mat-icon-button (click)="back()" [attr.aria-label]="'common.back' | t">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1>{{ session.name }}</h1>
+    </div>
 
-  <div class="content-grid">
-    <!-- People Management -->
-    <mat-card class="section-card">
-      <mat-card-header>
-        <mat-card-title>{{ 'sessionDetail.peopleTitle' | t:{ count: session.people.length } }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="people-list">
-          <div *ngFor="let person of session.people" class="person-item">
-            <mat-icon>person</mat-icon>
-            <span>{{ person.name }}</span>
-            <button mat-icon-button color="warn" (click)="removePerson(person)">
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-          <div class="empty-state" *ngIf="session.people.length === 0">
-            <p>{{ 'sessionDetail.noPeople' | t }}</p>
-          </div>
-        </div>
-        <button mat-raised-button color="primary" (click)="addPerson()" class="add-button">
-          <mat-icon>add</mat-icon>
-          {{ 'sessionDetail.addPerson' | t }}
-        </button>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Preferences Matrix -->
-    <mat-card class="section-card preferences-card">
-      <mat-card-header>
-        <mat-card-title>{{ 'sessionDetail.preferencesTitle' | t }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div *ngIf="session.people.length >= 2" class="preferences-matrix">
-          <div class="matrix-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th></th>
-                  <th *ngFor="let targetPerson of session.people">{{ targetPerson.name }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let person of session.people">
-                  <td class="row-header">{{ person.name }}</td>
-                  <td *ngFor="let targetPerson of session.people">
-                    <select
-                      *ngIf="person.id !== targetPerson.id"
-                      [value]="getPreference(person.id, targetPerson.id)"
-                      (change)="onPreferenceChange(person.id, targetPerson.id, $any($event.target).value)"
-                      class="preference-select">
-                      <option value="none">{{ 'sessionDetail.preferenceNone' | t }}</option>
-                      <option value="wantWith">{{ 'sessionDetail.preferenceWantWith' | t }}</option>
-                      <option value="avoid">{{ 'sessionDetail.preferenceAvoid' | t }}</option>
-                    </select>
-                    <span *ngIf="person.id === targetPerson.id" class="diagonal">{{ 'sessionDetail.preferenceNone' | t }}</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div class="empty-state" *ngIf="session.people.length < 2">
-          <p>{{ 'sessionDetail.preferencesMinPeople' | t }}</p>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Grouping Configuration -->
-    <mat-card class="section-card">
-      <mat-card-header>
-        <mat-card-title>{{ 'sessionDetail.createGroupsTitle' | t }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content class="grouping-config">
-        <mat-form-field>
-          <mat-label>{{ 'sessionDetail.strategy' | t }}</mat-label>
-          <select matNativeControl [(ngModel)]="groupingStrategy">
-            <option [value]="GroupingStrategy.RANDOM">{{ 'sessionDetail.strategyRandom' | t }}</option>
-            <option [value]="GroupingStrategy.PREFERENCE_BASED">{{ 'sessionDetail.strategyPreferenceBased' | t }}</option>
-          </select>
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>{{ 'sessionDetail.groupSize' | t }}</mat-label>
-          <input matNativeControl type="number" [(ngModel)]="groupSize" min="1" [max]="session.people.length">
-        </mat-form-field>
-
-        <mat-checkbox [(ngModel)]="allowPartialGroups">
-          {{ 'sessionDetail.allowPartialGroups' | t }}
-        </mat-checkbox>
-
-        <button mat-raised-button color="primary" (click)="generateGroups()" [disabled]="session.people.length === 0">
-          <mat-icon>shuffle</mat-icon>
-          {{ 'sessionDetail.generateGroups' | t }}
-        </button>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Generated Groups Display -->
-    <mat-card class="section-card groups-display" *ngIf="currentResult">
-      <mat-card-header>
-        <mat-card-title>
-          {{ 'sessionDetail.generatedGroups' | t }}
-          <span class="satisfaction-badge" *ngIf="currentResult.overallSatisfaction !== undefined">
-            {{ 'sessionDetail.satisfaction' | t:{ score: currentResult.overallSatisfaction } }}
-          </span>
-        </mat-card-title>
-        <button mat-icon-button (click)="regenerateGroups()" [attr.aria-label]="'sessionDetail.regenerateGroupsAria' | t">
-          <mat-icon>refresh</mat-icon>
-        </button>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="groups-grid">
-          <div *ngFor="let group of currentResult.groups; let i = index" class="group-card">
-            <div class="group-header">
-              <h3>{{ 'sessionDetail.groupLabel' | t:{ index: i + 1 } }}</h3>
-              <span class="score" *ngIf="group.satisfactionScore !== undefined">
-                {{ 'sessionDetail.score' | t:{ score: group.satisfactionScore } }}
-              </span>
-            </div>
-            <div class="group-members">
-              <div *ngFor="let memberId of group.memberIds" class="member">
+    <div class="content-grid">
+      <!-- People Management -->
+      <mat-card class="section-card">
+        <mat-card-header>
+          <mat-card-title>{{ 'sessionDetail.peopleTitle' | t:{ count: session.people.length } }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="people-list">
+            @for (person of session.people; track person.id) {
+              <div class="person-item">
                 <mat-icon>person</mat-icon>
-                <span>{{ getPersonName(memberId) }}</span>
+                <span>{{ person.name }}</span>
+                <button mat-icon-button color="warn" (click)="removePerson(person)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            }
+            @if (session.people.length === 0) {
+              <div class="empty-state">
+                <p>{{ 'sessionDetail.noPeople' | t }}</p>
+              </div>
+            }
+          </div>
+          <button mat-raised-button color="primary" (click)="addPerson()" class="add-button">
+            <mat-icon>add</mat-icon>
+            {{ 'sessionDetail.addPerson' | t }}
+          </button>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Preferences Matrix -->
+      <mat-card class="section-card preferences-card">
+        <mat-card-header>
+          <mat-card-title>{{ 'sessionDetail.preferencesTitle' | t }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          @if (session.people.length >= 2) {
+            <div class="preferences-matrix">
+              <div class="matrix-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th></th>
+                      @for (targetPerson of session.people; track targetPerson.id) {
+                        <th>{{ targetPerson.name }}</th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (person of session.people; track person.id) {
+                      <tr>
+                        <td class="row-header">{{ person.name }}</td>
+                        @for (targetPerson of session.people; track targetPerson.id) {
+                          <td>
+                            @if (person.id !== targetPerson.id) {
+                              <select
+                                [value]="getPreference(person.id, targetPerson.id)"
+                                (change)="onPreferenceChange(person.id, targetPerson.id, $any($event.target).value)"
+                                class="preference-select">
+                                <option value="none">{{ 'sessionDetail.preferenceNone' | t }}</option>
+                                <option value="wantWith">{{ 'sessionDetail.preferenceWantWith' | t }}</option>
+                                <option value="avoid">{{ 'sessionDetail.preferenceAvoid' | t }}</option>
+                              </select>
+                            } @else {
+                              <span class="diagonal">{{ 'sessionDetail.preferenceNone' | t }}</span>
+                            }
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
+          } @else {
+            <div class="empty-state">
+              <p>{{ 'sessionDetail.preferencesMinPeople' | t }}</p>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Grouping Configuration -->
+      <mat-card class="section-card">
+        <mat-card-header>
+          <mat-card-title>{{ 'sessionDetail.createGroupsTitle' | t }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="grouping-config">
+          <mat-form-field>
+            <mat-label>{{ 'sessionDetail.strategy' | t }}</mat-label>
+            <select matNativeControl [(ngModel)]="groupingStrategy">
+              <option [value]="GroupingStrategy.RANDOM">{{ 'sessionDetail.strategyRandom' | t }}</option>
+              <option [value]="GroupingStrategy.PREFERENCE_BASED">{{ 'sessionDetail.strategyPreferenceBased' | t }}</option>
+            </select>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>{{ 'sessionDetail.groupSize' | t }}</mat-label>
+            <input matNativeControl type="number" [(ngModel)]="groupSize" min="1" [max]="session.people.length">
+          </mat-form-field>
+
+          <mat-checkbox [(ngModel)]="allowPartialGroups">
+            {{ 'sessionDetail.allowPartialGroups' | t }}
+          </mat-checkbox>
+
+          <button mat-raised-button color="primary" (click)="generateGroups()" [disabled]="session.people.length === 0">
+            <mat-icon>shuffle</mat-icon>
+            {{ 'sessionDetail.generateGroups' | t }}
+          </button>
+
+          <button mat-stroked-button color="warn" (click)="resetSession()">
+            <mat-icon>restart_alt</mat-icon>
+            {{ 'sessionDetail.resetSession' | t }}
+          </button>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Generated Groups Display -->
+      @if (currentResult) {
+        <mat-card class="section-card groups-display">
+          <mat-card-header>
+            <mat-card-title>
+              {{ 'sessionDetail.generatedGroups' | t }}
+              @if (currentResult.overallSatisfaction !== undefined) {
+                <span class="satisfaction-badge">
+                  {{ 'sessionDetail.satisfaction' | t:{ score: currentResult.overallSatisfaction } }}
+                </span>
+              }
+            </mat-card-title>
+            <button mat-icon-button (click)="regenerateGroups()" [attr.aria-label]="'sessionDetail.regenerateGroupsAria' | t">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="groups-grid">
+              @for (group of currentResult.groups; track group.id; let i = $index) {
+                <div class="group-card">
+                  <div class="group-header">
+                    <h3>{{ 'sessionDetail.groupLabel' | t:{ index: i + 1 } }}</h3>
+                    @if (group.satisfactionScore !== undefined) {
+                      <span class="score">
+                        {{ 'sessionDetail.score' | t:{ score: group.satisfactionScore } }}
+                      </span>
+                    }
+                  </div>
+                  <div class="group-members">
+                    @for (memberId of group.memberIds; track memberId) {
+                      <div class="member">
+                        <mat-icon>person</mat-icon>
+                        <span>{{ getPersonName(memberId) }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
   </div>
-</div>
+}

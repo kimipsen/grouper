@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { Inject, Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 
 export type ThemeMode = 'light' | 'dark';
 
@@ -7,12 +7,12 @@ export type ThemeMode = 'light' | 'dark';
   providedIn: 'root',
 })
 export class ThemeService {
+  private readonly document = inject<Document>(DOCUMENT);
+
   private static readonly STORAGE_KEY = 'grouper.theme';
 
   private readonly themeSignal = signal<ThemeMode>('light');
   readonly currentTheme = this.themeSignal.asReadonly();
-
-  constructor(@Inject(DOCUMENT) private readonly document: Document) {}
 
   init(): void {
     const savedTheme = this.readStoredTheme();

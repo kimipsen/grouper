@@ -10,8 +10,6 @@ import { PreferenceGroupingAlgorithm } from '../algorithms/preference-grouping.a
 })
 export class GroupingService {
 
-  constructor() { }
-
   /**
    * Create groups based on settings
    * @param people Array of people to group
@@ -46,14 +44,16 @@ export class GroupingService {
         if (!preferences) {
           throw { message: 'grouping.errors.preferencesRequired' };
         }
-        const result = PreferenceGroupingAlgorithm.createGroups(
-          people,
-          preferences,
-          settings.groupSize,
-          settings.allowPartialGroups ?? true
-        );
-        groups = result.groups;
-        overallSatisfaction = result.overallSatisfaction;
+        {
+          const result = PreferenceGroupingAlgorithm.createGroups(
+            people,
+            preferences,
+            settings.groupSize,
+            settings.allowPartialGroups ?? true
+          );
+          groups = result.groups;
+          overallSatisfaction = result.overallSatisfaction;
+        }
         break;
 
       default:

@@ -9,9 +9,7 @@ export interface Preference {
   type: PreferenceType;
 }
 
-export interface PreferenceMap {
-  [personId: string]: {
+export type PreferenceMap = Record<string, {
     wantWith: string[];
     avoid: string[];
-  };
-}
+  }>;

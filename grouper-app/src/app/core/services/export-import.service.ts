@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Session } from '../../models/session.model';
 import { SessionStorageService } from './session-storage.service';
 
@@ -6,8 +6,7 @@ import { SessionStorageService } from './session-storage.service';
   providedIn: 'root'
 })
 export class ExportImportService {
-
-  constructor(private sessionStorageService: SessionStorageService) { }
+  private sessionStorageService = inject(SessionStorageService);
 
   /**
    * Export a session to JSON string
@@ -75,7 +74,7 @@ export class ExportImportService {
    * @param filename Filename for download
    * @param contentType MIME type
    */
-  downloadAsFile(content: string, filename: string, contentType: string = 'application/json'): void {
+  downloadAsFile(content: string, filename: string, contentType = 'application/json'): void {
     const blob = new Blob([content], { type: contentType });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -131,7 +130,7 @@ export class ExportImportService {
         sessionCount: 0,
         errors: ['Invalid format: expected session object or array of sessions']
       };
-    } catch (error) {
+    } catch {
       return {
         isValid: false,
         sessionCount: 0,

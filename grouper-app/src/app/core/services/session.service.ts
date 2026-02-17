@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 import { Session } from '../../models/session.model';
@@ -12,6 +12,8 @@ import { SessionStorageService } from './session-storage.service';
   providedIn: 'root'
 })
 export class SessionService {
+  private sessionStorageService = inject(SessionStorageService);
+
   // State management
   private sessionsSubject = new BehaviorSubject<Session[]>([]);
   public sessions$ = this.sessionsSubject.asObservable();
@@ -22,7 +24,7 @@ export class SessionService {
   // Auto-save trigger
   private saveTriggered = new Subject<void>();
 
-  constructor(private sessionStorageService: SessionStorageService) {
+  constructor() {
     // Set up auto-save with debouncing
     this.saveTriggered.pipe(
       debounceTime(500)
@@ -124,6 +126,20 @@ export class SessionService {
       this.currentSessionSubject.next(session);
       this.sessionStorageService.saveCurrentSessionId(id);
     }
+  }
+
+  /**
+   * Reset session contents (people, preferences, grouping history)
+   * @param id Session ID
+   */
+  resetSession(id: string): void {
+    const session = this.getSessionById(id);
+    if (!session) return;
+
+    session.people = [];
+    session.preferences = {};
+    session.groupingHistory = [];
+    this.updateSession(session);
   }
 
   /**

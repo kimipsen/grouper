@@ -1,7 +1,6 @@
 import { Person } from '../../models/person.model';
 import { Group } from '../../models/group.model';
 import { PreferenceMap } from '../../models/preference.model';
-import { v4 as uuidv4 } from 'uuid';
 import { RandomGroupingAlgorithm } from './random-grouping.algorithm';
 
 /**
@@ -32,7 +31,7 @@ export class PreferenceGroupingAlgorithm {
     people: Person[],
     preferences: PreferenceMap,
     groupSize: number,
-    allowPartialGroups: boolean = true
+    allowPartialGroups = true
   ): { groups: Group[], overallSatisfaction: number } {
 
     if (people.length === 0) {

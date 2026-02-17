@@ -1,10 +1,7 @@
-import { CommonModule } from '@angular/common';
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { App } from './app';
-import { TranslatePipe } from './core/pipes/translate.pipe';
 import { I18nService } from './core/services/i18n.service';
 import { ThemeMode, ThemeService } from './core/services/theme.service';
 
@@ -37,6 +34,10 @@ class MockI18nService {
     return ['en'];
   }
 
+  getLocaleDisplayName(locale: string): string {
+    return locale === 'en' ? 'English' : locale;
+  }
+
   setLocale(): Promise<void> {
     return Promise.resolve();
   }
@@ -45,8 +46,7 @@ class MockI18nService {
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CommonModule, FormsModule, RouterTestingModule],
-      declarations: [App, TranslatePipe],
+      imports: [App, RouterTestingModule],
       providers: [
         { provide: ThemeService, useClass: MockThemeService },
         { provide: I18nService, useClass: MockI18nService },

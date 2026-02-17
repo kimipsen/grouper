@@ -1,10 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { I18nService } from '../../../core/services/i18n.service';
 import { ExportImportService } from '../../../core/services/export-import.service';
 import { SessionService } from '../../../core/services/session.service';
@@ -43,8 +41,7 @@ describe('SessionList', () => {
     const sessions$ = new BehaviorSubject<Session[]>([]);
 
     await TestBed.configureTestingModule({
-      imports: [CommonModule],
-      declarations: [SessionList, TranslatePipe],
+      imports: [SessionList],
       providers: [
         { provide: SessionService, useValue: { sessions$ } },
         { provide: ExportImportService, useValue: {} },

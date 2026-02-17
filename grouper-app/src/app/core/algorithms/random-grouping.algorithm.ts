@@ -14,7 +14,7 @@ export class RandomGroupingAlgorithm {
    * @param allowPartialGroups Whether to allow groups smaller than groupSize
    * @returns Array of groups
    */
-  static createGroups(people: Person[], groupSize: number, allowPartialGroups: boolean = true): Group[] {
+  static createGroups(people: Person[], groupSize: number, allowPartialGroups = true): Group[] {
     if (people.length === 0) {
       return [];
     }
