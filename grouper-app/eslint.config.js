@@ -3,6 +3,7 @@ const eslint = require("@eslint/js");
 const { defineConfig } = require("eslint/config");
 const tseslint = require("typescript-eslint");
 const angular = require("angular-eslint");
+const sonarjs = require("eslint-plugin-sonarjs");
 
 module.exports = defineConfig([
   {
@@ -12,6 +13,7 @@ module.exports = defineConfig([
       tseslint.configs.recommended,
       tseslint.configs.stylistic,
       angular.configs.tsRecommended,
+      sonarjs.configs.recommended,
     ],
     processor: angular.processInlineTemplates,
     rules: {
@@ -31,6 +33,12 @@ module.exports = defineConfig([
           style: "kebab-case",
         },
       ],
+      // Keep Sonar active without forcing large refactors of existing code.
+      "sonarjs/cognitive-complexity": "off",
+      "sonarjs/no-invariant-returns": "off",
+      "sonarjs/no-nested-conditional": "off",
+      "sonarjs/pseudo-random": "off",
+      "sonarjs/void-use": "off",
     },
   },
   {
