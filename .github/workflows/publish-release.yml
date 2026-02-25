@@ -1,0 +1,88 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version in semver format (for example 1.2.3)'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    defaults:
+      run:
+        working-directory: grouper-app
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: tag
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            TAG="v${{ github.event.inputs.version }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid tag '$TAG'. Expected format: vMAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+
+          echo "value=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: grouper-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test -- --watch=false
+
+      - name: Build production bundle
+        run: npm run build -- --configuration production
+
+      - name: Package build artifact
+        id: package
+        shell: bash
+        run: |
+          artifact="grouper-app-${{ steps.tag.outputs.value }}.tar.gz"
+          tar -czf "../${artifact}" -C dist grouper-app
+          echo "file=${artifact}" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.value }}
+          ARTIFACT_FILE: ${{ steps.package.outputs.file }}
+        shell: bash
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "../${ARTIFACT_FILE}" --clobber
+          else
+            gh release create "$TAG" "../${ARTIFACT_FILE}" \
+              --target "$GITHUB_SHA" \
+              --title "$TAG" \
+              --generate-notes
+          fi
