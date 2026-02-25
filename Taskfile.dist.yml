@@ -21,3 +21,8 @@ tasks:
     dir: grouper-app
     cmds:
       - npm run start
+  test:
+    desc: Run all tests
+    dir: grouper-app
+    cmds:
+      - npm test -- --watch=false
