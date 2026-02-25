@@ -28,5 +28,7 @@ tasks:
       - npm test -- --watch=false
   lint:
     desc: Run all linting
+    dir: grouper-app
     cmds:
+      - npm exec eslint -- --print-config src/app/app.ts | grep -q '"sonarjs/no-duplicate-string"' || (echo "SonarJS rules are not loaded in ESLint config" && exit 1)
       - npm run lint
