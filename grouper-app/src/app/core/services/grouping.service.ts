@@ -341,11 +341,11 @@ export class GroupingService {
   }
 
   private selectBestMixedGenderGroup(
-    groups: Array<{
+    groups: {
       memberIds: string[];
       targetSize: number;
       genderCounts: Map<string, number>;
-    }>,
+    }[],
     gender: string
   ): {
     memberIds: string[];

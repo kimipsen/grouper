@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { v4 as uuidv4 } from 'uuid';
 import { DEFAULT_PREFERENCE_SCORING, PreferenceScoring, Session } from '../../models/session.model';
-import { Gender, Person } from '../../models/person.model';
+import { Person } from '../../models/person.model';
 import { PreferenceMap, PreferenceType } from '../../models/preference.model';
 import { GroupingResult } from '../../models/group.model';
 import { SessionStorageService } from './session-storage.service';

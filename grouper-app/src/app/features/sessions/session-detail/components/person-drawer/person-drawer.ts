@@ -21,7 +21,7 @@ export class PersonDrawer {
   readonly customWeights = input.required<CustomWeightDefinition[]>();
   readonly preferences = input.required<PreferenceMap>();
 
-  readonly close = output<void>();
+  readonly closeDrawer = output<void>();
   readonly updateName = output<string>();
   readonly updateGender = output<Gender>();
   readonly updatePreference = output<{ targetPersonId: string; value: string }>();

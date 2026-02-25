@@ -4,7 +4,7 @@
       <h3>{{ selectedPerson().name?.length ? selectedPerson().name : ('sessionDetail.unnamedPerson' | t) }}</h3>
       <p>{{ 'sessionDetail.customWeights.personWeightsTitle' | t }}</p>
     </div>
-    <button mat-icon-button (click)="close.emit()">
+    <button mat-icon-button (click)="closeDrawer.emit()">
       <mat-icon>close</mat-icon>
     </button>
   </div>

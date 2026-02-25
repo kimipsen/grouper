@@ -7,7 +7,9 @@ import { ThemeMode, ThemeService } from './core/services/theme.service';
 
 class MockThemeService {
   currentTheme = () => 'light' as ThemeMode;
-  toggleTheme(): void {}
+  toggleTheme(): void {
+    return;
+  }
 }
 
 class MockI18nService {

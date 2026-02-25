@@ -1,5 +1,12 @@
 {
+  "scripts": {
+    "prepare": "husky",
+    "lint": "npm --prefix grouper-app run lint"
+  },
   "dependencies": {
     "@angular/cli": "^21.1.4"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }

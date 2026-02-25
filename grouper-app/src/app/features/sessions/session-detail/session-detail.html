@@ -22,7 +22,7 @@
               [people]="sortedPeople"
               [customWeights]="session.customWeights"
               [preferences]="session.preferences"
-              (close)="closePersonWeights()"
+              (closeDrawer)="closePersonWeights()"
               (updateName)="updatePersonName(person.id, $event)"
               (updateGender)="updatePersonGender(person.id, $event)"
               (updatePreference)="onPreferenceChange(person.id, $event.targetPersonId, $event.value)"

@@ -62,7 +62,7 @@ describe('PersonDrawer', () => {
     const preferenceSpy = vi.fn();
     const weightSpy = vi.fn();
 
-    fixture.componentInstance.close.subscribe(closeSpy);
+    fixture.componentInstance.closeDrawer.subscribe(closeSpy);
     fixture.componentInstance.updateName.subscribe(nameSpy);
     fixture.componentInstance.updateGender.subscribe(genderSpy);
     fixture.componentInstance.updatePreference.subscribe(preferenceSpy);
