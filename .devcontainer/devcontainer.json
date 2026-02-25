@@ -14,8 +14,8 @@
 	"forwardPorts": [4204],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// Install workspace deps, app deps, then globally install Angular CLI so `ng` is available.
-	"postCreateCommand": "npm install && (cd grouper-app && npm install) && npm install -g @angular/cli@latest",
+	// Install deps, explicitly configure Husky hooks, then install Angular CLI globally.
+	"postCreateCommand": "npm install && npm run prepare && (cd grouper-app && npm install) && npm install -g @angular/cli@latest",
 
 	// Configure tool-specific properties.
 	"customizations": {
