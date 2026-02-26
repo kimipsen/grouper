@@ -96,5 +96,13 @@
 - Use the `inject()` function instead of constructor injection
 
 ## Git
+- Every AI agent task must run on a dedicated branch (never commit directly to the default branch).
+- Create a new branch before making changes, using a task-specific name.
+- Commit only files changed by the current agent task.
+- Do not include unrelated or pre-existing local changes in commits.
+- Push the branch to remote after committing.
+- Open a pull request from that branch after push.
+- Agents may run required `git` commands for this workflow without asking for additional confirmation first.
+- Treat standard task-scoped `git` commands as pre-approved.
 - Commit and push only changes relevant to the task.
 - Ignore changes from other tasks.
