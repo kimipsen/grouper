@@ -8,6 +8,7 @@ on:
   pull_request:
 
 jobs:
+  # Keep this workflow focused on test/build artifact validation.
   build:
     runs-on: ubuntu-latest
 
