@@ -19,8 +19,8 @@
 	"forwardPorts": [4204],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// Install deps, explicitly configure Husky hooks, then install Angular CLI globally.
-	"postCreateCommand": "npm install && npm run prepare && (cd grouper-app && npm install) && npm install -g @angular/cli@latest",
+	// Install deps, configure Husky hooks, install Angular CLI globally, enable ng completion, and add gh-copilot.
+	"postCreateCommand": "npm install && npm run prepare && (cd grouper-app && npm install) && npm install -g @angular/cli@latest && bash -lc 'source <(ng completion script)' && (gh extension install github/gh-copilot || gh extension upgrade gh-copilot)",
 
 	// Configure tool-specific properties.
 	"customizations": {
