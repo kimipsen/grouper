@@ -30,7 +30,8 @@
 				"esbenp.prettier-vscode",
 				"openai.chatgpt",
 				"GitHub.copilot-chat",
-				"github.vscode-github-actions"
+				"github.vscode-github-actions",
+				"SonarSource.sonarlint-vscode"
 			]
 		}
 	}
