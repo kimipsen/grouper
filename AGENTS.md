@@ -94,3 +94,7 @@
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Git
+- Commit and push only changes relevant to the task.
+- Ignore changes from other tasks.
