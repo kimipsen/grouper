@@ -25,7 +25,7 @@ tasks:
     desc: Run all tests
     dir: grouper-app
     cmds:
-      - npm test -- --watch=false
+      - npm test -- --watch=false --coverage
   lint:
     desc: Run all linting
     dir: grouper-app
