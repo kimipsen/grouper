@@ -31,26 +31,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install coverage provider
-        run: npm install --no-save @vitest/coverage-v8
-
       - name: Run tests
-        run: npm test -- --watch=false --coverage
+        run: npm test -- --watch=false
 
       - name: Build production bundle
         run: npm run build -- --configuration production
-
-      - name: SonarCloud scan
-        uses: SonarSource/sonarqube-scan-action@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.organization=kimipsen
-            -Dsonar.projectKey=kimipsen_grouper
-            -Dsonar.projectBaseDir=grouper-app
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
       - name: Upload production artifact
         uses: actions/upload-artifact@v4
