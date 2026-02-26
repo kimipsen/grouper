@@ -49,3 +49,6 @@ Run from the repository root unless stated otherwise.
 ## Release Process
 
 See [docs/release-process.md](docs/release-process.md).
+
+Note: Documentation-only changes do not affect application behavior.
+No-op note: repository workflow validation change.
