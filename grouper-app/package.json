@@ -44,6 +44,7 @@
     "@angular/cli": "^21.1.5",
     "@angular/compiler-cli": "^21.2.0",
     "@angular/material": "^21.2.0",
+    "@vitest/coverage-v8": "^4.0.18",
     "angular-eslint": "21.2.0",
     "eslint": "^9.39.2",
     "eslint-plugin-sonarjs": "^4.0.0",
