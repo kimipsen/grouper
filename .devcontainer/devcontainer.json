@@ -11,6 +11,11 @@
 		"ghcr.io/eitsupi/devcontainer-features/go-task:1": {}
 	},
 
+	// Persist Codex auth/session state in a local untracked folder.
+	"mounts": [
+		"source=${localWorkspaceFolder}/.local/codex-home,target=/home/node/.codex,type=bind"
+	],
+
 	// Forward GitHub token from host into container for CLI/tools/agents.
 	"containerEnv": {
 	},
