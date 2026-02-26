@@ -47,6 +47,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
+            -Dsonar.organization=kimipsen
+            -Dsonar.projectKey=kimipsen_grouper
             -Dsonar.projectBaseDir=grouper-app
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
