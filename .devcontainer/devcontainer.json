@@ -11,6 +11,12 @@
 		"ghcr.io/eitsupi/devcontainer-features/go-task:1": {}
 	},
 
+	// Forward GitHub token from host into container for CLI/tools/agents.
+	"containerEnv": {
+		"GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}",
+		"GH_TOKEN": "${localEnv:GITHUB_TOKEN}"
+	},
+
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [4204],
 
