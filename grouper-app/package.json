@@ -40,7 +40,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@angular/build": "^21.1.5",
+    "@angular/build": "^21.2.0",
     "@angular/cli": "^21.1.5",
     "@angular/compiler-cli": "^21.2.0",
     "@angular/material": "^21.2.0",
