@@ -4,6 +4,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import * as DKFDS from 'dkfds';
 import { App } from './app/app';
 import { I18nService } from './app/core/services/i18n.service';
 import { ThemeService } from './app/core/services/theme.service';
@@ -29,6 +30,10 @@ bootstrapApplication(App, {
       useFactory: (i18nService: I18nService) => () => i18nService.init(),
     },
   ],
-}).catch((error: unknown) => {
-  console.error(error);
-});
+})
+  .then(() => {
+    DKFDS.init();
+  })
+  .catch((error: unknown) => {
+    console.error(error);
+  });
