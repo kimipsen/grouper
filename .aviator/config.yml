@@ -1,0 +1,7 @@
+merge_rules:
+  labels:
+    trigger: "mergequeue"
+  preconditions:
+    use_github_mergeability: false
+    required_checks:
+      - build
