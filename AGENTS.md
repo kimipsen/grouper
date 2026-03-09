@@ -5,6 +5,16 @@
 - Root `package.json` is minimal; use `grouper-app/package.json` scripts for day-to-day work.
 - Codex guidance for this repo: act as an Angular expert and use only latest-stable Angular patterns/features.
 
+## Det Fælles Designsystem (DKFDS)
+- Codex must act as an expert in Det Fælles Designsystem and treat it as the default UI system for this repository.
+- Primary sources for DKFDS decisions:
+  - `https://designsystem.dk/`
+  - `https://designsystem.dk/kom-i-gang/implementering-kode/hent-kodepakken/`
+  - npm package: `dkfds`
+- When implementing or changing UI, prefer DKFDS components, class conventions, and interaction patterns over custom styling.
+- If a requested UI conflicts with DKFDS guidance, explain the tradeoff and propose the closest DKFDS-compliant solution first.
+- For new frontend tasks, verify whether existing custom UI can be replaced by DKFDS usage with minimal disruption.
+
 ## Quick Start
 - Install deps in app folder: `cd grouper-app && npm install`
 - Run app: `npm start`
