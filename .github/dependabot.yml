@@ -12,9 +12,13 @@ updates:
       interval: weekly
     labels:
       - "mergequeue"
+    assignees:
+      - "kimipsen"
   - package-ecosystem: "npm"
     directory: "/grouper-app"
     schedule:
       interval: weekly
     labels:
       - "mergequeue"
+    assignees:
+      - "kimipsen"
