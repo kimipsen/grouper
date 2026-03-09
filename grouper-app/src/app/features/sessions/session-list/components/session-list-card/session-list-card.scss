@@ -1,46 +1,31 @@
 .session-card {
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover,
+  &:focus-visible {
+    border-color: #1f3b82;
+    box-shadow: 0 0 0 3px #e3ecff;
+    outline: none;
+  }
 }
 
-.session-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 20px color-mix(in srgb, var(--mat-sys-shadow) 20%, transparent);
+.session-info {
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
 }
 
 .info-item {
+  color: #454545;
+}
+
+.card-actions {
+  gap: 0.5rem;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
-.info-item mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.info-item span {
-  color: var(--mat-sys-on-surface-variant);
-  font-size: 14px;
-}
-
-mat-card-actions {
-  display: flex;
-  justify-content: flex-start;
-  padding: 8px;
-}
-
-mat-card-actions button {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-mat-card-actions button mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+.card-actions .button {
+  margin: 0;
 }

@@ -57,7 +57,7 @@ describe('App accessibility', () => {
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    const h1OrTitle = root.querySelector('mat-toolbar span');
+    const h1OrTitle = root.querySelector('.app-title');
     expect(h1OrTitle?.textContent?.trim()).toBe('Grouper');
 
     const buttons = Array.from(root.querySelectorAll('button')) as HTMLButtonElement[];

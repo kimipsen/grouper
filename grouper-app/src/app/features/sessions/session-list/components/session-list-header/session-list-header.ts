@@ -1,6 +1,4 @@
 import { ChangeDetectionStrategy, Component, output } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
@@ -8,7 +6,7 @@ import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
   templateUrl: './session-list-header.html',
   styleUrl: './session-list-header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, TranslatePipe],
+  imports: [TranslatePipe],
 })
 export class SessionListHeader {
   readonly create = output<void>();

@@ -1,12 +1,10 @@
 <div class="header">
   <h1>{{ 'sessionList.title' | t }}</h1>
   <div class="actions">
-    <button mat-raised-button color="primary" (click)="create.emit()">
-      <mat-icon>add</mat-icon>
+    <button class="button button-primary" type="button" (click)="create.emit()">
       {{ 'sessionList.newSession' | t }}
     </button>
-    <button mat-raised-button (click)="import.emit()">
-      <mat-icon>upload</mat-icon>
+    <button class="button button-secondary" type="button" (click)="import.emit()">
       {{ 'common.import' | t }}
     </button>
   </div>

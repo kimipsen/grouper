@@ -1,8 +1,8 @@
 @if (session) {
   <div class="session-detail-container">
     <div class="header">
-      <button mat-icon-button (click)="back()" [attr.aria-label]="'common.back' | t">
-        <mat-icon>arrow_back</mat-icon>
+      <button class="button button-tertiary" type="button" (click)="back()" [attr.aria-label]="'common.back' | t">
+        {{ 'common.back' | t }}
       </button>
       <h1>{{ session.name }}</h1>
     </div>
