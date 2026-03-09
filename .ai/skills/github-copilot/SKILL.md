@@ -9,6 +9,13 @@ Give GitHub Copilot repository-scoped coding constraints so generated code align
 - Maintain strict TypeScript quality (avoid `any`).
 - Preserve accessibility and i18n requirements.
 
+## Pull Request Review Focus (UI)
+- Review UI changes as a senior product/UI designer and frontend engineer.
+- Prioritize issues in: visual hierarchy, typography consistency, spacing rhythm, interaction clarity, and responsive behavior.
+- Treat WCAG AA and AXE violations as blocking findings.
+- Call out missing UI states (loading, empty, error, disabled, hover/focus/active) and inconsistent component styling.
+- Give concrete, implementation-ready feedback instead of generic suggestions.
+
 ## Required Checks For Generated Changes
 1. Business logic changes include/update nearby tests.
 2. Persisted-model changes update model interfaces, storage mapping, import/export validation/defaults, and tests.
