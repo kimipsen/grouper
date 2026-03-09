@@ -170,7 +170,7 @@ export class GroupingService {
     if (weightIds.length === 0) {
       throw { message: 'grouping.errors.noWeightsSelected' };
     }
-    const weightedMode: WeightedGroupingMode = settings.weightedMode ?? 'balance';
+    const weightModeById = this.buildWeightModeMap(weightIds, session);
 
     const genderMode = settings.genderMode ?? session.genderMode ?? 'mixed';
     const groups = genderMode === 'single'
@@ -186,10 +186,13 @@ export class GroupingService {
     if (genderMode === 'mixed') {
       this.applyGenderMode(groups, session.people);
     }
-    if (weightedMode === 'match-similar') {
-      this.matchSimilarWeights(groups, session.people, weightIds);
-    } else {
-      this.balanceWeights(groups, session.people, weightIds);
+    const balanceWeightIds = weightIds.filter((weightId) => weightModeById.get(weightId) !== 'match-similar');
+    if (balanceWeightIds.length > 0) {
+      this.balanceWeights(groups, session.people, balanceWeightIds);
+    }
+    const similarWeightIds = weightIds.filter((weightId) => weightModeById.get(weightId) === 'match-similar');
+    if (similarWeightIds.length > 0) {
+      this.matchSimilarWeights(groups, session.people, similarWeightIds);
     }
 
     return {
@@ -209,6 +212,25 @@ export class GroupingService {
     const expanded = weightIds.filter(id => id !== '__gender__');
     expanded.push('gender:female', 'gender:male', 'gender:nonbinary', 'gender:unspecified');
     return expanded;
+  }
+
+  private buildWeightModeMap(weightIds: string[], session: Session): Map<string, WeightedGroupingMode> {
+    const modeByCustomWeightId = new Map(
+      session.customWeights.map((weight) => [weight.id, weight.mode])
+    );
+    const weightModeById = new Map<string, WeightedGroupingMode>();
+
+    for (const weightId of weightIds) {
+      if (weightId.startsWith('gender:')) {
+        weightModeById.set(weightId, 'balance');
+        continue;
+      }
+
+      const configuredMode = modeByCustomWeightId.get(weightId);
+      weightModeById.set(weightId, configuredMode === 'match-similar' ? 'match-similar' : 'balance');
+    }
+
+    return weightModeById;
   }
 
   private applyGenderMode(groups: Group[], people: Person[]): void {

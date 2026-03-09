@@ -39,7 +39,6 @@
           [genderModeControl]="genderModeControl"
           [preferenceWantWithControl]="preferenceWantWithControl"
           [preferenceAvoidControl]="preferenceAvoidControl"
-          [weightedModeControl]="weightedModeControl"
           [customWeights]="session.customWeights"
           [selectedWeightIds]="selectedWeightIds"
           [genderWeightId]="genderWeightId"
@@ -51,8 +50,10 @@
         <app-custom-weights-card
           [customWeights]="session.customWeights"
           [newWeightNameControl]="newWeightNameControl"
+          [newWeightModeControl]="newWeightModeControl"
           (addWeight)="addCustomWeight()"
           (renameWeight)="renameCustomWeight($event.weight, $event.name)"
+          (updateWeightMode)="updateCustomWeightMode($event.weight, $event.mode)"
           (removeWeight)="removeCustomWeight($event)" />
       </div>
 

@@ -54,13 +54,6 @@
     @if (groupingStrategyControl().value === GroupingStrategy.WEIGHTED) {
       <div class="weight-selection">
         <p class="weight-help">{{ 'sessionDetail.customWeights.selectHelp' | t }}</p>
-        <mat-form-field>
-          <mat-label>{{ 'sessionDetail.customWeights.modeLabel' | t }}</mat-label>
-          <select matNativeControl [formControl]="weightedModeControl()">
-            <option value="balance">{{ 'sessionDetail.customWeights.modeBalance' | t }}</option>
-            <option value="match-similar">{{ 'sessionDetail.customWeights.modeMatchSimilar' | t }}</option>
-          </select>
-        </mat-form-field>
         <div class="weight-select-list">
           <label class="weight-select-item">
             <input

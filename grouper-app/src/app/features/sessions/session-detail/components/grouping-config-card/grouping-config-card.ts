@@ -6,7 +6,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { GenderMode, GroupingStrategy, WeightedGroupingMode } from '../../../../../models/group.model';
+import { GenderMode, GroupingStrategy } from '../../../../../models/group.model';
 import { CustomWeightDefinition } from '../../../../../models/session.model';
 import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
@@ -33,7 +33,6 @@ export class GroupingConfigCard {
   readonly genderModeControl = input.required<FormControl<GenderMode>>();
   readonly preferenceWantWithControl = input.required<FormControl<number>>();
   readonly preferenceAvoidControl = input.required<FormControl<number>>();
-  readonly weightedModeControl = input.required<FormControl<WeightedGroupingMode>>();
   readonly customWeights = input.required<CustomWeightDefinition[]>();
   readonly selectedWeightIds = input.required<string[]>();
   readonly genderWeightId = input.required<string>();

@@ -57,8 +57,8 @@ export class SessionDetail implements OnInit {
   readonly genderModeControl = new FormControl<GenderMode>('mixed', { nonNullable: true });
   readonly preferenceWantWithControl = new FormControl<number>(DEFAULT_PREFERENCE_SCORING.wantWith, { nonNullable: true });
   readonly preferenceAvoidControl = new FormControl<number>(DEFAULT_PREFERENCE_SCORING.avoid, { nonNullable: true });
-  readonly weightedModeControl = new FormControl<WeightedGroupingMode>('balance', { nonNullable: true });
   readonly newWeightNameControl = new FormControl<string>('', { nonNullable: true });
+  readonly newWeightModeControl = new FormControl<WeightedGroupingMode>('balance', { nonNullable: true });
   selectedWeightIds: string[] = [];
   selectedPerson: Person | null = null;
   readonly genderWeightId = '__gender__';
@@ -162,13 +162,18 @@ export class SessionDetail implements OnInit {
     const name = this.newWeightNameControl.value.trim();
     if (!name) return;
 
-    this.sessionService.addCustomWeight(this.session.id, name);
+    this.sessionService.addCustomWeight(this.session.id, name, this.newWeightModeControl.value);
     this.newWeightNameControl.setValue('');
   }
 
   renameCustomWeight(weight: CustomWeightDefinition, name: string): void {
     if (!this.session) return;
     this.sessionService.renameCustomWeight(this.session.id, weight.id, name);
+  }
+
+  updateCustomWeightMode(weight: CustomWeightDefinition, mode: WeightedGroupingMode): void {
+    if (!this.session) return;
+    this.sessionService.updateCustomWeightMode(this.session.id, weight.id, mode);
   }
 
   removeCustomWeight(weight: CustomWeightDefinition): void {
@@ -266,8 +271,7 @@ export class SessionDetail implements OnInit {
       groupSize: this.groupSizeControl.value,
       allowPartialGroups: this.allowPartialGroupsControl.value,
       genderMode: this.genderModeControl.value,
-      weightIds: this.selectedWeightIds,
-      weightedMode: this.weightedModeControl.value
+      weightIds: this.selectedWeightIds
     };
 
     const validation = this.groupingService.validateSettings(this.session.people.length, settings);

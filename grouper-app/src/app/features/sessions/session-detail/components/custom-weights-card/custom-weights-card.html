@@ -8,6 +8,13 @@
         <mat-label>{{ 'sessionDetail.customWeights.nameLabel' | t }}</mat-label>
         <input matNativeControl [formControl]="newWeightNameControl()" />
       </mat-form-field>
+      <mat-form-field>
+        <mat-label>{{ 'sessionDetail.customWeights.modeLabel' | t }}</mat-label>
+        <select matNativeControl [formControl]="newWeightModeControl()">
+          <option value="balance">{{ 'sessionDetail.customWeights.modeBalance' | t }}</option>
+          <option value="match-similar">{{ 'sessionDetail.customWeights.modeMatchSimilar' | t }}</option>
+        </select>
+      </mat-form-field>
       <button mat-stroked-button color="primary" (click)="addWeight.emit()">
         <mat-icon>add</mat-icon>
         {{ 'sessionDetail.customWeights.add' | t }}
@@ -20,6 +27,17 @@
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>{{ 'sessionDetail.customWeights.weightLabel' | t }}</mat-label>
             <input #weightNameInput matNativeControl [value]="weight.name" (input)="renameWeight.emit({ weight, name: weightNameInput.value })" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'sessionDetail.customWeights.modeLabel' | t }}</mat-label>
+            <select
+              #weightModeInput
+              matNativeControl
+              [value]="weight.mode"
+              (change)="updateWeightMode.emit({ weight, mode: weightModeInput.value === 'match-similar' ? 'match-similar' : 'balance' })">
+              <option value="balance">{{ 'sessionDetail.customWeights.modeBalance' | t }}</option>
+              <option value="match-similar">{{ 'sessionDetail.customWeights.modeMatchSimilar' | t }}</option>
+            </select>
           </mat-form-field>
           <button mat-icon-button color="warn" (click)="removeWeight.emit(weight)">
             <mat-icon>delete</mat-icon>

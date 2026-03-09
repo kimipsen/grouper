@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DEFAULT_PREFERENCE_SCORING, PreferenceScoring, Session } from '../../models/session.model';
 import { Person } from '../../models/person.model';
 import { PreferenceMap, PreferenceType } from '../../models/preference.model';
-import { GroupingResult } from '../../models/group.model';
+import { GroupingResult, WeightedGroupingMode } from '../../models/group.model';
 import { SessionStorageService } from './session-storage.service';
 
 @Injectable({
@@ -202,7 +202,7 @@ export class SessionService {
     this.updateSession(session);
   }
 
-  addCustomWeight(sessionId: string, name: string): string | null {
+  addCustomWeight(sessionId: string, name: string, mode: WeightedGroupingMode): string | null {
     const session = this.getSessionById(sessionId);
     if (!session) return null;
 
@@ -210,7 +210,8 @@ export class SessionService {
     if (!trimmed) return null;
 
     const id = uuidv4();
-    session.customWeights.push({ id, name: trimmed });
+    const normalizedMode: WeightedGroupingMode = mode === 'match-similar' ? 'match-similar' : 'balance';
+    session.customWeights.push({ id, name: trimmed, mode: normalizedMode });
 
     session.people = session.people.map(person => ({
       ...person,
@@ -232,6 +233,17 @@ export class SessionService {
     if (!weight) return;
 
     weight.name = trimmed;
+    this.updateSession(session);
+  }
+
+  updateCustomWeightMode(sessionId: string, weightId: string, mode: WeightedGroupingMode): void {
+    const session = this.getSessionById(sessionId);
+    if (!session) return;
+
+    const weight = session.customWeights.find(item => item.id === weightId);
+    if (!weight) return;
+
+    weight.mode = mode === 'match-similar' ? 'match-similar' : 'balance';
     this.updateSession(session);
   }
 

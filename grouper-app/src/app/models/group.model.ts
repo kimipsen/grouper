@@ -35,7 +35,6 @@ export interface GroupingSettings {
   allowPartialGroups?: boolean;
   genderMode?: GenderMode;
   weightIds?: string[];
-  weightedMode?: WeightedGroupingMode;
 }
 
 export type GenderMode = 'mixed' | 'single' | 'ignore';

@@ -169,14 +169,14 @@ describe('GroupingService weighted modes', () => {
     service = new GroupingService();
   });
 
-  it('matches similar custom weights in the same group when weightedMode is match-similar', () => {
+  it('matches similar custom weights in the same group when custom weight mode is match-similar', () => {
     const session = buildSession([
       { id: 'p1', name: 'P1' },
       { id: 'p2', name: 'P2' },
       { id: 'p3', name: 'P3' },
       { id: 'p4', name: 'P4' },
     ]);
-    session.customWeights = [{ id: 'skill', name: 'Skill' }];
+    session.customWeights = [{ id: 'skill', name: 'Skill', mode: 'match-similar' }];
     session.people = session.people.map((person) => {
       const scoreById: Record<string, number> = {
         p1: 1,
@@ -198,7 +198,6 @@ describe('GroupingService weighted modes', () => {
         allowPartialGroups: true,
         genderMode: 'ignore',
         weightIds: ['skill'],
-        weightedMode: 'match-similar',
       },
       'en-US'
     );
@@ -212,14 +211,14 @@ describe('GroupingService weighted modes', () => {
     );
   });
 
-  it('balances custom weight totals across groups by default', () => {
+  it('balances custom weight totals across groups when custom weight mode is balance', () => {
     const session = buildSession([
       { id: 'p1', name: 'P1' },
       { id: 'p2', name: 'P2' },
       { id: 'p3', name: 'P3' },
       { id: 'p4', name: 'P4' },
     ]);
-    session.customWeights = [{ id: 'skill', name: 'Skill' }];
+    session.customWeights = [{ id: 'skill', name: 'Skill', mode: 'balance' }];
     session.people = session.people.map((person) => {
       const scoreById: Record<string, number> = {
         p1: 1,

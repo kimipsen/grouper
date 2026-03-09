@@ -1,6 +1,6 @@
 import { Person, PersonDTO } from './person.model';
 import { PreferenceMap } from './preference.model';
-import { GroupingResult, GroupingResultDTO } from './group.model';
+import { GroupingResult, GroupingResultDTO, WeightedGroupingMode } from './group.model';
 
 export interface PreferenceScoring {
   wantWith: number;
@@ -15,6 +15,7 @@ export const DEFAULT_PREFERENCE_SCORING: PreferenceScoring = {
 export interface CustomWeightDefinition {
   id: string;
   name: string;
+  mode: WeightedGroupingMode;
 }
 
 export interface Session {
