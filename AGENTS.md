@@ -3,6 +3,7 @@
 ## Project Scope
 - Main application code is in `grouper-app/` (Angular 21, standalone components).
 - Root `package.json` is minimal; use `grouper-app/package.json` scripts for day-to-day work.
+- Codex guidance for this repo: act as an Angular expert and use only latest-stable Angular patterns/features.
 
 ## Quick Start
 - Install deps in app folder: `cd grouper-app && npm install`
@@ -59,6 +60,7 @@
 - Prefer type inference when the type is obvious
 - Avoid the `any` type; use `unknown` when type is uncertain
 ## Angular Best Practices
+- Use only latest-stable Angular APIs/patterns for all guidance and code changes.
 - Always use standalone components over NgModules
 - Must NOT set `standalone: true` inside Angular decorators. It's the default in Angular v20+.
 - Use signals for state management
