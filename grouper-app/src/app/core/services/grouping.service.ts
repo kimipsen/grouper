@@ -486,21 +486,7 @@ export class GroupingService {
         for (let j = i + 1; j < groups.length; j++) {
           const groupA = groups[i];
           const groupB = groups[j];
-          const scoreBefore = this.groupSimilarityPenalty(groupA, personById, weightIds)
-            + this.groupSimilarityPenalty(groupB, personById, weightIds);
-
-          let bestSwap: { a: string; b: string; score: number } | null = null;
-          for (const memberA of groupA.memberIds) {
-            for (const memberB of groupB.memberIds) {
-              const scoreAfter =
-                this.groupSimilarityPenalty(groupA, personById, weightIds, memberA, memberB)
-                + this.groupSimilarityPenalty(groupB, personById, weightIds, memberB, memberA);
-
-              if (scoreAfter < scoreBefore && (!bestSwap || scoreAfter < bestSwap.score)) {
-                bestSwap = { a: memberA, b: memberB, score: scoreAfter };
-              }
-            }
-          }
+          const bestSwap = this.findBestSwapBetweenGroups(groupA, groupB, personById, weightIds);
 
           if (bestSwap) {
             const indexA = groupA.memberIds.indexOf(bestSwap.a);
@@ -514,6 +500,32 @@ export class GroupingService {
 
       if (!improved) break;
     }
+  }
+
+  private findBestSwapBetweenGroups(
+    groupA: Group,
+    groupB: Group,
+    personById: Map<string, Person>,
+    weightIds: string[]
+  ): { a: string; b: string; score: number } | null {
+    const scoreBefore = this.groupSimilarityPenalty(groupA, personById, weightIds)
+      + this.groupSimilarityPenalty(groupB, personById, weightIds);
+
+    let bestSwap: { a: string; b: string; score: number } | null = null;
+
+    for (const memberA of groupA.memberIds) {
+      for (const memberB of groupB.memberIds) {
+        const scoreAfter =
+          this.groupSimilarityPenalty(groupA, personById, weightIds, memberA, memberB)
+          + this.groupSimilarityPenalty(groupB, personById, weightIds, memberB, memberA);
+
+        if (scoreAfter < scoreBefore && (!bestSwap || scoreAfter < bestSwap.score)) {
+          bestSwap = { a: memberA, b: memberB, score: scoreAfter };
+        }
+      }
+    }
+
+    return bestSwap;
   }
 
   private groupWeightDiff(groupA: Group, groupB: Group, personById: Map<string, Person>, weightIds: string[]): number {
@@ -548,18 +560,12 @@ export class GroupingService {
     }
 
     for (const memberId of group.memberIds) {
-      const resolvedId = memberId === swapOut ? swapIn : memberId;
+      const resolvedId = this.resolveMember(memberId, swapOut, swapIn);
       if (!resolvedId) continue;
       const person = personById.get(resolvedId);
       if (!person) continue;
       for (const weightId of weightIds) {
-        if (weightId.startsWith('gender:')) {
-          const genderKey = weightId.split(':')[1];
-          const gender = person.gender ?? 'unspecified';
-          totals[weightId] += gender === genderKey ? 1 : 0;
-        } else {
-          totals[weightId] += person.weights?.[weightId] ?? 0;
-        }
+        totals[weightId] += this.getPersonWeightValue(person, weightId);
       }
     }
     return totals;
