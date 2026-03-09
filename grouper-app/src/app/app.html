@@ -1,25 +1,27 @@
-<mat-toolbar color="primary">
-  <span>{{ 'app.title' | t }}</span>
-  <span class="spacer"></span>
-  <button mat-button routerLink="/sessions">{{ 'app.sessionsNav' | t }}</button>
-  <button
-    mat-button
-    type="button"
-    (click)="themeService.toggleTheme()"
-    [attr.aria-label]="'app.themeToggleAria' | t">
-    <mat-icon>{{ themeService.currentTheme() === 'dark' ? 'dark_mode' : 'light_mode' }}</mat-icon>
-    {{ (themeService.currentTheme() === 'dark' ? 'app.themeToggle.dark' : 'app.themeToggle.light') | t }}
-  </button>
-  <mat-form-field subscriptSizing="dynamic" appearance="outline" class="locale-select">
-    <mat-label>{{ 'app.languageLabel' | t }}</mat-label>
-    <select matNativeControl [formControl]="localeControl">
-      @for (locale of availableLocales; track locale) {
-        <option [value]="locale">{{ i18nService.getLocaleDisplayName(locale) }}</option>
-      }
-    </select>
-  </mat-form-field>
-</mat-toolbar>
+<header class="app-header">
+  <div class="app-header__inner">
+    <p class="app-title">{{ 'app.title' | t }}</p>
+    <nav class="app-nav" [attr.aria-label]="'app.sessionsNav' | t">
+      <a class="button button-secondary" routerLink="/sessions">{{ 'app.sessionsNav' | t }}</a>
+    </nav>
+    <button
+      class="button button-secondary"
+      type="button"
+      (click)="themeService.toggleTheme()"
+      [attr.aria-label]="'app.themeToggleAria' | t">
+      {{ (themeService.currentTheme() === 'dark' ? 'app.themeToggle.dark' : 'app.themeToggle.light') | t }}
+    </button>
+    <div class="form-group app-locale">
+      <label class="form-label" for="locale-select">{{ 'app.languageLabel' | t }}</label>
+      <select id="locale-select" class="form-select" [formControl]="localeControl">
+        @for (locale of availableLocales; track locale) {
+          <option [value]="locale">{{ i18nService.getLocaleDisplayName(locale) }}</option>
+        }
+      </select>
+    </div>
+  </div>
+</header>
 
-<div class="app-container">
+<main class="app-container">
   <router-outlet (activate)="onRouteActivate()"></router-outlet>
-</div>
+</main>

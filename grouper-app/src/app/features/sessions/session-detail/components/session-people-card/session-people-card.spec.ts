@@ -12,6 +12,8 @@ class MockI18nService {
     const labels: Record<string, string> = {
       'sessionDetail.noPeople': 'No people',
       'sessionDetail.addPerson': 'Add Person',
+      'sessionDetail.unnamedPerson': 'Unnamed person',
+      'common.delete': 'Delete',
     };
     return labels[key] ?? key;
   }
@@ -43,17 +45,13 @@ describe('SessionPeopleCard', () => {
     fixture.detectChanges();
 
     const nameButtons = fixture.nativeElement.querySelectorAll('.person-name');
-    const removeButtons = fixture.nativeElement.querySelectorAll('button[color="warn"]');
+    const removeButtons = fixture.nativeElement.querySelectorAll('.person-item .button-unstyled');
 
     nameButtons[0].click();
     removeButtons[0].click();
     fixture.nativeElement.querySelector('.add-button').click();
 
-    const icons = [...fixture.nativeElement.querySelectorAll('.person-item > mat-icon')]
-      .map((icon: HTMLElement) => icon.textContent?.trim());
-
     expect(fixture.nativeElement.textContent).toContain('People (3)');
-    expect(icons).toEqual(['female', 'male', 'transgender']);
     expect(openSpy).toHaveBeenCalledWith(people[0]);
     expect(removeSpy).toHaveBeenCalledWith(people[0]);
     expect(addSpy).toHaveBeenCalledTimes(1);

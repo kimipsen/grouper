@@ -67,22 +67,20 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render localized toolbar title', () => {
+  it('should render localized app title', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('mat-toolbar span')?.textContent).toContain('Grouper');
+    expect(compiled.querySelector('.app-title')?.textContent).toContain('Grouper');
   });
 
   it('should toggle theme from toolbar action', () => {
     const fixture = TestBed.createComponent(App);
     const themeService = TestBed.inject(ThemeService) as unknown as MockThemeService;
 
-    fixture.detectChanges();
-
-    const buttons = fixture.nativeElement.querySelectorAll('button');
-    buttons[1].click();
+    fixture.detectChanges();    const themeToggle = fixture.nativeElement.querySelector('button[aria-label="Toggle dark mode"]') as HTMLButtonElement;
+    themeToggle.click();
 
     expect(themeService.currentTheme()).toBe('dark');
   });

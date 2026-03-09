@@ -1,22 +1,20 @@
-<mat-card class="section-card">
-  <mat-card-header>
-    <mat-card-title>{{ 'sessionDetail.customWeights.title' | t }}</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
+<section class="card section-card">
+  <div class="card-content">
+    <h2 class="card-heading">{{ 'sessionDetail.customWeights.title' | t }}</h2>
+
     <div class="weight-editor">
-      <mat-form-field>
-        <mat-label>{{ 'sessionDetail.customWeights.nameLabel' | t }}</mat-label>
-        <input matNativeControl [formControl]="newWeightNameControl()" />
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>{{ 'sessionDetail.customWeights.modeLabel' | t }}</mat-label>
-        <select matNativeControl [formControl]="newWeightModeControl()">
+      <div class="form-group">
+        <label class="form-label" for="new-weight-name">{{ 'sessionDetail.customWeights.nameLabel' | t }}</label>
+        <input id="new-weight-name" class="form-input" [formControl]="newWeightNameControl()" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="new-weight-mode">{{ 'sessionDetail.customWeights.modeLabel' | t }}</label>
+        <select id="new-weight-mode" class="form-select" [formControl]="newWeightModeControl()">
           <option value="balance">{{ 'sessionDetail.customWeights.modeBalance' | t }}</option>
           <option value="match-similar">{{ 'sessionDetail.customWeights.modeMatchSimilar' | t }}</option>
         </select>
-      </mat-form-field>
-      <button mat-stroked-button color="primary" (click)="addWeight.emit()">
-        <mat-icon>add</mat-icon>
+      </div>
+      <button class="button button-secondary" type="button" (click)="addWeight.emit()">
         {{ 'sessionDetail.customWeights.add' | t }}
       </button>
     </div>
@@ -24,23 +22,29 @@
     <div class="weight-list">
       @for (weight of customWeights(); track weight.id) {
         <div class="weight-row">
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'sessionDetail.customWeights.weightLabel' | t }}</mat-label>
-            <input #weightNameInput matNativeControl [value]="weight.name" (input)="renameWeight.emit({ weight, name: weightNameInput.value })" />
-          </mat-form-field>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>{{ 'sessionDetail.customWeights.modeLabel' | t }}</mat-label>
+          <div class="form-group">
+            <label class="form-label" [for]="'weight-name-' + weight.id">{{ 'sessionDetail.customWeights.weightLabel' | t }}</label>
+            <input
+              #weightNameInput
+              [id]="'weight-name-' + weight.id"
+              class="form-input"
+              [value]="weight.name"
+              (input)="renameWeight.emit({ weight, name: weightNameInput.value })" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" [for]="'weight-mode-' + weight.id">{{ 'sessionDetail.customWeights.modeLabel' | t }}</label>
             <select
               #weightModeInput
-              matNativeControl
+              [id]="'weight-mode-' + weight.id"
+              class="form-select"
               [value]="weight.mode"
               (change)="updateWeightMode.emit({ weight, mode: weightModeInput.value === 'match-similar' ? 'match-similar' : 'balance' })">
               <option value="balance">{{ 'sessionDetail.customWeights.modeBalance' | t }}</option>
               <option value="match-similar">{{ 'sessionDetail.customWeights.modeMatchSimilar' | t }}</option>
             </select>
-          </mat-form-field>
-          <button mat-icon-button color="warn" (click)="removeWeight.emit(weight)">
-            <mat-icon>delete</mat-icon>
+          </div>
+          <button class="button button-unstyled" type="button" (click)="removeWeight.emit(weight)">
+            {{ 'common.delete' | t }}
           </button>
         </div>
       }
@@ -50,5 +54,5 @@
         </div>
       }
     </div>
-  </mat-card-content>
-</mat-card>
+  </div>
+</section>

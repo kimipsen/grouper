@@ -70,7 +70,7 @@ describe('PersonDrawer', () => {
 
     fixture.detectChanges();
 
-    const nameInput = fixture.nativeElement.querySelector('input[matinput]');
+    const nameInput = fixture.nativeElement.querySelector('#person-name');
     nameInput.value = 'Alicia';
     nameInput.dispatchEvent(new Event('input'));
 

@@ -46,6 +46,7 @@
               }
             ],
             "styles": [
+              "node_modules/dkfds/dist/css/dkfds.css",
               "src/styles.scss"
             ]
           },

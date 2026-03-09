@@ -18,7 +18,7 @@ class MockI18nService {
 
     const labels: Record<string, string> = {
       'sessionDetail.generatedGroups': 'Generated Groups',
-      'sessionDetail.regenerateGroupsAria': 'Regenerate',
+      'sessionDetail.generateGroups': 'Generate groups',
     };
     return labels[key] ?? key;
   }
@@ -51,13 +51,10 @@ describe('GroupsResultCard', () => {
     fixture.nativeElement.querySelector('button').click();
 
     const content = fixture.nativeElement.textContent;
-    const memberIcons = [...fixture.nativeElement.querySelectorAll('.member mat-icon')]
-      .map((icon: HTMLElement) => icon.textContent?.trim());
 
     expect(content).toContain('Generated Groups');
     expect(content).toContain('Alice');
     expect(content).toContain('Bob');
-    expect(memberIcons).toEqual(['female', 'male']);
     expect(regenSpy).toHaveBeenCalledTimes(1);
   });
 });
