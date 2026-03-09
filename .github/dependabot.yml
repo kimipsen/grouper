@@ -10,7 +10,11 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    assignees:
+      - "kimipsen"
   - package-ecosystem: "npm"
     directory: "/grouper-app"
     schedule:
       interval: weekly
+    assignees:
+      - "kimipsen"
