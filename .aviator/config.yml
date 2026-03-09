@@ -1,0 +1,13 @@
+version: 1
+merge_rules:
+  - name: default
+    base_branches:
+      - main
+      - master
+    queue_rules:
+      merge_method: squash
+      max_parallel_checks: 1
+      max_entries_to_build: 5
+    trigger_conditions:
+      - condition: label
+        value: mergequeue
