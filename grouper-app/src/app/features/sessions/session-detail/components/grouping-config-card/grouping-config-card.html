@@ -1,53 +1,52 @@
-<mat-card class="section-card">
-  <mat-card-header>
-    <mat-card-title>{{ 'sessionDetail.createGroupsTitle' | t }}</mat-card-title>
-  </mat-card-header>
-  <mat-card-content class="grouping-config">
-    <mat-form-field>
-      <mat-label>{{ 'sessionDetail.genderMode.label' | t }}</mat-label>
-      <select matNativeControl [formControl]="genderModeControl()">
+<section class="card section-card">
+  <div class="card-content grouping-config">
+    <h2 class="card-heading">{{ 'sessionDetail.createGroupsTitle' | t }}</h2>
+
+    <div class="form-group">
+      <label class="form-label" for="gender-mode">{{ 'sessionDetail.genderMode.label' | t }}</label>
+      <select id="gender-mode" class="form-select" [formControl]="genderModeControl()">
         <option value="mixed">{{ 'sessionDetail.genderMode.mixed' | t }}</option>
         <option value="single">{{ 'sessionDetail.genderMode.single' | t }}</option>
         <option value="ignore">{{ 'sessionDetail.genderMode.ignore' | t }}</option>
       </select>
-    </mat-form-field>
+    </div>
 
-    <mat-form-field>
-      <mat-label>{{ 'sessionDetail.strategy' | t }}</mat-label>
-      <select matNativeControl [formControl]="groupingStrategyControl()">
+    <div class="form-group">
+      <label class="form-label" for="grouping-strategy">{{ 'sessionDetail.strategy' | t }}</label>
+      <select id="grouping-strategy" class="form-select" [formControl]="groupingStrategyControl()">
         <option [value]="GroupingStrategy.RANDOM">{{ 'sessionDetail.strategyRandom' | t }}</option>
         <option [value]="GroupingStrategy.PREFERENCE_BASED">{{ 'sessionDetail.strategyPreferenceBased' | t }}</option>
         <option [value]="GroupingStrategy.WEIGHTED">{{ 'sessionDetail.strategyWeighted' | t }}</option>
       </select>
-    </mat-form-field>
+    </div>
 
     @if (groupingStrategyControl().value === GroupingStrategy.PREFERENCE_BASED) {
       <div class="preference-scoring">
         <p class="weight-help">{{ 'sessionDetail.preferenceScoring.title' | t }}</p>
         <div class="preference-scoring-grid">
-          <mat-form-field>
-            <mat-label>{{ 'sessionDetail.preferenceScoring.wantWith' | t }}</mat-label>
-            <input matNativeControl type="number" [formControl]="preferenceWantWithControl()" />
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>{{ 'sessionDetail.preferenceScoring.avoid' | t }}</mat-label>
-            <input matNativeControl type="number" [formControl]="preferenceAvoidControl()" />
-          </mat-form-field>
+          <div class="form-group">
+            <label class="form-label" for="pref-want">{{ 'sessionDetail.preferenceScoring.wantWith' | t }}</label>
+            <input id="pref-want" class="form-input" type="number" [formControl]="preferenceWantWithControl()" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="pref-avoid">{{ 'sessionDetail.preferenceScoring.avoid' | t }}</label>
+            <input id="pref-avoid" class="form-input" type="number" [formControl]="preferenceAvoidControl()" />
+          </div>
         </div>
       </div>
     }
 
-    <mat-form-field>
-      <mat-label>{{ 'sessionDetail.groupSize' | t }}</mat-label>
-      <input matNativeControl type="number" [formControl]="groupSizeControl()" min="1" [max]="peopleCount()">
-    </mat-form-field>
+    <div class="form-group">
+      <label class="form-label" for="group-size">{{ 'sessionDetail.groupSize' | t }}</label>
+      <input id="group-size" class="form-input" type="number" [formControl]="groupSizeControl()" min="1" [max]="peopleCount()" />
+    </div>
 
-    <mat-checkbox [formControl]="allowPartialGroupsControl()">
-      {{ 'sessionDetail.allowPartialGroups' | t }}
-    </mat-checkbox>
+    <div class="form-group-checkbox">
+      <input id="allow-partial" class="form-checkbox" type="checkbox" [formControl]="allowPartialGroupsControl()" />
+      <label for="allow-partial">{{ 'sessionDetail.allowPartialGroups' | t }}</label>
+    </div>
 
-    <button mat-raised-button color="primary" (click)="generateGroups.emit()" [disabled]="peopleCount() === 0">
-      <mat-icon>shuffle</mat-icon>
+    <button class="button button-primary" type="button" (click)="generateGroups.emit()" [disabled]="peopleCount() === 0">
       {{ 'sessionDetail.generateGroups' | t }}
     </button>
 
@@ -55,29 +54,32 @@
       <div class="weight-selection">
         <p class="weight-help">{{ 'sessionDetail.customWeights.selectHelp' | t }}</p>
         <div class="weight-select-list">
-          <label class="weight-select-item">
+          <div class="form-group-checkbox weight-select-item">
             <input
+              id="weight-gender"
+              class="form-checkbox"
               type="checkbox"
               [checked]="selectedWeightIds().includes(genderWeightId())"
               (change)="toggleWeightSelection.emit(genderWeightId())" />
-            <span>{{ 'sessionDetail.customWeights.genderWeight' | t }}</span>
-          </label>
+            <label for="weight-gender">{{ 'sessionDetail.customWeights.genderWeight' | t }}</label>
+          </div>
           @for (weight of customWeights(); track weight.id) {
-            <label class="weight-select-item">
+            <div class="form-group-checkbox weight-select-item">
               <input
+                [id]="'weight-' + weight.id"
+                class="form-checkbox"
                 type="checkbox"
                 [checked]="selectedWeightIds().includes(weight.id)"
                 (change)="toggleWeightSelection.emit(weight.id)" />
-              <span>{{ weight.name }}</span>
-            </label>
+              <label [for]="'weight-' + weight.id">{{ weight.name }}</label>
+            </div>
           }
         </div>
       </div>
     }
 
-    <button mat-stroked-button color="warn" (click)="resetSession.emit()">
-      <mat-icon>restart_alt</mat-icon>
+    <button class="button button-secondary" type="button" (click)="resetSession.emit()">
       {{ 'sessionDetail.resetSession' | t }}
     </button>
-  </mat-card-content>
-</mat-card>
+  </div>
+</section>

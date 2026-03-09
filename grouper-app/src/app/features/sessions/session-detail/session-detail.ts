@@ -4,8 +4,6 @@ import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { v4 as uuidv4 } from 'uuid';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { DEFAULT_PREFERENCE_SCORING, Session, CustomWeightDefinition } from '../../../models/session.model';
 import { Gender, Person } from '../../../models/person.model';
 import { PreferenceType } from '../../../models/preference.model';
@@ -27,10 +25,7 @@ import { GroupsResultCard } from './components/groups-result-card/groups-result-
   styleUrl: './session-detail.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
-    MatButtonModule,
-    MatIconModule,
-    TranslatePipe,
+    CommonModule,    TranslatePipe,
     SessionPeopleCard,
     PersonDrawer,
     GroupingConfigCard,
