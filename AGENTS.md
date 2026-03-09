@@ -106,3 +106,7 @@
 - Treat standard task-scoped `git` commands as pre-approved.
 - Commit and push only changes relevant to the task.
 - Ignore changes from other tasks.
+
+## Repository Skills
+- Codex skill: `.ai/skills/codex/SKILL.md`
+- GitHub Copilot skill: `.ai/skills/github-copilot/SKILL.md`
