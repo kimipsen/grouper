@@ -1,11 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { GenderMode, GroupingStrategy } from '../../../../../models/group.model';
 import { CustomWeightDefinition } from '../../../../../models/session.model';
 import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
@@ -15,16 +9,7 @@ import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
   templateUrl: './grouping-config-card.html',
   styleUrl: './grouping-config-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatCheckboxModule,
-    MatButtonModule,
-    MatIconModule,
-    MatInputModule,
-    TranslatePipe,
-  ],
+  imports: [ReactiveFormsModule, TranslatePipe],
 })
 export class GroupingConfigCard {
   readonly groupingStrategyControl = input.required<FormControl<GroupingStrategy>>();

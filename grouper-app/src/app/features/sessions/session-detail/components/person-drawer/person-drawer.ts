@@ -1,8 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { CustomWeightDefinition } from '../../../../../models/session.model';
 import { Gender, Person } from '../../../../../models/person.model';
 import { PreferenceMap } from '../../../../../models/preference.model';
@@ -13,7 +9,7 @@ import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
   templateUrl: './person-drawer.html',
   styleUrl: './person-drawer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule, TranslatePipe],
+  imports: [TranslatePipe],
 })
 export class PersonDrawer {
   readonly selectedPerson = input.required<Person>();
@@ -45,9 +41,10 @@ export class PersonDrawer {
   }
 
   onGenderChange(gender: string): void {
-    const normalized: Gender = gender === 'female' || gender === 'male' || gender === 'nonbinary' || gender === 'unspecified'
-      ? gender
-      : 'unspecified';
+    const normalized: Gender =
+      gender === 'female' || gender === 'male' || gender === 'nonbinary' || gender === 'unspecified'
+        ? gender
+        : 'unspecified';
 
     this.updateGender.emit(normalized);
   }

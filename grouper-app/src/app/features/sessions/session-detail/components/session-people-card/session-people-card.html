@@ -1,17 +1,15 @@
-<mat-card class="section-card">
-  <mat-card-header>
-    <mat-card-title>{{ 'sessionDetail.peopleTitle' | t:{ count: people().length } }}</mat-card-title>
-  </mat-card-header>
-  <mat-card-content>
+<section class="card section-card">
+  <div class="card-content">
+    <h2 class="card-heading">{{ 'sessionDetail.peopleTitle' | t:{ count: people().length } }}</h2>
+
     <div class="people-list">
       @for (person of people(); track person.id) {
         <div class="person-item">
-          <mat-icon>{{ getPersonIcon(person) }}</mat-icon>
           <button class="person-name" type="button" (click)="openPerson.emit(person)">
-            {{ person.name || 'Unnamed person' }}
+            {{ person.name || ('sessionDetail.unnamedPerson' | t) }}
           </button>
-          <button mat-icon-button color="warn" (click)="removePerson.emit(person)">
-            <mat-icon>close</mat-icon>
+          <button class="button button-unstyled" type="button" (click)="removePerson.emit(person)">
+            {{ 'common.delete' | t }}
           </button>
         </div>
       }
@@ -21,9 +19,9 @@
         </div>
       }
     </div>
-    <button mat-raised-button color="primary" (click)="addPerson.emit()" class="add-button">
-      <mat-icon>add</mat-icon>
+
+    <button class="button button-primary add-button" type="button" (click)="addPerson.emit()">
       {{ 'sessionDetail.addPerson' | t }}
     </button>
-  </mat-card-content>
-</mat-card>
+  </div>
+</section>
