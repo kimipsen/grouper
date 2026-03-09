@@ -51,7 +51,7 @@ describe('CustomWeightsCard', () => {
     const addButton = fixture.nativeElement.querySelector('.weight-editor button');
     const renameInput = fixture.nativeElement.querySelector('.weight-row input');
     const modeSelect = fixture.nativeElement.querySelector('.weight-row select');
-    const removeButton = fixture.nativeElement.querySelector('.weight-row .button-unstyled');
+    const removeButton = fixture.nativeElement.querySelector('.weight-row .button-warning');
 
     addButton.click();
     renameInput.value = 'Renamed';

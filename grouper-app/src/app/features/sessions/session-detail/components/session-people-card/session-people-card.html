@@ -8,7 +8,7 @@
           <button class="person-name" type="button" (click)="openPerson.emit(person)">
             {{ person.name || ('sessionDetail.unnamedPerson' | t) }}
           </button>
-          <button class="button button-unstyled" type="button" (click)="removePerson.emit(person)">
+          <button class="button button-warning" type="button" (click)="removePerson.emit(person)">
             {{ 'common.delete' | t }}
           </button>
         </div>
