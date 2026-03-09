@@ -1,0 +1,87 @@
+name: Copilot Review And Auto-Merge
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+  pull_request_review:
+    types:
+      - submitted
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  request-copilot-review:
+    if: github.event_name == 'pull_request_target' && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Request Copilot review
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pullNumber = context.payload.pull_request.number;
+
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pullNumber,
+                reviewers: ['copilot-pull-request-reviewer[bot]'],
+              });
+
+              core.info(`Requested Copilot review for PR #${pullNumber}.`);
+            } catch (error) {
+              core.warning(`Could not request Copilot directly (${error.message}). Posting @copilot review comment instead.`);
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullNumber,
+                body: '@copilot review',
+              });
+            }
+
+  enable-auto-merge-after-copilot-approval:
+    if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Enable auto-merge when approved by Copilot
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const reviewer = (context.payload.review.user?.login || '').toLowerCase();
+            const isCopilotReviewer = reviewer.includes('copilot');
+
+            if (!isCopilotReviewer) {
+              core.info(`Skipping: approval came from ${reviewer || 'unknown reviewer'}, not Copilot.`);
+              return;
+            }
+
+            const pullRequestId = context.payload.pull_request.node_id;
+            const pullNumber = context.payload.pull_request.number;
+
+            try {
+              await github.graphql(
+                `mutation EnableAutoMerge($pullRequestId: ID!) {
+                  enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: SQUASH }) {
+                    clientMutationId
+                  }
+                }`,
+                { pullRequestId },
+              );
+
+              core.info(`Enabled auto-merge for PR #${pullNumber}.`);
+            } catch (error) {
+              core.warning(
+                `Unable to enable auto-merge for PR #${pullNumber}: ${error.message}. ` +
+                'Make sure auto-merge is enabled in repository settings and the merge method is allowed.'
+              );
+            }
