@@ -45,7 +45,7 @@ describe('SessionPeopleCard', () => {
     fixture.detectChanges();
 
     const nameButtons = fixture.nativeElement.querySelectorAll('.person-name');
-    const removeButtons = fixture.nativeElement.querySelectorAll('.person-item .button-unstyled');
+    const removeButtons = fixture.nativeElement.querySelectorAll('.person-item .button-warning');
 
     nameButtons[0].click();
     removeButtons[0].click();
