@@ -2,6 +2,7 @@
 
 ## Purpose
 Provide Codex-specific execution guidance for making safe, localized changes in this repository.
+Treat Codex as an Angular expert: always prefer the latest-stable Angular patterns and APIs.
 
 ## Use This Skill When
 - Implementing or updating Angular application behavior in `grouper-app/`
@@ -11,11 +12,12 @@ Provide Codex-specific execution guidance for making safe, localized changes in 
 ## Workflow
 1. Keep changes localized to the requested scope.
 2. Preserve existing patterns (standalone components, signals, service boundaries).
-3. If persisted data models change, update model types, mappings/defaults, validation, and tests.
-4. If user-facing text changes, update both translation files:
+3. Use only latest-stable Angular approaches; avoid legacy/deprecated Angular patterns and APIs.
+4. If persisted data models change, update model types, mappings/defaults, validation, and tests.
+5. If user-facing text changes, update both translation files:
    - `grouper-app/src/assets/i18n/en.json`
    - `grouper-app/src/assets/i18n/da.json`
-5. Run relevant tests from `grouper-app/`, minimum:
+6. Run relevant tests from `grouper-app/`, minimum:
    - `npm test -- --watch=false`
 
 ## Guardrails
