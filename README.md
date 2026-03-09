@@ -36,6 +36,11 @@ Run from the repository root unless stated otherwise.
 - Preference scoring is configurable per session:
   - `preferenceScoring.wantWith` (default `2`)
   - `preferenceScoring.avoid` (default `-2`)
+- Custom weights are configurable per weight:
+  - each custom weight has a `mode`: `balance` or `match-similar`
+  - mode is set when the weight is created and can be changed later
+  - weighted grouping uses the mode of each selected custom weight
+  - legacy imported weights without `mode` default to `balance`
 - Supported locales are English (`en`) and Danish (`da`).
 
 ## Key Source Folders
