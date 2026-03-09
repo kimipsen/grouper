@@ -244,7 +244,7 @@ describe('GroupingService weighted modes', () => {
       'en-US'
     );
 
-    const sortedGroups = result.groups.map((group) => [...group.memberIds].sort());
+    const sortedGroups = result.groups.map((group) => [...group.memberIds].sort((a, b) => a.localeCompare(b)));
     expect(sortedGroups).not.toContainEqual(['p1', 'p2']);
     expect(sortedGroups).not.toContainEqual(['p3', 'p4']);
 
