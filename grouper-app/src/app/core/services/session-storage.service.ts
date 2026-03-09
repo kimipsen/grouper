@@ -1,11 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { StorageService } from './storage.service';
 import {
+  CustomWeightDefinition,
   DEFAULT_PREFERENCE_SCORING,
   PreferenceScoring,
   Session,
   SessionDTO,
 } from '../../models/session.model';
+import { WeightedGroupingMode } from '../../models/group.model';
 
 const SESSIONS_STORAGE_KEY = 'grouper_sessions';
 const CURRENT_SESSION_ID_KEY = 'grouper_current_session_id';
@@ -151,7 +153,7 @@ export class SessionStorageService {
         timestamp: gr.timestamp.toISOString(),
         overallSatisfaction: gr.overallSatisfaction
       })),
-      customWeights: session.customWeights,
+      customWeights: this.normalizeCustomWeights(session.customWeights),
       genderMode: session.genderMode,
       createdAt: session.createdAt.toISOString(),
       updatedAt: session.updatedAt.toISOString()
@@ -183,7 +185,7 @@ export class SessionStorageService {
         timestamp: new Date(gr.timestamp),
         overallSatisfaction: gr.overallSatisfaction
       })),
-      customWeights: dto.customWeights ?? [],
+      customWeights: this.normalizeCustomWeights(dto.customWeights),
       genderMode: dto.genderMode ?? 'mixed',
       createdAt: new Date(dto.createdAt),
       updatedAt: new Date(dto.updatedAt)
@@ -228,6 +230,26 @@ export class SessionStorageService {
     if (session.customWeights !== undefined && !Array.isArray(session.customWeights)) {
       throw new Error('Invalid session data: customWeights must be an array');
     }
+    if (Array.isArray(session.customWeights)) {
+      for (const weight of session.customWeights) {
+        if (!weight || typeof weight !== 'object') {
+          throw new Error('Invalid session data: customWeights entries must be objects');
+        }
+        if (typeof weight.id !== 'string' || !weight.id.trim()) {
+          throw new Error('Invalid session data: customWeights.id must be a non-empty string');
+        }
+        if (typeof weight.name !== 'string' || !weight.name.trim()) {
+          throw new Error('Invalid session data: customWeights.name must be a non-empty string');
+        }
+        if (
+          'mode' in weight &&
+          weight.mode !== 'balance' &&
+          weight.mode !== 'match-similar'
+        ) {
+          throw new Error('Invalid session data: customWeights.mode must be "balance" or "match-similar"');
+        }
+      }
+    }
   }
 
   private normalizePreferenceScoring(scoring?: PreferenceScoring): PreferenceScoring {
@@ -239,5 +261,21 @@ export class SessionStorageService {
         ? (scoring?.avoid as number)
         : DEFAULT_PREFERENCE_SCORING.avoid,
     };
+  }
+
+  private normalizeCustomWeights(weights?: CustomWeightDefinition[]): CustomWeightDefinition[] {
+    if (!Array.isArray(weights)) {
+      return [];
+    }
+
+    return weights.map(weight => ({
+      id: weight.id,
+      name: weight.name,
+      mode: this.normalizeWeightedGroupingMode(weight.mode),
+    }));
+  }
+
+  private normalizeWeightedGroupingMode(mode?: WeightedGroupingMode): WeightedGroupingMode {
+    return mode === 'match-similar' ? 'match-similar' : 'balance';
   }
 }

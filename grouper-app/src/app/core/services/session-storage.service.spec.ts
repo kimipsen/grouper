@@ -64,6 +64,32 @@ describe('SessionStorageService', () => {
 
     expect(imported.preferenceScoring).toEqual(DEFAULT_PREFERENCE_SCORING);
   });
+
+  it('persists custom weight mode when exporting a session', () => {
+    const session = buildSessionWithHistory(0);
+    session.customWeights = [{ id: 'w1', name: 'Skill', mode: 'match-similar' }];
+
+    const exported = JSON.parse(service.exportSession(session));
+
+    expect(exported.customWeights).toEqual([{ id: 'w1', name: 'Skill', mode: 'match-similar' }]);
+  });
+
+  it('defaults custom weight mode to balance when importing legacy sessions', () => {
+    const jsonWithoutMode = JSON.stringify({
+      id: 'legacy-session',
+      name: 'Legacy',
+      people: [],
+      preferences: {},
+      groupingHistory: [],
+      customWeights: [{ id: 'w1', name: 'Skill' }],
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+    });
+
+    const imported = service.importSession(jsonWithoutMode);
+
+    expect(imported.customWeights).toEqual([{ id: 'w1', name: 'Skill', mode: 'balance' }]);
+  });
 });
 
 function buildSessionWithHistory(historyCount: number): Session {

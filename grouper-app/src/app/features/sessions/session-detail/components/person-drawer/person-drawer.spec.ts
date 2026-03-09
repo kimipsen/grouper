@@ -51,7 +51,7 @@ describe('PersonDrawer', () => {
     const fixture = TestBed.createComponent(PersonDrawer);
     fixture.componentRef.setInput('selectedPerson', selectedPerson);
     fixture.componentRef.setInput('people', [selectedPerson, otherPerson]);
-    fixture.componentRef.setInput('customWeights', [{ id: 'w1', name: 'Karakter' }]);
+    fixture.componentRef.setInput('customWeights', [{ id: 'w1', name: 'Karakter', mode: 'balance' }]);
     fixture.componentRef.setInput('preferences', {
       p1: { wantWith: ['p2'], avoid: [] },
     });

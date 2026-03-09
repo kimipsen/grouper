@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { WeightedGroupingMode } from '../../../../../models/group.model';
 import { CustomWeightDefinition } from '../../../../../models/session.model';
 import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
@@ -26,8 +27,10 @@ import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 export class CustomWeightsCard {
   readonly customWeights = input.required<CustomWeightDefinition[]>();
   readonly newWeightNameControl = input.required<FormControl<string>>();
+  readonly newWeightModeControl = input.required<FormControl<WeightedGroupingMode>>();
 
   readonly addWeight = output<void>();
   readonly renameWeight = output<{ weight: CustomWeightDefinition; name: string }>();
+  readonly updateWeightMode = output<{ weight: CustomWeightDefinition; mode: WeightedGroupingMode }>();
   readonly removeWeight = output<CustomWeightDefinition>();
 }
