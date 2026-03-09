@@ -487,7 +487,6 @@ export class GroupingService {
           const groupA = groups[i];
           const groupB = groups[j];
           const bestSwap = this.findBestSwapBetweenGroups(groupA, groupB, personById, weightIds);
-
           if (bestSwap) {
             const indexA = groupA.memberIds.indexOf(bestSwap.a);
             const indexB = groupB.memberIds.indexOf(bestSwap.b);
