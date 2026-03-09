@@ -23,6 +23,9 @@ class MockI18nService {
       'sessionDetail.allowPartialGroups': 'Allow partial groups',
       'sessionDetail.generateGroups': 'Generate Groups',
       'sessionDetail.customWeights.selectHelp': 'Select weights',
+      'sessionDetail.customWeights.modeLabel': 'Weight mode',
+      'sessionDetail.customWeights.modeBalance': 'Balance across groups',
+      'sessionDetail.customWeights.modeMatchSimilar': 'Match similar in groups',
       'sessionDetail.customWeights.genderWeight': 'Gender',
       'sessionDetail.resetSession': 'Reset Session',
     };
@@ -44,6 +47,7 @@ describe('GroupingConfigCard', () => {
     fixture.componentRef.setInput('genderModeControl', new FormControl('mixed', { nonNullable: true }));
     fixture.componentRef.setInput('preferenceWantWithControl', new FormControl(2, { nonNullable: true }));
     fixture.componentRef.setInput('preferenceAvoidControl', new FormControl(-2, { nonNullable: true }));
+    fixture.componentRef.setInput('weightedModeControl', new FormControl('balance', { nonNullable: true }));
     fixture.componentRef.setInput('customWeights', [{ id: 'w1', name: 'Karakter' }]);
     fixture.componentRef.setInput('selectedWeightIds', []);
     fixture.componentRef.setInput('genderWeightId', '__gender__');

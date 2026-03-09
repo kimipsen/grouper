@@ -71,6 +71,9 @@
       "weightLabel": "Weight",
       "empty": "No custom weights yet",
       "selectHelp": "Select weights to use for weighted grouping",
+      "modeLabel": "Weight mode",
+      "modeBalance": "Balance across groups",
+      "modeMatchSimilar": "Match similar in groups",
       "genderWeight": "Balance gender",
       "editPerson": "Edit weights",
       "personWeightsTitle": "Weights for person"

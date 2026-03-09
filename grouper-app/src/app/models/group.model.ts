@@ -27,12 +27,15 @@ export enum GroupingStrategy {
   WEIGHTED = 'WEIGHTED'
 }
 
+export type WeightedGroupingMode = 'balance' | 'match-similar';
+
 export interface GroupingSettings {
   strategy: GroupingStrategy;
   groupSize: number;
   allowPartialGroups?: boolean;
   genderMode?: GenderMode;
   weightIds?: string[];
+  weightedMode?: WeightedGroupingMode;
 }
 
 export type GenderMode = 'mixed' | 'single' | 'ignore';
