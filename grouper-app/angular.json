@@ -43,10 +43,14 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/dkfds/dist",
+                "output": "assets/dkfds/dist"
               }
             ],
             "styles": [
-              "node_modules/dkfds/dist/css/dkfds.css",
               "src/styles.scss"
             ]
           },
