@@ -71,6 +71,9 @@
       "weightLabel": "Vægt",
       "empty": "Ingen brugerdefinerede vægte endnu",
       "selectHelp": "Vælg vægte til vægtet gruppering",
+      "modeLabel": "Vægttilstand",
+      "modeBalance": "Balancér på tværs af grupper",
+      "modeMatchSimilar": "Match lignende i grupper",
       "genderWeight": "Balancer køn",
       "editPerson": "Rediger vægte",
       "personWeightsTitle": "Vægte for person"

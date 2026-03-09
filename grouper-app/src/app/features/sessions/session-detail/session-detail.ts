@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { DEFAULT_PREFERENCE_SCORING, Session, CustomWeightDefinition } from '../../../models/session.model';
 import { Gender, Person } from '../../../models/person.model';
 import { PreferenceType } from '../../../models/preference.model';
-import { GenderMode, GroupingStrategy, GroupingSettings, GroupingResult } from '../../../models/group.model';
+import { GenderMode, GroupingStrategy, GroupingSettings, GroupingResult, WeightedGroupingMode } from '../../../models/group.model';
 import { GroupingService, ValidationMessage } from '../../../core/services/grouping.service';
 import { SessionService } from '../../../core/services/session.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -57,6 +57,7 @@ export class SessionDetail implements OnInit {
   readonly genderModeControl = new FormControl<GenderMode>('mixed', { nonNullable: true });
   readonly preferenceWantWithControl = new FormControl<number>(DEFAULT_PREFERENCE_SCORING.wantWith, { nonNullable: true });
   readonly preferenceAvoidControl = new FormControl<number>(DEFAULT_PREFERENCE_SCORING.avoid, { nonNullable: true });
+  readonly weightedModeControl = new FormControl<WeightedGroupingMode>('balance', { nonNullable: true });
   readonly newWeightNameControl = new FormControl<string>('', { nonNullable: true });
   selectedWeightIds: string[] = [];
   selectedPerson: Person | null = null;
@@ -265,7 +266,8 @@ export class SessionDetail implements OnInit {
       groupSize: this.groupSizeControl.value,
       allowPartialGroups: this.allowPartialGroupsControl.value,
       genderMode: this.genderModeControl.value,
-      weightIds: this.selectedWeightIds
+      weightIds: this.selectedWeightIds,
+      weightedMode: this.weightedModeControl.value
     };
 
     const validation = this.groupingService.validateSettings(this.session.people.length, settings);

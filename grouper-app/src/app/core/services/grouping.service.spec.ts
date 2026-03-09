@@ -162,6 +162,100 @@ describe('GroupingService preference scores', () => {
   });
 });
 
+describe('GroupingService weighted modes', () => {
+  let service: GroupingService;
+
+  beforeEach(() => {
+    service = new GroupingService();
+  });
+
+  it('matches similar custom weights in the same group when weightedMode is match-similar', () => {
+    const session = buildSession([
+      { id: 'p1', name: 'P1' },
+      { id: 'p2', name: 'P2' },
+      { id: 'p3', name: 'P3' },
+      { id: 'p4', name: 'P4' },
+    ]);
+    session.customWeights = [{ id: 'skill', name: 'Skill' }];
+    session.people = session.people.map((person) => {
+      const scoreById: Record<string, number> = {
+        p1: 1,
+        p2: 2,
+        p3: 9,
+        p4: 10,
+      };
+      return {
+        ...person,
+        weights: { skill: scoreById[person.id] },
+      };
+    });
+
+    const result = service.createGroupsWithSession(
+      session,
+      {
+        strategy: GroupingStrategy.WEIGHTED,
+        groupSize: 2,
+        allowPartialGroups: true,
+        genderMode: 'ignore',
+        weightIds: ['skill'],
+        weightedMode: 'match-similar',
+      },
+      'en-US'
+    );
+
+    const groups = result.groups.map((group) => new Set(group.memberIds));
+    expect(groups).toEqual(
+      expect.arrayContaining([
+        new Set(['p1', 'p2']),
+        new Set(['p3', 'p4']),
+      ])
+    );
+  });
+
+  it('balances custom weight totals across groups by default', () => {
+    const session = buildSession([
+      { id: 'p1', name: 'P1' },
+      { id: 'p2', name: 'P2' },
+      { id: 'p3', name: 'P3' },
+      { id: 'p4', name: 'P4' },
+    ]);
+    session.customWeights = [{ id: 'skill', name: 'Skill' }];
+    session.people = session.people.map((person) => {
+      const scoreById: Record<string, number> = {
+        p1: 1,
+        p2: 2,
+        p3: 9,
+        p4: 10,
+      };
+      return {
+        ...person,
+        weights: { skill: scoreById[person.id] },
+      };
+    });
+
+    const result = service.createGroupsWithSession(
+      session,
+      {
+        strategy: GroupingStrategy.WEIGHTED,
+        groupSize: 2,
+        allowPartialGroups: true,
+        genderMode: 'ignore',
+        weightIds: ['skill'],
+      },
+      'en-US'
+    );
+
+    const sortedGroups = result.groups.map((group) => [...group.memberIds].sort());
+    expect(sortedGroups).not.toContainEqual(['p1', 'p2']);
+    expect(sortedGroups).not.toContainEqual(['p3', 'p4']);
+
+    const sums = result.groups.map((group) =>
+      group.memberIds.reduce((sum, memberId) => sum + (session.people.find((person) => person.id === memberId)?.weights?.['skill'] ?? 0), 0)
+    );
+    expect(sums[0]).toBe(sums[1]);
+  });
+});
+
 function buildSession(
   peopleInput: { id: string; name: string; gender?: 'female' | 'male' | 'nonbinary' | 'unspecified' }[]
 ): Session {
