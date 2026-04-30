@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, computed, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink, RouterOutlet } from '@angular/router';
@@ -37,6 +37,17 @@ export class App {
   private readonly destroyRef = inject(DestroyRef);
   readonly localeControl = new FormControl<LocaleCode>('en', { nonNullable: true });
   readonly availableLocales = this.i18nService.getAvailableLocales();
+
+  readonly themeIcon = computed(() => {
+    switch (this.themeService.currentTheme()) {
+      case 'dark': return 'dark_mode';
+      case 'solarized-light': return 'wb_sunny';
+      case 'solarized-dark': return 'nights_stay';
+      default: return 'light_mode';
+    }
+  });
+
+  readonly themeLabel = computed(() => `app.theme.${this.themeService.currentTheme()}`);
 
   constructor() {
     this.localeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((locale) => {

@@ -7,8 +7,8 @@
     type="button"
     (click)="themeService.toggleTheme()"
     [attr.aria-label]="'app.themeToggleAria' | t">
-    <mat-icon>{{ themeService.currentTheme() === 'dark' ? 'dark_mode' : 'light_mode' }}</mat-icon>
-    {{ (themeService.currentTheme() === 'dark' ? 'app.themeToggle.dark' : 'app.themeToggle.light') | t }}
+    <mat-icon>{{ themeIcon() }}</mat-icon>
+    {{ themeLabel() | t }}
   </button>
   <mat-form-field subscriptSizing="dynamic" appearance="outline" class="locale-select">
     <mat-label>{{ 'app.languageLabel' | t }}</mat-label>

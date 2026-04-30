@@ -5,12 +5,20 @@ import { App } from './app';
 import { I18nService } from './core/services/i18n.service';
 import { ThemeMode, ThemeService } from './core/services/theme.service';
 
+const THEME_CYCLE: ThemeMode[] = ['light', 'dark', 'solarized-light', 'solarized-dark'];
+
 class MockThemeService {
   private readonly themeSignal = signal<ThemeMode>('light');
   readonly currentTheme = this.themeSignal.asReadonly();
 
+  setTheme(theme: ThemeMode): void {
+    this.themeSignal.set(theme);
+  }
+
   toggleTheme(): void {
-    this.themeSignal.set(this.themeSignal() === 'dark' ? 'light' : 'dark');
+    const currentIndex = THEME_CYCLE.indexOf(this.themeSignal());
+    const nextIndex = (currentIndex + 1) % THEME_CYCLE.length;
+    this.themeSignal.set(THEME_CYCLE[nextIndex]);
   }
 }
 
@@ -22,9 +30,11 @@ class MockI18nService {
     const labels: Record<string, string> = {
       'app.title': 'Grouper',
       'app.sessionsNav': 'Sessions',
-      'app.themeToggleAria': 'Toggle dark mode',
-      'app.themeToggle.light': 'Light',
-      'app.themeToggle.dark': 'Dark',
+      'app.themeToggleAria': 'Cycle theme',
+      'app.theme.light': 'Light',
+      'app.theme.dark': 'Dark',
+      'app.theme.solarized-light': 'Solarized Light',
+      'app.theme.solarized-dark': 'Solarized Dark',
       'app.languageLabel': 'Language',
     };
     return labels[key] ?? key;
@@ -75,7 +85,7 @@ describe('App', () => {
     expect(compiled.querySelector('mat-toolbar span')?.textContent).toContain('Grouper');
   });
 
-  it('should toggle theme from toolbar action', () => {
+  it('should cycle to dark theme on first toolbar theme button click', () => {
     const fixture = TestBed.createComponent(App);
     const themeService = TestBed.inject(ThemeService) as unknown as MockThemeService;
 
@@ -85,6 +95,28 @@ describe('App', () => {
     buttons[1].click();
 
     expect(themeService.currentTheme()).toBe('dark');
+  });
+
+  it('should cycle through all themes via toolbar theme button', () => {
+    const fixture = TestBed.createComponent(App);
+    const themeService = TestBed.inject(ThemeService) as unknown as MockThemeService;
+
+    fixture.detectChanges();
+
+    const buttons = fixture.nativeElement.querySelectorAll('button');
+    const themeButton = buttons[1] as HTMLButtonElement;
+
+    themeButton.click();
+    expect(themeService.currentTheme()).toBe('dark');
+
+    themeButton.click();
+    expect(themeService.currentTheme()).toBe('solarized-light');
+
+    themeButton.click();
+    expect(themeService.currentTheme()).toBe('solarized-dark');
+
+    themeButton.click();
+    expect(themeService.currentTheme()).toBe('light');
   });
 
   it('should list both supported locales in selector', () => {

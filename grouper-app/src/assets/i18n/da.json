@@ -2,10 +2,16 @@
   "app": {
     "title": "Grouper",
     "sessionsNav": "Sessioner",
-    "themeToggleAria": "Skift mørk tilstand",
+    "themeToggleAria": "Skift tema",
     "themeToggle": {
       "light": "Lys",
       "dark": "Mørk"
+    },
+    "theme": {
+      "light": "Lys",
+      "dark": "Mørk",
+      "solarized-light": "Solarized Lys",
+      "solarized-dark": "Solarized Mørk"
     },
     "languageLabel": "Sprog",
     "languages": {

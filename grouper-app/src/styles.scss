@@ -6,6 +6,20 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
+// Solarized palette — https://ethanschoonover.com/solarized/
+$sol-base03:  #002b36;
+$sol-base02:  #073642;
+$sol-base01:  #586e75;
+$sol-base00:  #657b83;
+$sol-base0:   #839496;
+$sol-base1:   #93a1a1;
+$sol-base2:   #eee8d5;
+$sol-base3:   #fdf6e3;
+$sol-blue:    #268bd2;
+$sol-cyan:    #2aa198;
+$sol-red:     #dc322f;
+$sol-violet:  #6c71c4;
+
 html {
   height: 100%;
   @include mat.theme((
@@ -24,6 +38,88 @@ html.theme-light {
 
 html.theme-dark {
   color-scheme: dark;
+}
+
+html.theme-solarized-light {
+  color-scheme: light;
+
+  --mat-sys-background: #{$sol-base3};
+  --mat-sys-on-background: #{$sol-base00};
+  --mat-sys-surface: #{$sol-base3};
+  --mat-sys-surface-dim: #{$sol-base2};
+  --mat-sys-surface-bright: #{$sol-base3};
+  --mat-sys-surface-container-lowest: #{$sol-base3};
+  --mat-sys-surface-container-low: #{$sol-base3};
+  --mat-sys-surface-container: #{$sol-base2};
+  --mat-sys-surface-container-high: #{$sol-base2};
+  --mat-sys-surface-container-highest: #{$sol-base2};
+  --mat-sys-surface-variant: #{$sol-base2};
+  --mat-sys-on-surface: #{$sol-base00};
+  --mat-sys-on-surface-variant: #{$sol-base01};
+  --mat-sys-inverse-surface: #{$sol-base02};
+  --mat-sys-inverse-on-surface: #{$sol-base2};
+  --mat-sys-primary: #{$sol-blue};
+  --mat-sys-on-primary: #{$sol-base3};
+  --mat-sys-primary-container: #{$sol-base2};
+  --mat-sys-on-primary-container: #{$sol-base01};
+  --mat-sys-inverse-primary: #{$sol-blue};
+  --mat-sys-secondary: #{$sol-cyan};
+  --mat-sys-on-secondary: #{$sol-base3};
+  --mat-sys-secondary-container: #{$sol-base2};
+  --mat-sys-on-secondary-container: #{$sol-base01};
+  --mat-sys-tertiary: #{$sol-violet};
+  --mat-sys-on-tertiary: #{$sol-base3};
+  --mat-sys-tertiary-container: #{$sol-base2};
+  --mat-sys-on-tertiary-container: #{$sol-base01};
+  --mat-sys-error: #{$sol-red};
+  --mat-sys-on-error: #{$sol-base3};
+  --mat-sys-error-container: #fce8e6;
+  --mat-sys-on-error-container: #{$sol-red};
+  --mat-sys-outline: #{$sol-base1};
+  --mat-sys-outline-variant: #{$sol-base2};
+  --mat-sys-scrim: #{$sol-base03};
+  --mat-sys-shadow: #{$sol-base03};
+}
+
+html.theme-solarized-dark {
+  color-scheme: dark;
+
+  --mat-sys-background: #{$sol-base03};
+  --mat-sys-on-background: #{$sol-base0};
+  --mat-sys-surface: #{$sol-base03};
+  --mat-sys-surface-dim: #{$sol-base03};
+  --mat-sys-surface-bright: #{$sol-base02};
+  --mat-sys-surface-container-lowest: #{$sol-base03};
+  --mat-sys-surface-container-low: #{$sol-base03};
+  --mat-sys-surface-container: #{$sol-base02};
+  --mat-sys-surface-container-high: #{$sol-base02};
+  --mat-sys-surface-container-highest: #{$sol-base01};
+  --mat-sys-surface-variant: #{$sol-base02};
+  --mat-sys-on-surface: #{$sol-base0};
+  --mat-sys-on-surface-variant: #{$sol-base1};
+  --mat-sys-inverse-surface: #{$sol-base2};
+  --mat-sys-inverse-on-surface: #{$sol-base02};
+  --mat-sys-primary: #{$sol-blue};
+  --mat-sys-on-primary: #{$sol-base03};
+  --mat-sys-primary-container: #{$sol-base02};
+  --mat-sys-on-primary-container: #{$sol-base1};
+  --mat-sys-inverse-primary: #{$sol-blue};
+  --mat-sys-secondary: #{$sol-cyan};
+  --mat-sys-on-secondary: #{$sol-base03};
+  --mat-sys-secondary-container: #{$sol-base02};
+  --mat-sys-on-secondary-container: #{$sol-base1};
+  --mat-sys-tertiary: #{$sol-violet};
+  --mat-sys-on-tertiary: #{$sol-base03};
+  --mat-sys-tertiary-container: #{$sol-base02};
+  --mat-sys-on-tertiary-container: #{$sol-base1};
+  --mat-sys-error: #f2b8b5;
+  --mat-sys-on-error: #{$sol-base03};
+  --mat-sys-error-container: #{$sol-red};
+  --mat-sys-on-error-container: #fce8e6;
+  --mat-sys-outline: #{$sol-base01};
+  --mat-sys-outline-variant: #{$sol-base02};
+  --mat-sys-scrim: #{$sol-base03};
+  --mat-sys-shadow: #{$sol-base03};
 }
 
 body {
