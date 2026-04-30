@@ -31,3 +31,9 @@ yarn-error.log*
 **/*.local.*
 **/[Tt]askfile.yml
 **/[Tt]askfile.yaml
+
+# Gas Town polecat system directories
+/.beads/
+/.claude/
+/.runtime/
+/CLAUDE.md
