@@ -37,3 +37,6 @@ yarn-error.log*
 /.claude/
 /.runtime/
 /CLAUDE.md
+
+# Git worktrees for agent tasks
+/.worktrees/
