@@ -7,7 +7,6 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import * as DKFDS from 'dkfds';
 import { App } from './app/app';
 import { I18nService } from './app/core/services/i18n.service';
-import { ThemeService } from './app/core/services/theme.service';
 import { routes } from './app/app.routes';
 
 bootstrapApplication(App, {
@@ -17,12 +16,6 @@ bootstrapApplication(App, {
     provideHttpClient(),
     provideRouter(routes),
     importProvidersFrom(MatSnackBarModule),
-    {
-      provide: APP_INITIALIZER,
-      multi: true,
-      deps: [ThemeService],
-      useFactory: (themeService: ThemeService) => () => themeService.init(),
-    },
     {
       provide: APP_INITIALIZER,
       multi: true,

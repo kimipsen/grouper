@@ -2,17 +2,6 @@
   "app": {
     "title": "Grouper",
     "sessionsNav": "Sessions",
-    "themeToggleAria": "Cycle theme",
-    "themeToggle": {
-      "light": "Light",
-      "dark": "Dark"
-    },
-    "theme": {
-      "light": "Light",
-      "dark": "Dark",
-      "solarized-light": "Solarized Light",
-      "solarized-dark": "Solarized Dark"
-    },
     "languageLabel": "Language",
     "languages": {
       "en": "English",

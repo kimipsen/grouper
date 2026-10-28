@@ -1,11 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, computed, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { I18nService, LocaleCode } from './core/services/i18n.service';
 import { TranslatePipe } from './core/pipes/translate.pipe';
-import { ThemeService } from './core/services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -15,23 +14,11 @@ import { ThemeService } from './core/services/theme.service';
   imports: [CommonModule, ReactiveFormsModule, RouterLink, RouterOutlet, TranslatePipe]
 })
 export class App {
-  readonly themeService = inject(ThemeService);
   readonly i18nService = inject(I18nService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   readonly localeControl = new FormControl<LocaleCode>('en', { nonNullable: true });
   readonly availableLocales = this.i18nService.getAvailableLocales();
-
-  readonly themeIcon = computed(() => {
-    switch (this.themeService.currentTheme()) {
-      case 'dark': return 'dark_mode';
-      case 'solarized-light': return 'wb_sunny';
-      case 'solarized-dark': return 'nights_stay';
-      default: return 'light_mode';
-    }
-  });
-
-  readonly themeLabel = computed(() => `app.theme.${this.themeService.currentTheme()}`);
 
   constructor() {
     this.localeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((locale) => {

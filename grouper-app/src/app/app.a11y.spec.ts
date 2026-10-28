@@ -3,14 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { App } from './app';
 import { I18nService } from './core/services/i18n.service';
-import { ThemeMode, ThemeService } from './core/services/theme.service';
-
-class MockThemeService {
-  currentTheme = () => 'light' as ThemeMode;
-  toggleTheme(): void {
-    return;
-  }
-}
 
 class MockI18nService {
   currentLocale = () => 'en' as const;
@@ -19,9 +11,6 @@ class MockI18nService {
     const labels: Record<string, string> = {
       'app.title': 'Grouper',
       'app.sessionsNav': 'Sessions',
-      'app.themeToggleAria': 'Toggle dark mode',
-      'app.themeToggle.light': 'Light',
-      'app.themeToggle.dark': 'Dark',
       'app.languageLabel': 'Language',
       'app.languages.en': 'English',
       'app.languages.da': 'Danish',
@@ -47,7 +36,6 @@ describe('App accessibility', () => {
     await TestBed.configureTestingModule({
       imports: [App, RouterTestingModule],
       providers: [
-        { provide: ThemeService, useClass: MockThemeService },
         { provide: I18nService, useClass: MockI18nService },
       ],
       schemas: [NO_ERRORS_SCHEMA],
