@@ -1,7 +1,9 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, signal, inject } from '@angular/core';
 
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark' | 'solarized-light' | 'solarized-dark';
+
+const THEME_CYCLE: ThemeMode[] = ['light', 'dark', 'solarized-light', 'solarized-dark'];
 
 @Injectable({
   providedIn: 'root',
@@ -30,21 +32,22 @@ export class ThemeService {
   }
 
   toggleTheme(): void {
-    const nextTheme: ThemeMode = this.themeSignal() === 'dark' ? 'light' : 'dark';
-    this.setTheme(nextTheme);
+    const currentIndex = THEME_CYCLE.indexOf(this.themeSignal());
+    const nextIndex = (currentIndex + 1) % THEME_CYCLE.length;
+    this.setTheme(THEME_CYCLE[nextIndex]);
   }
 
   private applyTheme(theme: ThemeMode): void {
     const root = this.document.documentElement;
-    root.classList.remove('theme-light', 'theme-dark');
+    root.classList.remove('theme-light', 'theme-dark', 'theme-solarized-light', 'theme-solarized-dark');
     root.classList.add(`theme-${theme}`);
-    root.style.colorScheme = theme;
+    root.style.colorScheme = theme.includes('dark') ? 'dark' : 'light';
   }
 
   private readStoredTheme(): ThemeMode | null {
     const storedTheme = localStorage.getItem(ThemeService.STORAGE_KEY);
-    if (storedTheme === 'light' || storedTheme === 'dark') {
-      return storedTheme;
+    if ((THEME_CYCLE as string[]).includes(storedTheme ?? '')) {
+      return storedTheme as ThemeMode;
     }
     return null;
   }

@@ -1,0 +1,6 @@
+node_modules
+grouper-app/node_modules
+grouper-app/dist
+.git
+.vscode
+.devcontainer
