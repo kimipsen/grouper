@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+		"dbaeumer.vscode-eslint",
+		"esbenp.prettier-vscode",
+		"openai.chatgpt",
+		"GitHub.copilot-chat",
+        "Anthropic.claude-code",
+		"github.vscode-github-actions",
+		"SonarSource.sonarlint-vscode"
+    ]
+}
