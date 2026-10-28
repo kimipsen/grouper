@@ -109,6 +109,7 @@
 
 ## Git
 - Every AI agent task must run on a dedicated branch (never commit directly to the default branch).
+- For feature and bug work, use a dedicated git worktree (see `.ai/skills/work-on-feature-or-bug/SKILL.md`).
 - Create a new branch before making changes, using a task-specific name.
 - Commit only files changed by the current agent task.
 - Do not include unrelated or pre-existing local changes in commits.
@@ -122,3 +123,4 @@
 ## Repository Skills
 - Codex skill: `.ai/skills/codex/SKILL.md`
 - GitHub Copilot skill: `.ai/skills/github-copilot/SKILL.md`
+- Work on a feature or bug (worktree -> PR): `.ai/skills/work-on-feature-or-bug/SKILL.md`
