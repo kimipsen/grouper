@@ -4,13 +4,6 @@
     <nav class="app-nav" [attr.aria-label]="'app.sessionsNav' | t">
       <a class="button button-secondary" routerLink="/sessions">{{ 'app.sessionsNav' | t }}</a>
     </nav>
-    <button
-      class="button button-secondary"
-      type="button"
-      (click)="themeService.toggleTheme()"
-      [attr.aria-label]="'app.themeToggleAria' | t">
-      {{ (themeService.currentTheme() === 'dark' ? 'app.themeToggle.dark' : 'app.themeToggle.light') | t }}
-    </button>
     <div class="form-group app-locale">
       <label class="form-label" for="locale-select">{{ 'app.languageLabel' | t }}</label>
       <select id="locale-select" class="form-select" [formControl]="localeControl">
