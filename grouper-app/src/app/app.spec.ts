@@ -89,7 +89,9 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     const themeService = TestBed.inject(ThemeService) as unknown as MockThemeService;
 
-    fixture.detectChanges();    const themeToggle = fixture.nativeElement.querySelector('button[aria-label="Toggle dark mode"]') as HTMLButtonElement;
+    fixture.detectChanges();
+
+    const themeToggle = fixture.nativeElement.querySelector('button[aria-label="Cycle theme"]') as HTMLButtonElement;
     themeToggle.click();
 
     expect(themeService.currentTheme()).toBe('dark');
@@ -101,8 +103,7 @@ describe('App', () => {
 
     fixture.detectChanges();
 
-    const buttons = fixture.nativeElement.querySelectorAll('button');
-    const themeButton = buttons[1] as HTMLButtonElement;
+    const themeButton = fixture.nativeElement.querySelector('button[aria-label="Cycle theme"]') as HTMLButtonElement;
 
     themeButton.click();
     expect(themeService.currentTheme()).toBe('dark');
