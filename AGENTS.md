@@ -122,3 +122,6 @@
 ## Repository Skills
 - Codex skill: `.ai/skills/codex/SKILL.md`
 - GitHub Copilot skill: `.ai/skills/github-copilot/SKILL.md`
+- Generate screenshots: `.ai/skills/generate-screenshots/SKILL.md`
+- Create documentation: `.ai/skills/create-documentation/SKILL.md`
+- Create tests (with mutation testing): `.ai/skills/create-tests/SKILL.md`
