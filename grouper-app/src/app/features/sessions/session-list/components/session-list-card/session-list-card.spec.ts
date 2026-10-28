@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { I18nService } from '../../../../../core/services/i18n.service';
 import { Session } from '../../../../../models/session.model';
+import { registerAppLocaleData } from '../../../../../core/register-locale-data';
 import { SessionListCard } from './session-list-card';
 
 class MockI18nService {
@@ -63,5 +64,24 @@ describe('SessionListCard', () => {
     expect(openSpy).toHaveBeenCalledTimes(1);
     expect(exportSpy).toHaveBeenCalledTimes(1);
     expect(removeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders date and action labels with the Danish date locale', async () => {
+    registerAppLocaleData();
+    await TestBed.configureTestingModule({
+      imports: [SessionListCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(SessionListCard);
+    fixture.componentRef.setInput('session', session);
+    fixture.componentRef.setInput('currentDateLocale', 'da-DK');
+    fixture.detectChanges();
+
+    const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
+    const infoItems: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('.info-item dt'));
+
+    expect(buttons.map((button) => button.textContent?.trim())).toEqual(['Open', 'Export', 'Delete']);
+    expect(infoItems[2].textContent?.trim()).toMatch(/\d{2}\.\d{2}\.\d{4}/);
   });
 });
