@@ -8,6 +8,9 @@ import * as DKFDS from 'dkfds';
 import { App } from './app/app';
 import { I18nService } from './app/core/services/i18n.service';
 import { routes } from './app/app.routes';
+import { registerAppLocaleData } from './app/core/register-locale-data';
+
+registerAppLocaleData();
 
 bootstrapApplication(App, {
   providers: [
