@@ -2,6 +2,10 @@
 
 Grouper is an Angular app for creating sessions and grouping people based on preferences.
 
+## Demo
+
+A live demo of the application is available at <https://grouper.kim-ipsen.workers.dev/>.
+
 ## Repository Layout
 
 - `grouper-app/`: main application (Angular 21, standalone components)
