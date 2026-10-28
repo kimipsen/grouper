@@ -8,7 +8,10 @@
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"ghcr.io/devcontainers/features/github-cli:1": {},
-		"ghcr.io/eitsupi/devcontainer-features/go-task:1": {}
+		"ghcr.io/eitsupi/devcontainer-features/go-task:1": {},
+		"ghcr.io/devcontainers-extra/features/claude-code:2": {},
+		"ghcr.io/devcontainers/features/copilot-cli:1": {},
+		"ghcr.io/devcontainers-extra/features/angular-cli:2": {}
 	},
 
 	// Persist Codex auth/session state in a local untracked folder.
@@ -33,16 +36,7 @@
 			// Set the default VS Code settings.json values on container create.
 			"settings": {
 				"terminal.integrated.shell.linux": "/bin/bash"
-			},
-			// Add the IDs of extensions you want installed when the container is created.
-			"extensions": [
-				"dbaeumer.vscode-eslint",
-				"esbenp.prettier-vscode",
-				"openai.chatgpt",
-				"GitHub.copilot-chat",
-				"github.vscode-github-actions",
-				"SonarSource.sonarlint-vscode"
-			]
+			}
 		}
 	}
 
