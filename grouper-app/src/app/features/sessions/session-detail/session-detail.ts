@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnInit, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnInit, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,7 +10,7 @@ import { PreferenceType } from '../../../models/preference.model';
 import { GenderMode, GroupingStrategy, GroupingSettings, GroupingResult, WeightedGroupingMode } from '../../../models/group.model';
 import { GroupingService, ValidationMessage } from '../../../core/services/grouping.service';
 import { SessionService } from '../../../core/services/session.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotificationService } from '../../../core/services/notification.service';
 import { I18nService } from '../../../core/services/i18n.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { SessionPeopleCard } from './components/session-people-card/session-people-card';
@@ -40,7 +40,7 @@ export class SessionDetail implements OnInit {
   private injector = inject(Injector);
   private sessionService = inject(SessionService);
   private groupingService = inject(GroupingService);
-  private snackBar = inject(MatSnackBar);
+  private notifications = inject(NotificationService);
   private i18n = inject(I18nService);
 
   session: Session | null = null;
@@ -60,6 +60,7 @@ export class SessionDetail implements OnInit {
 
   // Current grouping result
   currentResult: GroupingResult | null = null;
+  readonly groupingError = signal<ValidationMessage | null>(null);
 
   // Enum for template
   GroupingStrategy = GroupingStrategy;
@@ -133,14 +134,14 @@ export class SessionDetail implements OnInit {
     };
     this.sessionService.addPersonToSession(this.session.id, person);
     this.selectedPerson = person;
-    this.showSnack('sessionDetail.snackbar.personAdded', 2000);
+    this.notifications.success('sessionDetail.snackbar.personAdded');
   }
 
   removePerson(person: Person): void {
     if (!this.session) return;
 
     this.sessionService.removePersonFromSession(this.session.id, person.id);
-    this.showSnack('sessionDetail.snackbar.personRemoved', 2000);
+    this.notifications.success('sessionDetail.snackbar.personRemoved');
   }
 
   resetSession(): void {
@@ -148,7 +149,7 @@ export class SessionDetail implements OnInit {
 
     if (confirm(this.i18n.t('sessionDetail.confirm.resetSession', { name: this.session.name }))) {
       this.sessionService.resetSession(this.session.id);
-      this.showSnack('sessionDetail.snackbar.sessionReset', 2000);
+      this.notifications.success('sessionDetail.snackbar.sessionReset');
     }
   }
 
@@ -257,7 +258,7 @@ export class SessionDetail implements OnInit {
     if (!this.session) return;
 
     if (this.session.people.length === 0) {
-      this.showSnack('sessionDetail.snackbar.addPeopleFirst');
+      this.groupingError.set({ key: 'sessionDetail.snackbar.addPeopleFirst' });
       return;
     }
 
@@ -271,7 +272,7 @@ export class SessionDetail implements OnInit {
 
     const validation = this.groupingService.validateSettings(this.session.people.length, settings);
     if (!validation.isValid) {
-      this.showValidationMessage(validation.errors[0]);
+      this.groupingError.set(validation.errors[0]);
       return;
     }
 
@@ -283,10 +284,10 @@ export class SessionDetail implements OnInit {
       );
 
       this.sessionService.addGroupingResult(this.session.id, this.currentResult);
-      this.showSnack('sessionDetail.snackbar.groupsGenerated', 2000);
+      this.groupingError.set(null);
+      this.notifications.success('sessionDetail.snackbar.groupsGenerated');
     } catch (error: unknown) {
-      const message = this.getGroupingErrorMessage(error);
-      this.snackBar.open(message, this.i18n.t('common.close'), { duration: 3000 });
+      this.groupingError.set(this.getGroupingErrorMessage(error));
     }
   }
 
@@ -298,25 +299,15 @@ export class SessionDetail implements OnInit {
     this.router.navigate(['/sessions']);
   }
 
-  private showSnack(messageKey: string, duration = 3000): void {
-    this.snackBar.open(this.i18n.t(messageKey), this.i18n.t('common.close'), { duration });
-  }
-
-  private showValidationMessage(message: ValidationMessage): void {
-    this.snackBar.open(this.i18n.t(message.key, message.params), this.i18n.t('common.close'), {
-      duration: 3000
-    });
-  }
-
-  private getGroupingErrorMessage(error: unknown): string {
+  private getGroupingErrorMessage(error: unknown): ValidationMessage {
     if (typeof error === 'object' && error !== null && 'message' in error) {
       const message = (error as { message?: unknown }).message;
       if (typeof message === 'string') {
         const params = (error as { params?: Record<string, string | number> }).params;
-        return this.i18n.t(message, params);
+        return { key: message, params };
       }
     }
-    return this.i18n.t('sessionDetail.snackbar.failedGenerateGroups');
+    return { key: 'sessionDetail.snackbar.failedGenerateGroups' };
   }
 
   private getPersonById(personId: string): Person | null {

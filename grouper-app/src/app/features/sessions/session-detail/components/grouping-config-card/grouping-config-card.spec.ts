@@ -5,8 +5,12 @@ import { GroupingStrategy } from '../../../../../models/group.model';
 import { GroupingConfigCard } from './grouping-config-card';
 
 class MockI18nService {
-  t(key: string): string {
+  t(key: string, params?: Record<string, string | number>): string {
+    if (key === 'grouping.warnings.groupSizeLargerThanPeople') {
+      return `Group size ${params?.['groupSize']} is larger than ${params?.['peopleCount']} people`;
+    }
     const labels: Record<string, string> = {
+      'notifications.error': 'Error:',
       'sessionDetail.createGroupsTitle': 'Create Groups',
       'sessionDetail.genderMode.label': 'Gender Mode',
       'sessionDetail.genderMode.mixed': 'Mixed',
@@ -68,5 +72,41 @@ describe('GroupingConfigCard', () => {
     expect(generateSpy).toHaveBeenCalledTimes(1);
     expect(resetSpy).toHaveBeenCalledTimes(1);
     expect(toggleSpy).toHaveBeenCalledWith('__gender__');
+  });
+
+  it('shows the grouping error as a DKFDS error alert below the heading', async () => {
+    await TestBed.configureTestingModule({
+      imports: [GroupingConfigCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(GroupingConfigCard);
+    fixture.componentRef.setInput('groupingStrategyControl', new FormControl(GroupingStrategy.RANDOM, { nonNullable: true }));
+    fixture.componentRef.setInput('groupSizeControl', new FormControl(3, { nonNullable: true }));
+    fixture.componentRef.setInput('allowPartialGroupsControl', new FormControl(true, { nonNullable: true }));
+    fixture.componentRef.setInput('genderModeControl', new FormControl('mixed', { nonNullable: true }));
+    fixture.componentRef.setInput('preferenceWantWithControl', new FormControl(2, { nonNullable: true }));
+    fixture.componentRef.setInput('preferenceAvoidControl', new FormControl(-2, { nonNullable: true }));
+    fixture.componentRef.setInput('customWeights', []);
+    fixture.componentRef.setInput('selectedWeightIds', []);
+    fixture.componentRef.setInput('genderWeightId', '__gender__');
+    fixture.componentRef.setInput('peopleCount', 2);
+    fixture.detectChanges();
+
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelector('.alert')).toBeNull();
+
+    fixture.componentRef.setInput('error', {
+      key: 'grouping.warnings.groupSizeLargerThanPeople',
+      params: { groupSize: 3, peopleCount: 2 },
+    });
+    fixture.detectChanges();
+
+    const alert = root.querySelector('.alert.alert-error');
+    expect(alert?.getAttribute('role')).toBe('alert');
+    expect(alert?.previousElementSibling?.classList).toContain('card-heading');
+    expect(alert?.querySelector('.alert-heading')?.textContent?.trim()).toBe(
+      'Error: Group size 3 is larger than 2 people',
+    );
   });
 });

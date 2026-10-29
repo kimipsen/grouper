@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { GenderMode, GroupingStrategy } from '../../../../../models/group.model';
 import { CustomWeightDefinition } from '../../../../../models/session.model';
+import { ValidationMessage } from '../../../../../core/services/grouping.service';
 import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
@@ -22,6 +23,7 @@ export class GroupingConfigCard {
   readonly selectedWeightIds = input.required<string[]>();
   readonly genderWeightId = input.required<string>();
   readonly peopleCount = input.required<number>();
+  readonly error = input<ValidationMessage | null>(null);
 
   readonly generateGroups = output<void>();
   readonly resetSession = output<void>();

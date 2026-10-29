@@ -43,6 +43,7 @@
           [selectedWeightIds]="selectedWeightIds"
           [genderWeightId]="genderWeightId"
           [peopleCount]="session.people.length"
+          [error]="groupingError()"
           (generateGroups)="generateGroups()"
           (resetSession)="resetSession()"
           (toggleWeightSelection)="toggleWeightSelection($event)" />

@@ -5,13 +5,14 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { I18nService, LocaleCode } from './core/services/i18n.service';
 import { TranslatePipe } from './core/pipes/translate.pipe';
+import { ToastContainer } from './core/components/toast-container/toast-container';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, RouterOutlet, TranslatePipe]
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, RouterOutlet, TranslatePipe, ToastContainer]
 })
 export class App {
   readonly i18nService = inject(I18nService);

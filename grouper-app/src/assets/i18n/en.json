@@ -9,6 +9,12 @@
       "da": "Danish"
     }
   },
+  "notifications": {
+    "success": "Success:",
+    "info": "Information:",
+    "warning": "Warning:",
+    "error": "Error:"
+  },
   "common": {
     "close": "Close",
     "open": "Open",

@@ -1,7 +1,6 @@
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { EMPTY } from 'rxjs';
 import { I18nService } from '../../../core/services/i18n.service';
 import { ExportImportService } from '../../../core/services/export-import.service';
@@ -45,7 +44,6 @@ describe('SessionList accessibility', () => {
       providers: [
         { provide: SessionService, useValue: { sessions } },
         { provide: ExportImportService, useValue: {} },
-        { provide: MatSnackBar, useValue: { open: vi.fn() } },
         { provide: Router, useValue: { navigate: vi.fn(), events: EMPTY } },
         { provide: I18nService, useClass: MockI18nService },
       ],
