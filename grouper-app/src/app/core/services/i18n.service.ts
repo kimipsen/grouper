@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, signal, inject } from '@angular/core';
+import { DOCUMENT, Injectable, signal, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 export type LocaleCode = 'en' | 'da';
@@ -13,6 +13,7 @@ export interface TranslationDictionary {
 })
 export class I18nService {
   private readonly http = inject(HttpClient);
+  private readonly document = inject(DOCUMENT);
 
   private static readonly STORAGE_KEY = 'grouper.locale';
 
@@ -55,6 +56,7 @@ export class I18nService {
 
     this.translations = dictionary;
     this.localeSignal.set(normalizedLocale);
+    this.document.documentElement.lang = normalizedLocale;
 
     if (persist) {
       localStorage.setItem(I18nService.STORAGE_KEY, normalizedLocale);

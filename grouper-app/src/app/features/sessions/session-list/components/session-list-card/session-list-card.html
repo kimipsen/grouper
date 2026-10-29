@@ -1,26 +1,20 @@
-<article class="card session-card" (click)="open.emit()" (keydown.enter)="open.emit()" tabindex="0" role="button">
+<article class="card session-card">
   <div class="card-content">
     <h2 class="card-heading">{{ session().name }}</h2>
     @if (session().description) {
       <p class="card-subheading">{{ session().description }}</p>
     }
 
-    <dl class="session-info">
-      <div class="info-item">
-        <dt>{{ 'sessionList.peopleCount' | t:{ count: session().people.length } }}</dt>
-      </div>
-      <div class="info-item">
-        <dt>{{ 'sessionList.groupingsCount' | t:{ count: session().groupingHistory.length } }}</dt>
-      </div>
-      <div class="info-item">
-        <dt>{{ session().updatedAt | date:'short':undefined:currentDateLocale() }}</dt>
-      </div>
-    </dl>
+    <ul class="session-info nobullet-list">
+      <li class="info-item">{{ 'sessionList.peopleCount' | t:{ count: session().people.length } }}</li>
+      <li class="info-item">{{ 'sessionList.groupingsCount' | t:{ count: session().groupingHistory.length } }}</li>
+      <li class="info-item">{{ session().updatedAt | date:'short':undefined:currentDateLocale() }}</li>
+    </ul>
 
     <div class="card-actions button-group">
-      <button class="button button-secondary" type="button">{{ 'common.open' | t }}</button>
-      <button class="button button-secondary" type="button" (click)="onExport($event)">{{ 'common.export' | t }}</button>
-      <button class="button button-warning" type="button" (click)="onDelete($event)">{{ 'common.delete' | t }}</button>
+      <button class="button button-secondary" type="button" (click)="open.emit()">{{ 'common.open' | t }}</button>
+      <button class="button button-secondary" type="button" (click)="export.emit()">{{ 'common.export' | t }}</button>
+      <button class="button button-warning" type="button" (click)="remove.emit()">{{ 'common.delete' | t }}</button>
     </div>
   </div>
 </article>

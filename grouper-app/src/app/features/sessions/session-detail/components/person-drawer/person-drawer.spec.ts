@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { I18nService } from '../../../../../core/services/i18n.service';
 import { Person } from '../../../../../models/person.model';
+import { getAxeViolations } from '../../../../../../testing/axe';
 import { PersonDrawer } from './person-drawer';
 
 class MockI18nService {
@@ -20,6 +21,7 @@ class MockI18nService {
       'sessionDetail.preferenceWantWith': 'Want with',
       'sessionDetail.preferenceAvoid': 'Avoid',
       'sessionDetail.customWeights.empty': 'No weights',
+      'sessionDetail.customWeights.weightLabel': 'Weight',
     };
     return labels[key] ?? key;
   }
@@ -93,5 +95,48 @@ describe('PersonDrawer', () => {
     expect(genderSpy).toHaveBeenCalledWith('male');
     expect(preferenceSpy).toHaveBeenCalledWith({ targetPersonId: 'p2', value: 'avoid' });
     expect(weightSpy).toHaveBeenCalledWith({ weightId: 'w1', value: 9 });
+  });
+
+  it('labels every preference select and weight input and has no axe violations', async () => {
+    await TestBed.configureTestingModule({
+      imports: [PersonDrawer],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(PersonDrawer);
+    fixture.componentRef.setInput('selectedPerson', selectedPerson);
+    fixture.componentRef.setInput('people', [selectedPerson, otherPerson]);
+    fixture.componentRef.setInput('customWeights', [{ id: 'w1', name: 'Karakter', mode: 'balance' }]);
+    fixture.componentRef.setInput('preferences', {});
+    fixture.detectChanges();
+
+    const root: HTMLElement = fixture.nativeElement;
+    const preferenceSelect = root.querySelector<HTMLSelectElement>('.preference-select');
+    const weightInput = root.querySelector<HTMLInputElement>('.weight-input');
+
+    expect(preferenceSelect?.id).toBe('person-preference-p2');
+    expect(root.querySelector(`label[for="person-preference-p2"]`)?.textContent?.trim()).toBe('Bob');
+    expect(weightInput?.id).toBe('person-weight-w1');
+    expect(root.querySelector(`label[for="person-weight-w1"]`)?.textContent?.trim()).toBe('Karakter');
+    expect(await getAxeViolations(root)).toEqual([]);
+  });
+
+  it('falls back to readable labels for unnamed people and weights', async () => {
+    await TestBed.configureTestingModule({
+      imports: [PersonDrawer],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(PersonDrawer);
+    fixture.componentRef.setInput('selectedPerson', selectedPerson);
+    fixture.componentRef.setInput('people', [selectedPerson, { ...otherPerson, name: '' }]);
+    fixture.componentRef.setInput('customWeights', [{ id: 'w1', name: '', mode: 'balance' }]);
+    fixture.componentRef.setInput('preferences', {});
+    fixture.detectChanges();
+
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelector('label[for="person-preference-p2"]')?.textContent?.trim()).toBe('Unnamed person');
+    expect(root.querySelector('label[for="person-weight-w1"]')?.textContent?.trim()).toBe('Weight');
+    expect(await getAxeViolations(root)).toEqual([]);
   });
 });

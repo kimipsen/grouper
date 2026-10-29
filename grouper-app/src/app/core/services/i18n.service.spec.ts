@@ -124,4 +124,19 @@ describe('I18nService', () => {
 
     expect(service.getCurrentDateLocale()).toBe('da-DK');
   });
+
+  it('sets the document language to the active locale', async () => {
+    document.documentElement.lang = 'en';
+    const daPromise = service.setLocale('da');
+    httpMock.expectOne('assets/i18n/da.json').flush({});
+    await daPromise;
+
+    expect(document.documentElement.lang).toBe('da');
+
+    const enPromise = service.setLocale('en');
+    httpMock.expectOne('assets/i18n/en.json').flush({});
+    await enPromise;
+
+    expect(document.documentElement.lang).toBe('en');
+  });
 });

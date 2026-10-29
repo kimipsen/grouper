@@ -1,17 +1,6 @@
-.session-card {
-  cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover,
-  &:focus-visible {
-    border-color: #1f3b82;
-    box-shadow: 0 0 0 3px #e3ecff;
-    outline: none;
-  }
-}
-
 .session-info {
   margin: 0;
+  padding: 0;
   display: grid;
   gap: 0.5rem;
 }

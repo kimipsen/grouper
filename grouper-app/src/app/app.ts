@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, effect, inject, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink, RouterOutlet } from '@angular/router';
@@ -19,6 +19,7 @@ export class App {
   private readonly destroyRef = inject(DestroyRef);
   readonly localeControl = new FormControl<LocaleCode>('en', { nonNullable: true });
   readonly availableLocales = this.i18nService.getAvailableLocales();
+  private readonly main = viewChild.required<ElementRef<HTMLElement>>('main');
 
   constructor() {
     this.localeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((locale) => {
@@ -31,6 +32,12 @@ export class App {
         this.localeControl.setValue(currentLocale, { emitEvent: false });
       }
     });
+  }
+
+  // Handled in code because a plain "#main-content" href resolves against <base href> and would navigate.
+  skipToMain(event: Event): void {
+    event.preventDefault();
+    this.main().nativeElement.focus();
   }
 
   onRouteActivate(): void {

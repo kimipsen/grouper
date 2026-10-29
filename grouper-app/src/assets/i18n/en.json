@@ -3,6 +3,7 @@
     "title": "Grouper",
     "sessionsNav": "Sessions",
     "languageLabel": "Language",
+    "skipToContent": "Skip to main content",
     "languages": {
       "en": "English",
       "da": "Danish"

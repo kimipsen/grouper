@@ -17,14 +17,4 @@ export class SessionListCard {
   readonly open = output<void>();
   readonly remove = output<void>();
   readonly export = output<void>();
-
-  onDelete(event: Event): void {
-    event.stopPropagation();
-    this.remove.emit();
-  }
-
-  onExport(event: Event): void {
-    event.stopPropagation();
-    this.export.emit();
-  }
 }

@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { I18nService } from '../../../../../core/services/i18n.service';
 import { Session } from '../../../../../models/session.model';
 import { registerAppLocaleData } from '../../../../../core/register-locale-data';
+import { getAxeViolations } from '../../../../../../testing/axe';
 import { SessionListCard } from './session-list-card';
 
 class MockI18nService {
@@ -54,10 +55,9 @@ describe('SessionListCard', () => {
 
     fixture.detectChanges();
 
-    const card = fixture.nativeElement.querySelector('.session-card');
     const buttons = fixture.nativeElement.querySelectorAll('button');
 
-    card.click();
+    buttons[0].click();
     buttons[1].click();
     buttons[2].click();
 
@@ -79,9 +79,50 @@ describe('SessionListCard', () => {
     fixture.detectChanges();
 
     const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
-    const infoItems: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('.info-item dt'));
+    const infoItems: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('.info-item'));
 
     expect(buttons.map((button) => button.textContent?.trim())).toEqual(['Open', 'Export', 'Delete']);
     expect(infoItems[2].textContent?.trim()).toMatch(/\d{2}\.\d{2}\.\d{4}/);
+  });
+
+  it('has no axe violations and no clickable card wrapping the action buttons', async () => {
+    await TestBed.configureTestingModule({
+      imports: [SessionListCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(SessionListCard);
+    fixture.componentRef.setInput('session', session);
+    fixture.componentRef.setInput('currentDateLocale', 'en-US');
+    fixture.detectChanges();
+
+    const card: HTMLElement = fixture.nativeElement.querySelector('.session-card');
+    expect(card.hasAttribute('role')).toBe(false);
+    expect(card.hasAttribute('tabindex')).toBe(false);
+    expect(await getAxeViolations(fixture.nativeElement)).toEqual([]);
+  });
+
+  it('does not open the session when the card body is clicked', async () => {
+    await TestBed.configureTestingModule({
+      imports: [SessionListCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(SessionListCard);
+    fixture.componentRef.setInput('session', session);
+    fixture.componentRef.setInput('currentDateLocale', 'en-US');
+    const openSpy = vi.fn();
+    const exportSpy = vi.fn();
+    const removeSpy = vi.fn();
+    fixture.componentInstance.open.subscribe(openSpy);
+    fixture.componentInstance.export.subscribe(exportSpy);
+    fixture.componentInstance.remove.subscribe(removeSpy);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.session-card').click();
+
+    expect(openSpy).not.toHaveBeenCalled();
+    expect(exportSpy).not.toHaveBeenCalled();
+    expect(removeSpy).not.toHaveBeenCalled();
   });
 });
