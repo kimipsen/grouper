@@ -42,25 +42,15 @@ describe('AppTitleStrategy', () => {
     title = TestBed.inject(Title);
   });
 
-  it('translates static route titles and appends the app title', async () => {
+  it.each([
+    { scenario: 'translates static route titles and appends the app title', url: '/sessions', expected: 'Sessions – Grouper' },
+    { scenario: 'uses resolved titles as-is without translating them', url: '/session/s1', expected: 'sessionList.title – Grouper' },
+    { scenario: 'falls back to the app title when the route has no title', url: '/untitled', expected: 'Grouper' },
+  ])('$scenario', async ({ url, expected }) => {
     const harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl('/sessions');
+    await harness.navigateByUrl(url);
 
-    expect(title.getTitle()).toBe('Sessions – Grouper');
-  });
-
-  it('uses resolved titles as-is without translating them', async () => {
-    const harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl('/session/s1');
-
-    expect(title.getTitle()).toBe('sessionList.title – Grouper');
-  });
-
-  it('falls back to the app title when the route has no title', async () => {
-    const harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl('/untitled');
-
-    expect(title.getTitle()).toBe('Grouper');
+    expect(title.getTitle()).toBe(expected);
   });
 
   it('re-translates the current title when the locale changes', async () => {
