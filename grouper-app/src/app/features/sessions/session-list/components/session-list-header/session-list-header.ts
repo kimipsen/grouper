@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, output, viewChild } from '@angular/core';
 import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
@@ -11,4 +11,10 @@ import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 export class SessionListHeader {
   readonly create = output<void>();
   readonly import = output<void>();
+
+  private readonly newSessionButton = viewChild.required<ElementRef<HTMLButtonElement>>('newSessionButton');
+
+  focusNewSession(): void {
+    this.newSessionButton().nativeElement.focus();
+  }
 }

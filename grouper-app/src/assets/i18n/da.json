@@ -21,7 +21,8 @@
     "delete": "Slet",
     "export": "Eksporter",
     "import": "Importer",
-    "back": "Tilbage"
+    "back": "Tilbage",
+    "cancel": "Annuller"
   },
   "sessionList": {
     "title": "Sessioner",
@@ -39,11 +40,16 @@
       "imported": "Session importeret",
       "importFailed": "Kunne ikke importere session: Ugyldig fil"
     },
-    "prompt": {
-      "sessionName": "Indtast sessionsnavn:"
-    },
     "confirm": {
-      "deleteSession": "Er du sikker på, at du vil slette sessionen \"{{name}}\"?"
+      "deleteSession": "\"{{name}}\" og alle dens personer, vægte og grupperinger slettes. Det kan ikke fortrydes.",
+      "deleteSessionTitle": "Slet session?",
+      "deleteSessionAction": "Slet session"
+    },
+    "createForm": {
+      "title": "Ny session",
+      "nameLabel": "Sessionens navn",
+      "nameRequired": "Indtast et navn til sessionen",
+      "submit": "Opret session"
     }
   },
   "sessionDetail": {
@@ -78,7 +84,8 @@
       "modeMatchSimilar": "Match lignende i grupper",
       "genderWeight": "Balancer køn",
       "editPerson": "Rediger vægte",
-      "personWeightsTitle": "Vægte for person"
+      "personWeightsTitle": "Vægte for person",
+      "nameRequired": "Indtast et navn til vægten"
     },
     "preferencesTitle": "Præferencer",
     "preferenceNone": "-",
@@ -109,7 +116,15 @@
     },
     "confirm": {
       "removePerson": "Fjern {{name}}?",
-      "resetSession": "Nulstil sessionen \"{{name}}\"? Dette fjerner alle personer, præferencer og gruppehistorik."
+      "resetSession": "Alle personer, præferencer, brugerdefinerede vægte og grupperingshistorik i \"{{name}}\" slettes. Det kan ikke fortrydes.",
+      "resetSessionTitle": "Nulstil session?",
+      "resetSessionAction": "Nulstil session",
+      "deletePersonTitle": "Slet person?",
+      "deletePerson": "{{name}} og personens præferencer fjernes fra sessionen.",
+      "deletePersonAction": "Slet person",
+      "deleteWeightTitle": "Slet vægt?",
+      "deleteWeight": "Vægten \"{{name}}\" og alle personers værdier for den slettes.",
+      "deleteWeightAction": "Slet vægt"
     },
     "snackbar": {
       "personAdded": "Person tilføjet",
@@ -119,7 +134,9 @@
       "sessionReset": "Session nulstillet",
       "failedGenerateGroups": "Kunne ikke generere grupper"
     },
-    "resetSession": "Nulstil session"
+    "resetSession": "Nulstil session",
+    "errorSummaryTitle": "Der er et problem",
+    "resetSessionHelp": "Fjerner alle personer, vægte og grupperinger fra sessionen."
   },
   "grouping": {
     "errors": {

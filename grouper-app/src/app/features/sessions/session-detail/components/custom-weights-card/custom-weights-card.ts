@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { WeightedGroupingMode } from '../../../../../models/group.model';
 import { CustomWeightDefinition } from '../../../../../models/session.model';
@@ -20,4 +20,18 @@ export class CustomWeightsCard {
   readonly renameWeight = output<{ weight: CustomWeightDefinition; name: string }>();
   readonly updateWeightMode = output<{ weight: CustomWeightDefinition; mode: WeightedGroupingMode }>();
   readonly removeWeight = output<CustomWeightDefinition>();
+
+  readonly showNameError = signal(false);
+  private readonly newWeightNameInput = viewChild.required<ElementRef<HTMLInputElement>>('newWeightNameInput');
+
+  onAddWeight(): void {
+    if (!this.newWeightNameControl().value.trim()) {
+      this.showNameError.set(true);
+      this.newWeightNameInput().nativeElement.focus();
+      return;
+    }
+
+    this.showNameError.set(false);
+    this.addWeight.emit();
+  }
 }

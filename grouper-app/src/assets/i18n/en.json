@@ -21,7 +21,8 @@
     "delete": "Delete",
     "export": "Export",
     "import": "Import",
-    "back": "Back"
+    "back": "Back",
+    "cancel": "Cancel"
   },
   "sessionList": {
     "title": "Sessions",
@@ -39,11 +40,16 @@
       "imported": "Session imported successfully",
       "importFailed": "Failed to import session: Invalid file"
     },
-    "prompt": {
-      "sessionName": "Enter session name:"
-    },
     "confirm": {
-      "deleteSession": "Are you sure you want to delete session \"{{name}}\"?"
+      "deleteSession": "\"{{name}}\" and all its people, weights and groupings will be deleted. This cannot be undone.",
+      "deleteSessionTitle": "Delete session?",
+      "deleteSessionAction": "Delete session"
+    },
+    "createForm": {
+      "title": "New session",
+      "nameLabel": "Session name",
+      "nameRequired": "Enter a name for the session",
+      "submit": "Create session"
     }
   },
   "sessionDetail": {
@@ -78,7 +84,8 @@
       "modeMatchSimilar": "Match similar in groups",
       "genderWeight": "Balance gender",
       "editPerson": "Edit weights",
-      "personWeightsTitle": "Weights for person"
+      "personWeightsTitle": "Weights for person",
+      "nameRequired": "Enter a name for the weight"
     },
     "preferencesTitle": "Preferences",
     "preferenceNone": "-",
@@ -109,7 +116,15 @@
     },
     "confirm": {
       "removePerson": "Remove {{name}}?",
-      "resetSession": "Reset session \"{{name}}\"? This will remove all people, preferences, and group history."
+      "resetSession": "All people, preferences, custom weights and grouping history in \"{{name}}\" will be deleted. This cannot be undone.",
+      "resetSessionTitle": "Reset session?",
+      "resetSessionAction": "Reset session",
+      "deletePersonTitle": "Delete person?",
+      "deletePerson": "{{name}} and their preferences will be removed from this session.",
+      "deletePersonAction": "Delete person",
+      "deleteWeightTitle": "Delete weight?",
+      "deleteWeight": "The weight \"{{name}}\" and everyone's values for it will be deleted.",
+      "deleteWeightAction": "Delete weight"
     },
     "snackbar": {
       "personAdded": "Person added",
@@ -119,7 +134,9 @@
       "sessionReset": "Session reset",
       "failedGenerateGroups": "Failed to generate groups"
     },
-    "resetSession": "Reset Session"
+    "resetSession": "Reset Session",
+    "errorSummaryTitle": "There is a problem",
+    "resetSessionHelp": "Removes all people, weights and groupings from this session."
   },
   "grouping": {
     "errors": {

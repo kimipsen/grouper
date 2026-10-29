@@ -1,7 +1,7 @@
 <div class="page-header">
   <h1>{{ 'sessionList.title' | t }}</h1>
   <div class="actions">
-    <button class="button button-primary" type="button" (click)="create.emit()">
+    <button #newSessionButton class="button button-primary" type="button" (click)="create.emit()">
       {{ 'sessionList.newSession' | t }}
     </button>
     <button class="button button-secondary" type="button" (click)="import.emit()">

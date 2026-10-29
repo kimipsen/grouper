@@ -3,9 +3,20 @@
     <h2 class="card-heading">{{ 'sessionDetail.customWeights.title' | t }}</h2>
 
     <div class="weight-editor">
-      <div class="form-group">
+      <div class="form-group" [class.form-error]="showNameError()">
         <label class="form-label" for="new-weight-name">{{ 'sessionDetail.customWeights.nameLabel' | t }}</label>
-        <input id="new-weight-name" class="form-input" [formControl]="newWeightNameControl()" />
+        @if (showNameError()) {
+          <span id="new-weight-name-error" class="form-error-message">
+            <span class="sr-only">{{ 'notifications.error' | t }} </span>{{ 'sessionDetail.customWeights.nameRequired' | t }}
+          </span>
+        }
+        <input
+          #newWeightNameInput
+          id="new-weight-name"
+          class="form-input"
+          [formControl]="newWeightNameControl()"
+          [attr.aria-invalid]="showNameError() ? 'true' : null"
+          [attr.aria-describedby]="showNameError() ? 'new-weight-name-error' : null" />
       </div>
       <div class="form-group">
         <label class="form-label" for="new-weight-mode">{{ 'sessionDetail.customWeights.modeLabel' | t }}</label>
@@ -14,7 +25,7 @@
           <option value="match-similar">{{ 'sessionDetail.customWeights.modeMatchSimilar' | t }}</option>
         </select>
       </div>
-      <button class="button button-secondary" type="button" (click)="addWeight.emit()">
+      <button class="button button-secondary" type="button" (click)="onAddWeight()">
         {{ 'sessionDetail.customWeights.add' | t }}
       </button>
     </div>
