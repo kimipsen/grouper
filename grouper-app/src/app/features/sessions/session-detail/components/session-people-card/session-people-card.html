@@ -2,25 +2,27 @@
   <div class="card-content">
     <h2 class="card-heading">{{ 'sessionDetail.peopleTitle' | t:{ count: people().length } }}</h2>
 
-    <div class="people-list">
-      @for (person of people(); track person.id) {
-        <div class="person-item">
-          <button class="person-name" type="button" (click)="openPerson.emit(person)">
-            {{ person.name || ('sessionDetail.unnamedPerson' | t) }}
-          </button>
-          <button class="button button-warning" type="button" (click)="removePerson.emit(person)">
-            {{ 'common.delete' | t }}
-          </button>
-        </div>
-      }
-      @if (people().length === 0) {
-        <div class="empty-state">
-          <p>{{ 'sessionDetail.noPeople' | t }}</p>
-        </div>
-      }
-    </div>
+    @if (people().length === 0) {
+      <p>{{ 'sessionDetail.noPeople' | t }}</p>
+    } @else {
+      <ul class="people-list nobullet-list">
+        @for (person of people(); track person.id) {
+          @let displayName = person.name || ('sessionDetail.unnamedPerson' | t);
+          <li class="person-item">
+            <button class="function-link person-name" type="button" (click)="openPerson.emit(person)">
+              {{ displayName }}
+            </button>
+            <button class="function-link person-delete" type="button" (click)="removePerson.emit(person)">
+              <svg class="icon-svg" focusable="false" aria-hidden="true">
+                <use href="assets/dkfds/dist/img/all-svg-icons.svg#delete"></use>
+              </svg>{{ 'common.delete' | t }}<span class="sr-only"> {{ displayName }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
 
-    <button id="add-person-button" class="button button-primary add-button" type="button" (click)="addPerson.emit()">
+    <button id="add-person-button" class="button button-secondary add-button" type="button" (click)="addPerson.emit()">
       {{ 'sessionDetail.addPerson' | t }}
     </button>
   </div>

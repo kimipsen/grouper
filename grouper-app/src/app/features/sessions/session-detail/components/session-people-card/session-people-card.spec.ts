@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { I18nService } from '../../../../../core/services/i18n.service';
 import { Person } from '../../../../../models/person.model';
+import { getAxeViolations } from '../../../../../../testing/axe';
 import { SessionPeopleCard } from './session-people-card';
 
 class MockI18nService {
@@ -45,7 +46,7 @@ describe('SessionPeopleCard', () => {
     fixture.detectChanges();
 
     const nameButtons = fixture.nativeElement.querySelectorAll('.person-name');
-    const removeButtons = fixture.nativeElement.querySelectorAll('.person-item .button-warning');
+    const removeButtons = fixture.nativeElement.querySelectorAll('.person-item .person-delete');
 
     nameButtons[0].click();
     removeButtons[0].click();
@@ -55,5 +56,44 @@ describe('SessionPeopleCard', () => {
     expect(openSpy).toHaveBeenCalledWith(people[0]);
     expect(removeSpy).toHaveBeenCalledWith(people[0]);
     expect(addSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses DKFDS function links with a per-person accessible name and a secondary add button', async () => {
+    await TestBed.configureTestingModule({
+      imports: [SessionPeopleCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(SessionPeopleCard);
+    fixture.componentRef.setInput('people', [...people, { id: 'p4', name: '', gender: 'unspecified', createdAt: new Date() }]);
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+
+    const deletes = Array.from(root.querySelectorAll<HTMLButtonElement>('.person-delete'));
+    expect(deletes.map((button) => button.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+      'Delete Alice',
+      'Delete Bob',
+      'Delete Taylor',
+      'Delete Unnamed person',
+    ]);
+    expect(deletes.every((button) => button.classList.contains('function-link'))).toBe(true);
+    expect(root.querySelector('.button-warning')).toBeNull();
+    expect(root.querySelector('#add-person-button')?.className).toContain('button-secondary');
+    expect(root.querySelector('.button-primary')).toBeNull();
+    expect(await getAxeViolations(root)).toEqual([]);
+  });
+
+  it('shows the empty message as plain text without a list', async () => {
+    await TestBed.configureTestingModule({
+      imports: [SessionPeopleCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(SessionPeopleCard);
+    fixture.componentRef.setInput('people', []);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('ul')).toBeNull();
+    expect(fixture.nativeElement.querySelector('p')?.textContent?.trim()).toBe('No people');
   });
 });

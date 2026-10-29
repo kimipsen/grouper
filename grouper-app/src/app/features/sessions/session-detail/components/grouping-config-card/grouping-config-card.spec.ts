@@ -202,5 +202,28 @@ describe('GroupingConfigCard', () => {
       expect(root.querySelector('.form-error')).toBeNull();
       expect(root.querySelector('#group-size')?.hasAttribute('aria-invalid')).toBe(false);
     });
+
+    it('uses DKFDS radio groups bound to the gender mode and strategy controls', async () => {
+      const { fixture, root } = await setup(GroupingStrategy.RANDOM);
+      const strategy = fixture.componentInstance.groupingStrategyControl();
+      const genderMode = fixture.componentInstance.genderModeControl();
+
+      expect(root.querySelector('select')).toBeNull();
+      expect(Array.from(root.querySelectorAll('fieldset > legend')).map((legend) => legend.textContent?.trim())).toEqual([
+        'Gender Mode',
+        'Strategy',
+      ]);
+      expect(root.querySelector<HTMLInputElement>('#grouping-strategy-RANDOM')?.checked).toBe(true);
+      expect(root.querySelector<HTMLInputElement>('#gender-mode-mixed')?.checked).toBe(true);
+
+      root.querySelector<HTMLInputElement>('#grouping-strategy-PREFERENCE_BASED')?.click();
+      root.querySelector<HTMLInputElement>('#gender-mode-ignore')?.click();
+      await fixture.whenStable();
+
+      expect(strategy.value).toBe(GroupingStrategy.PREFERENCE_BASED);
+      expect(genderMode.value).toBe('ignore');
+      expect(root.querySelector('#pref-want')).not.toBeNull();
+      expect(await getAxeViolations(root)).toEqual([]);
+    });
   });
 });

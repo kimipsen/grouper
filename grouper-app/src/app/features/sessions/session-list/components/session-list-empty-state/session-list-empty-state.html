@@ -1,7 +1,7 @@
 <div class="empty-state">
-  <h2>{{ 'sessionList.emptyTitle' | t }}</h2>
+  <h2 class="h3">{{ 'sessionList.emptyTitle' | t }}</h2>
   <p>{{ 'sessionList.emptyDescription' | t }}</p>
-  <button class="button button-primary" type="button" (click)="create.emit()">
+  <button class="button button-secondary" type="button" (click)="create.emit()">
     {{ 'sessionList.createFirstSession' | t }}
   </button>
 </div>

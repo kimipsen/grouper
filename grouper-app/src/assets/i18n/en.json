@@ -88,7 +88,7 @@
       "nameRequired": "Enter a name for the weight"
     },
     "preferencesTitle": "Preferences",
-    "preferenceNone": "-",
+    "preferenceNone": "None",
     "preferenceWantWith": "Prefer",
     "preferenceAvoid": "Avoid",
     "preferenceScoring": {
@@ -107,7 +107,7 @@
     "generateGroups": "Generate Groups",
     "generatedGroups": "Generated Groups",
     "satisfaction": "Satisfaction: {{score}}",
-    "regenerateGroupsAria": "Regenerate groups",
+    "regenerateGroups": "Generate new groups",
     "groupLabel": "Group {{index}}",
     "score": "Score: {{score}}",
     "prompt": {
@@ -136,7 +136,8 @@
     },
     "resetSession": "Reset Session",
     "errorSummaryTitle": "There is a problem",
-    "resetSessionHelp": "Removes all people, weights and groupings from this session."
+    "resetSessionHelp": "Removes all people, weights and groupings from this session.",
+    "preferencePerson": "Person"
   },
   "grouping": {
     "errors": {

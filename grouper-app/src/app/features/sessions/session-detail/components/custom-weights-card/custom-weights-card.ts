@@ -21,6 +21,11 @@ export class CustomWeightsCard {
   readonly updateWeightMode = output<{ weight: CustomWeightDefinition; mode: WeightedGroupingMode }>();
   readonly removeWeight = output<CustomWeightDefinition>();
 
+  readonly modes: { value: WeightedGroupingMode; labelKey: string }[] = [
+    { value: 'balance', labelKey: 'sessionDetail.customWeights.modeBalance' },
+    { value: 'match-similar', labelKey: 'sessionDetail.customWeights.modeMatchSimilar' },
+  ];
+
   readonly showNameError = signal(false);
   private readonly newWeightNameInput = viewChild.required<ElementRef<HTMLInputElement>>('newWeightNameInput');
 

@@ -35,23 +35,37 @@
       </div>
     }
 
-    <div class="form-group">
-      <label class="form-label" for="gender-mode">{{ 'sessionDetail.genderMode.label' | t }}</label>
-      <select id="gender-mode" class="form-select" [formControl]="genderModeControl()">
-        <option value="mixed">{{ 'sessionDetail.genderMode.mixed' | t }}</option>
-        <option value="single">{{ 'sessionDetail.genderMode.single' | t }}</option>
-        <option value="ignore">{{ 'sessionDetail.genderMode.ignore' | t }}</option>
-      </select>
-    </div>
+    <fieldset class="form-group">
+      <legend class="form-label">{{ 'sessionDetail.genderMode.label' | t }}</legend>
+      @for (option of genderModeOptions; track option.value) {
+        <div class="form-group-radio">
+          <input
+            class="form-radio"
+            type="radio"
+            name="gender-mode"
+            [id]="'gender-mode-' + option.value"
+            [value]="option.value"
+            [formControl]="genderModeControl()" />
+          <label [for]="'gender-mode-' + option.value">{{ option.labelKey | t }}</label>
+        </div>
+      }
+    </fieldset>
 
-    <div class="form-group">
-      <label class="form-label" for="grouping-strategy">{{ 'sessionDetail.strategy' | t }}</label>
-      <select id="grouping-strategy" class="form-select" [formControl]="groupingStrategyControl()">
-        <option [value]="GroupingStrategy.RANDOM">{{ 'sessionDetail.strategyRandom' | t }}</option>
-        <option [value]="GroupingStrategy.PREFERENCE_BASED">{{ 'sessionDetail.strategyPreferenceBased' | t }}</option>
-        <option [value]="GroupingStrategy.WEIGHTED">{{ 'sessionDetail.strategyWeighted' | t }}</option>
-      </select>
-    </div>
+    <fieldset class="form-group">
+      <legend class="form-label">{{ 'sessionDetail.strategy' | t }}</legend>
+      @for (option of strategyOptions; track option.value) {
+        <div class="form-group-radio">
+          <input
+            class="form-radio"
+            type="radio"
+            name="grouping-strategy"
+            [id]="'grouping-strategy-' + option.value"
+            [value]="option.value"
+            [formControl]="groupingStrategyControl()" />
+          <label [for]="'grouping-strategy-' + option.value">{{ option.labelKey | t }}</label>
+        </div>
+      }
+    </fieldset>
 
     @if (groupingStrategyControl().value === GroupingStrategy.PREFERENCE_BASED) {
       <div class="preference-scoring">

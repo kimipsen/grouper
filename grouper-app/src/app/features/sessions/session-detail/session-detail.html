@@ -1,11 +1,11 @@
 @if (session) {
   <div class="session-detail-container">
-    <div class="page-header">
-      <button class="button button-tertiary" type="button" (click)="back()" [attr.aria-label]="'common.back' | t">
-        {{ 'common.back' | t }}
-      </button>
-      <h1>{{ session.name }}</h1>
-    </div>
+    <a class="back-link" routerLink="/sessions">
+      <svg class="icon-svg" focusable="false" aria-hidden="true">
+        <use href="assets/dkfds/dist/img/all-svg-icons.svg#chevron-left"></use>
+      </svg>{{ 'common.back' | t }}
+    </a>
+    <h1 class="page-title">{{ session.name }}</h1>
 
     <div class="content-layout">
       <div class="layout-row top-row">

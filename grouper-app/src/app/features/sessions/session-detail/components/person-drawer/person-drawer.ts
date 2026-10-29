@@ -23,6 +23,19 @@ export class PersonDrawer {
   readonly updatePreference = output<{ targetPersonId: string; value: string }>();
   readonly updateWeight = output<{ weightId: string; value: number }>();
 
+  readonly genderOptions: { value: Gender; labelKey: string }[] = [
+    { value: 'female', labelKey: 'sessionDetail.gender.female' },
+    { value: 'male', labelKey: 'sessionDetail.gender.male' },
+    { value: 'nonbinary', labelKey: 'sessionDetail.gender.nonbinary' },
+    { value: 'unspecified', labelKey: 'sessionDetail.gender.unspecified' },
+  ];
+
+  readonly preferenceOptions = [
+    { value: 'none', labelKey: 'sessionDetail.preferenceNone' },
+    { value: 'wantWith', labelKey: 'sessionDetail.preferenceWantWith' },
+    { value: 'avoid', labelKey: 'sessionDetail.preferenceAvoid' },
+  ] as const;
+
   readonly otherPeople = computed(() => this.people().filter(person => person.id !== this.selectedPerson().id));
 
   getPreference(targetPersonId: string): string {

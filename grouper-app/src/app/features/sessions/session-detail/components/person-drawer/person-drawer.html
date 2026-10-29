@@ -25,43 +25,65 @@
       </div>
 
       <div class="drawer-section">
-        <div class="form-group">
-          <label class="form-label" for="person-gender">{{ 'sessionDetail.gender.label' | t }}</label>
-          <select
-            #genderSelect
-            id="person-gender"
-            class="form-select"
-            [value]="selectedPerson().gender ?? 'unspecified'"
-            (change)="onGenderChange(genderSelect.value)">
-            <option value="female">{{ 'sessionDetail.gender.female' | t }}</option>
-            <option value="male">{{ 'sessionDetail.gender.male' | t }}</option>
-            <option value="nonbinary">{{ 'sessionDetail.gender.nonbinary' | t }}</option>
-            <option value="unspecified">{{ 'sessionDetail.gender.unspecified' | t }}</option>
-          </select>
-        </div>
+        <fieldset class="form-group">
+          <legend class="form-label">{{ 'sessionDetail.gender.label' | t }}</legend>
+          @for (option of genderOptions; track option.value) {
+            <div class="form-group-radio">
+              <input
+                class="form-radio"
+                type="radio"
+                name="person-gender"
+                [id]="'person-gender-' + option.value"
+                [value]="option.value"
+                [checked]="(selectedPerson().gender ?? 'unspecified') === option.value"
+                (change)="onGenderChange(option.value)" />
+              <label [for]="'person-gender-' + option.value">{{ option.labelKey | t }}</label>
+            </div>
+          }
+        </fieldset>
       </div>
 
       <div class="drawer-section">
-        <h4>{{ 'sessionDetail.preferencesTitle' | t }}</h4>
+        <h4 id="person-preferences-heading">{{ 'sessionDetail.preferencesTitle' | t }}</h4>
         @if (people().length < 2) {
           <p class="drawer-muted">{{ 'sessionDetail.preferencesMinPeople' | t }}</p>
         } @else {
-          <div class="drawer-list">
-            @for (targetPerson of otherPeople(); track targetPerson.id) {
-              <div class="drawer-row">
-                <label [for]="'person-preference-' + targetPerson.id">{{ targetPerson.name || ('sessionDetail.unnamedPerson' | t) }}</label>
-                <select
-                  #preferenceSelect
-                  [id]="'person-preference-' + targetPerson.id"
-                  class="form-select preference-select"
-                  [value]="getPreference(targetPerson.id)"
-                  (change)="updatePreference.emit({ targetPersonId: targetPerson.id, value: preferenceSelect.value })">
-                  <option value="none">{{ 'sessionDetail.preferenceNone' | t }}</option>
-                  <option value="wantWith">{{ 'sessionDetail.preferenceWantWith' | t }}</option>
-                  <option value="avoid">{{ 'sessionDetail.preferenceAvoid' | t }}</option>
-                </select>
-              </div>
-            }
+          <div class="table--responsive-scroll">
+            <table class="table table--extracompact preference-table" aria-labelledby="person-preferences-heading">
+              <thead>
+                <tr>
+                  <th scope="col">{{ 'sessionDetail.preferencePerson' | t }}</th>
+                  @for (option of preferenceOptions; track option.value) {
+                    <th scope="col">{{ option.labelKey | t }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (targetPerson of otherPeople(); track targetPerson.id) {
+                  @let targetName = targetPerson.name || ('sessionDetail.unnamedPerson' | t);
+                  @let current = getPreference(targetPerson.id);
+                  <tr>
+                    <th scope="row">{{ targetName }}</th>
+                    @for (option of preferenceOptions; track option.value) {
+                      @let radioId = 'person-preference-' + targetPerson.id + '-' + option.value;
+                      <td>
+                        <div class="form-group-radio">
+                          <input
+                            class="form-radio"
+                            type="radio"
+                            [name]="'person-preference-' + targetPerson.id"
+                            [id]="radioId"
+                            [value]="option.value"
+                            [checked]="current === option.value"
+                            (change)="updatePreference.emit({ targetPersonId: targetPerson.id, value: option.value })" />
+                          <label [for]="radioId"><span class="sr-only">{{ targetName }}: {{ option.labelKey | t }}</span></label>
+                        </div>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         }
       </div>
