@@ -1,6 +1,5 @@
 import { APP_INITIALIZER, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withXhr } from '@angular/common/http';
 import { TitleStrategy, provideRouter } from '@angular/router';
 import * as DKFDS from 'dkfds';
@@ -15,7 +14,6 @@ registerAppLocaleData();
 bootstrapApplication(App, {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideAnimations(),
     provideHttpClient(withXhr()),
     provideRouter(routes),
     { provide: TitleStrategy, useExisting: AppTitleStrategy },
