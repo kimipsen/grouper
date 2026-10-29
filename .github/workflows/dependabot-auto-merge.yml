@@ -9,7 +9,9 @@ permissions:
 jobs:
   # Enable auto-merge; GitHub merges once required checks pass.
   auto-merge:
-    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    # Check the actor, not the PR author: a human "@dependabot rebase" makes
+    # the human the actor, and fetch-metadata rejects non-Dependabot actors.
+    if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     steps:
