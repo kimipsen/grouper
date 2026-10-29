@@ -4,7 +4,7 @@
     "lint": "npm --prefix grouper-app run lint"
   },
   "dependencies": {
-    "@angular/cli": "^21.1.4"
+    "@angular/cli": "^22.2.5"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.2",
