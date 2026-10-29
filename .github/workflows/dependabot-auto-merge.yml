@@ -7,7 +7,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  # Approve and enable auto-merge; GitHub merges once required checks pass.
+  # Enable auto-merge; GitHub merges once required checks pass.
   auto-merge:
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
@@ -20,11 +20,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Major version bumps are left for manual review.
-      - name: Approve and enable auto-merge
+      - name: Enable auto-merge
         if: steps.meta.outputs.update-type != 'version-update:semver-major'
-        run: |
-          gh pr review --approve "$PR_URL" --body "Auto-approved; will merge after required checks pass."
-          gh pr merge --auto --squash "$PR_URL"
+        run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
