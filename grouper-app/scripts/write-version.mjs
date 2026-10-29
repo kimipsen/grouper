@@ -1,18 +1,19 @@
 // Writes the app version, derived from git, to src/app/core/version.generated.ts.
-// Order: APP_VERSION env (release workflow, Docker) → `git describe` → Cloudflare commit SHA → 'unknown'.
+// Order: APP_VERSION env (release workflow, Docker) → git ("v1.0.0 (abc1234)") → Cloudflare commit SHA → 'unknown'.
 import { execFileSync } from 'node:child_process';
 import { existsSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 // Absolute paths so the build never runs a `git` found via a writable PATH entry.
-const GIT_PATHS = ['/usr/bin/git', '/usr/local/bin/git', '/opt/homebrew/bin/git'];
+const GIT_PATH = ['/usr/bin/git', '/usr/local/bin/git', '/opt/homebrew/bin/git'].find((path) => existsSync(path));
 
-function gitDescribe() {
-  const git = GIT_PATHS.find((path) => existsSync(path));
-  if (!git) {
+function git(...args) {
+  if (!GIT_PATH) {
     return '';
   }
   try {
-    return execFileSync(git, ['describe', '--tags', '--always', '--match', 'v[0-9]*'], {
+    return execFileSync(GIT_PATH, args, {
+      cwd: fileURLToPath(new URL('.', import.meta.url)),
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     }).trim();
@@ -21,9 +22,27 @@ function gitDescribe() {
   }
 }
 
+function latestTag() {
+  return git('describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*');
+}
+
+function gitVersion() {
+  const sha = git('rev-parse', '--short', 'HEAD');
+  if (!sha) {
+    return '';
+  }
+  let tag = latestTag();
+  // CI builds (e.g. Cloudflare Workers Builds) clone shallow without tags; fetch them to find the release tag.
+  if (!tag && git('rev-parse', '--is-shallow-repository') === 'true') {
+    git('fetch', '--quiet', '--unshallow', '--tags', 'origin');
+    tag = latestTag();
+  }
+  return tag ? `${tag} (${sha})` : sha;
+}
+
 const version =
   process.env.APP_VERSION?.trim() ||
-  gitDescribe() ||
+  gitVersion() ||
   process.env.WORKERS_CI_COMMIT_SHA?.slice(0, 7) ||
   'unknown';
 
