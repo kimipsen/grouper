@@ -40,6 +40,8 @@
     "@angular/build": "^22.2.5",
     "@angular/cli": "^22.2.5",
     "@angular/compiler-cli": "^22.2.3",
+    "@emnapi/core": "^1.11.3",
+    "@emnapi/runtime": "^1.11.3",
     "@vitest/coverage-v8": "^4.0.18",
     "angular-eslint": "22.6.0",
     "axe-core": "^4.11.3",
