@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { App } from './app';
 import { I18nService, LocaleCode } from './core/services/i18n.service';
+import { APP_VERSION } from './core/version';
 
 @Component({ template: '' })
 class BlankPage {}
@@ -15,7 +16,10 @@ class MockI18nService {
     return Promise.resolve();
   });
 
-  t(key: string): string {
+  t(key: string, params?: Record<string, string | number>): string {
+    if (key === 'app.version') {
+      return `Version ${params?.['version']}`;
+    }
     const labels: Record<string, string> = {
       'app.title': 'Grouper',
       'app.homeLinkLabel': 'Grouper, front page',
@@ -42,6 +46,7 @@ describe('App', () => {
       imports: [App],
       providers: [
         { provide: I18nService, useClass: MockI18nService },
+        { provide: APP_VERSION, useValue: 'v1.2.3-4-gabc1234' },
         provideRouter([
           { path: 'sessions', component: BlankPage },
           { path: 'session/:id', component: BlankPage },
@@ -103,5 +108,11 @@ describe('App', () => {
     await render(url);
 
     expect(i18n.setLocale).not.toHaveBeenCalled();
+  });
+
+  it('shows the build version in the DKFDS footer', async () => {
+    const { root } = await render('/sessions');
+
+    expect(root.querySelector('footer .footer .app-version')?.textContent?.trim()).toBe('Version v1.2.3-4-gabc1234');
   });
 });

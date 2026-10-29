@@ -29,6 +29,15 @@ This repository publishes application versions as GitHub Releases with a product
 2. Click **Run workflow** and enter version (example: `1.4.0`).
 3. The workflow publishes tag `v1.4.0` from the selected commit and creates the release artifact.
 
+## Version Shown in the App
+
+The footer shows the version the app was built from. `npm start`, `build`, `test` and `lint` first run `npm run write-version`, which writes `src/app/core/version.generated.ts` (not committed) using the first available of:
+
+1. `APP_VERSION` environment variable (set by the release workflow, so releases show exactly `vX.Y.Z`)
+2. `git describe --tags --always` (for example `v1.4.0` on a tag, `v1.4.0-3-gabc1234` after it)
+3. Cloudflare Workers Builds commit SHA (`WORKERS_CI_COMMIT_SHA`)
+4. `unknown` (for example Docker builds, where `.git` is excluded; pass `APP_VERSION` to set it)
+
 ## Rollback
 
 - If a release is bad, delete the GitHub Release and tag (`vX.Y.Z`) and publish a new patch version.
