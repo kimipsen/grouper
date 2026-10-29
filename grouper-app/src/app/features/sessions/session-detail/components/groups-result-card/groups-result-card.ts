@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { GroupingResult } from '../../../../../models/group.model';
-import { Person } from '../../../../../models/person.model';
+import { Gender, Person } from '../../../../../models/person.model';
 import { TranslatePipe } from '../../../../../core/pipes/translate.pipe';
 
 @Component({
@@ -20,5 +20,9 @@ export class GroupsResultCard {
 
   getPersonName(personId: string): string {
     return this.peopleById().get(personId)?.name ?? '';
+  }
+
+  getPersonGender(personId: string): Gender {
+    return this.peopleById().get(personId)?.gender ?? 'unspecified';
   }
 }

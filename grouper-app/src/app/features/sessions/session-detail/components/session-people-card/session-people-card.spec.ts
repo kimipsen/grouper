@@ -15,6 +15,10 @@ class MockI18nService {
       'sessionDetail.addPerson': 'Add Person',
       'sessionDetail.unnamedPerson': 'Unnamed person',
       'common.delete': 'Delete',
+      'sessionDetail.gender.female': 'Female',
+      'sessionDetail.gender.male': 'Male',
+      'sessionDetail.gender.nonbinary': 'Non-binary',
+      'sessionDetail.gender.unspecified': 'Unspecified',
     };
     return labels[key] ?? key;
   }
@@ -81,6 +85,49 @@ describe('SessionPeopleCard', () => {
     expect(root.querySelector('#add-person-button')?.className).toContain('button-secondary');
     expect(root.querySelector('.button-primary')).toBeNull();
     expect(await getAxeViolations(root)).toEqual([]);
+  });
+
+  it('shows each person\'s gender as a badge inside the name button, falling back to unspecified', async () => {
+    await TestBed.configureTestingModule({
+      imports: [SessionPeopleCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(SessionPeopleCard);
+    fixture.componentRef.setInput('people', [...people, { id: 'p4', name: 'Sam', createdAt: new Date() }]);
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+
+    const nameButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('.person-name'));
+    expect(nameButtons.map((button) => button.querySelector('.badge')?.textContent?.trim())).toEqual([
+      'Female',
+      'Male',
+      'Non-binary',
+      'Unspecified',
+    ]);
+    expect(nameButtons.map((button) => button.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+      'Alice, Female',
+      'Bob, Male',
+      'Taylor, Non-binary',
+      'Sam, Unspecified',
+    ]);
+    expect(await getAxeViolations(root)).toEqual([]);
+  });
+
+  it('updates the gender badge when the person is replaced with a new gender', async () => {
+    await TestBed.configureTestingModule({
+      imports: [SessionPeopleCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(SessionPeopleCard);
+    fixture.componentRef.setInput('people', people);
+    fixture.detectChanges();
+
+    fixture.componentRef.setInput('people', [{ ...people[0], gender: 'nonbinary' }, people[1], people[2]]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('#person-name-p1 .badge')?.textContent?.trim()).toBe('Non-binary');
   });
 
   it('shows the empty message as plain text without a list', async () => {

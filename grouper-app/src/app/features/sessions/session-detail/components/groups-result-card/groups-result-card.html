@@ -23,7 +23,10 @@
               }
               <ul class="nobullet-list group-members">
                 @for (memberId of group.memberIds; track memberId) {
-                  <li>{{ getPersonName(memberId) || ('sessionDetail.unnamedPerson' | t) }}</li>
+                  <li>
+                    {{ getPersonName(memberId) || ('sessionDetail.unnamedPerson' | t) }}<span class="sr-only">, </span>
+                    <span class="badge member-gender">{{ 'sessionDetail.gender.' + getPersonGender(memberId) | t }}</span>
+                  </li>
                 }
               </ul>
             </div>
