@@ -1,7 +1,7 @@
 # AI Instructions For This Repository
 
 ## Project Scope
-- Main application code is in `grouper-app/` (Angular 21, standalone components).
+- Main application code is in `grouper-app/` (Angular 22, standalone components).
 - Root `package.json` is minimal; use `grouper-app/package.json` scripts for day-to-day work.
 - Codex guidance for this repo: act as an Angular expert and use only latest-stable Angular patterns/features.
 

@@ -1,7 +1,7 @@
 import { APP_INITIALIZER, importProvidersFrom, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import * as DKFDS from 'dkfds';
@@ -16,7 +16,7 @@ bootstrapApplication(App, {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideAnimations(),
-    provideHttpClient(),
+    provideHttpClient(withXhr()),
     provideRouter(routes),
     importProvidersFrom(MatSnackBarModule),
     {

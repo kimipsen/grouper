@@ -8,7 +8,7 @@ A live demo of the application is available at <https://grouper.kim-ipsen.worker
 
 ## Repository Layout
 
-- `grouper-app/`: main application (Angular 21, standalone components)
+- `grouper-app/`: main application (Angular 22, standalone components)
 - `docs/`: project documentation and release notes
 
 ## Getting Started
