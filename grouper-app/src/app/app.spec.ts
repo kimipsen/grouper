@@ -119,6 +119,13 @@ describe('App', () => {
     expect(root.querySelector('footer .footer .app-version a')).toBeNull();
   });
 
+  it('follows the DKFDS footer order: footer content, then the language switcher', async () => {
+    const { root } = await render('/sessions');
+    const sections = Array.from(root.querySelectorAll('footer > div')).map((element) => element.className);
+
+    expect(sections).toEqual(['footer', 'language-switcher']);
+  });
+
   it('links to the GitHub repository from the footer', async () => {
     const { root } = await render('/sessions');
     const link = root.querySelector<HTMLAnchorElement>('footer .footer .inline-list a.app-source-link');
