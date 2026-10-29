@@ -9,7 +9,9 @@ updates:
   - package-ecosystem: "devcontainers"
     directory: "/"
     schedule:
-      interval: weekly
+      interval: cron
+      cronjob: "0 6 * * 1,3,5"
+      timezone: "Europe/Copenhagen"
     labels:
       - "mergequeue"
     assignees:
@@ -17,7 +19,9 @@ updates:
   - package-ecosystem: "npm"
     directory: "/grouper-app"
     schedule:
-      interval: weekly
+      interval: cron
+      cronjob: "0 6 * * 1,3,5"
+      timezone: "Europe/Copenhagen"
     labels:
       - "mergequeue"
     assignees:
@@ -25,7 +29,9 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: weekly
+      interval: cron
+      cronjob: "0 6 * * 1,3,5"
+      timezone: "Europe/Copenhagen"
     labels:
       - "mergequeue"
     assignees:
