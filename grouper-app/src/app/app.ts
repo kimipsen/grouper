@@ -8,6 +8,9 @@ import { ToastContainer } from './core/components/toast-container/toast-containe
 import { ConfirmModal } from './core/components/confirm-modal/confirm-modal';
 import { APP_VERSION } from './core/version';
 
+const REPOSITORY_URL = 'https://github.com/kimipsen/grouper';
+const RELEASE_TAG = /^v\d+\.\d+\.\d+$/;
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
@@ -17,6 +20,9 @@ import { APP_VERSION } from './core/version';
 export class App {
   readonly i18nService = inject(I18nService);
   readonly appVersion = inject(APP_VERSION);
+  readonly repositoryUrl = REPOSITORY_URL;
+  /** Release builds (exact vX.Y.Z tag) link the version to its GitHub release. */
+  readonly releaseUrl = RELEASE_TAG.test(this.appVersion) ? `${REPOSITORY_URL}/releases/tag/${this.appVersion}` : null;
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
   private readonly main = viewChild.required<ElementRef<HTMLElement>>('main');

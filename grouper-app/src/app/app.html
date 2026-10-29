@@ -41,7 +41,16 @@
   </div>
   <div class="footer">
     <div class="container">
-      <p class="app-version">{{ 'app.version' | t: { version: appVersion } }}</p>
+      <ul class="inline-list">
+        <li class="app-version">
+          @if (releaseUrl) {
+            <a [href]="releaseUrl">{{ 'app.version' | t: { version: appVersion } }}</a>
+          } @else {
+            {{ 'app.version' | t: { version: appVersion } }}
+          }
+        </li>
+        <li><a class="app-source-link" [href]="repositoryUrl">{{ 'app.sourceCode' | t }}</a></li>
+      </ul>
     </div>
   </div>
 </footer>
