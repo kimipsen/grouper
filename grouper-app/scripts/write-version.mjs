@@ -1,11 +1,18 @@
 // Writes the app version, derived from git, to src/app/core/version.generated.ts.
 // Order: APP_VERSION env (release workflow, Docker) → `git describe` → Cloudflare commit SHA → 'unknown'.
 import { execFileSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
+
+// Absolute paths so the build never runs a `git` found via a writable PATH entry.
+const GIT_PATHS = ['/usr/bin/git', '/usr/local/bin/git', '/opt/homebrew/bin/git'];
 
 function gitDescribe() {
+  const git = GIT_PATHS.find((path) => existsSync(path));
+  if (!git) {
+    return '';
+  }
   try {
-    return execFileSync('git', ['describe', '--tags', '--always', '--match', 'v[0-9]*'], {
+    return execFileSync(git, ['describe', '--tags', '--always', '--match', 'v[0-9]*'], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     }).trim();
