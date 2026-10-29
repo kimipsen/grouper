@@ -1,12 +1,16 @@
-<aside class="person-drawer card">
+<aside class="person-drawer card collapsed-height" aria-labelledby="person-drawer-heading">
   <div class="card-content">
     <div class="drawer-header">
       <div>
-        <h3>{{ selectedPerson().name.length ? selectedPerson().name : ('sessionDetail.unnamedPerson' | t) }}</h3>
+        <h3 #heading id="person-drawer-heading" tabindex="-1">
+          {{ selectedPerson().name.length ? selectedPerson().name : ('sessionDetail.unnamedPerson' | t) }}
+        </h3>
         <p>{{ 'sessionDetail.customWeights.personWeightsTitle' | t }}</p>
       </div>
-      <button class="button button-tertiary" type="button" (click)="closeDrawer.emit()">
-        {{ 'common.close' | t }}
+      <button class="function-link" type="button" (click)="closeDrawer.emit()">
+        <svg class="icon-svg" focusable="false" aria-hidden="true">
+          <use href="assets/dkfds/dist/img/all-svg-icons.svg#close"></use>
+        </svg>{{ 'common.close' | t }}
       </button>
     </div>
 

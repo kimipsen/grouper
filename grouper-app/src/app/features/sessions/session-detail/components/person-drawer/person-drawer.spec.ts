@@ -150,4 +150,28 @@ describe('PersonDrawer', () => {
     expect(root.querySelector('label[for="person-weight-w1"]')?.textContent?.trim()).toBe('Weight');
     expect(await getAxeViolations(root)).toEqual([]);
   });
+
+  it.each([
+    ['heading', 'person-drawer-heading'],
+    ['name', 'person-name'],
+  ] as const)('moves focus to the %s when the panel opens', async (initialFocus, expectedId) => {
+    await TestBed.configureTestingModule({
+      imports: [PersonDrawer],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(PersonDrawer);
+    fixture.componentRef.setInput('selectedPerson', selectedPerson);
+    fixture.componentRef.setInput('people', [selectedPerson, otherPerson]);
+    fixture.componentRef.setInput('customWeights', []);
+    fixture.componentRef.setInput('preferences', {});
+    fixture.componentRef.setInput('initialFocus', initialFocus);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    await fixture.whenStable();
+
+    expect(document.activeElement?.id).toBe(expectedId);
+    expect(root.querySelector('aside')?.getAttribute('aria-labelledby')).toBe('person-drawer-heading');
+    root.remove();
+  });
 });

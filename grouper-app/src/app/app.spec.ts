@@ -1,80 +1,107 @@
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
+import { Router, provideRouter } from '@angular/router';
 import { App } from './app';
-import { I18nService } from './core/services/i18n.service';
+import { I18nService, LocaleCode } from './core/services/i18n.service';
+
+@Component({ template: '' })
+class BlankPage {}
 
 class MockI18nService {
-  private readonly localeSignal = signal<'en' | 'da'>('en');
+  private readonly localeSignal = signal<LocaleCode>('en');
   readonly currentLocale = this.localeSignal.asReadonly();
+  readonly setLocale = vi.fn((locale: LocaleCode) => {
+    this.localeSignal.set(locale);
+    return Promise.resolve();
+  });
 
   t(key: string): string {
     const labels: Record<string, string> = {
       'app.title': 'Grouper',
-      'app.sessionsNav': 'Sessions',
-      'app.languageLabel': 'Language',
+      'app.homeLinkLabel': 'Grouper, front page',
+      'app.languageLabel': 'Choose language',
     };
     return labels[key] ?? key;
   }
 
-  getAvailableLocales(): ('en' | 'da')[] {
+  getAvailableLocales(): LocaleCode[] {
     return ['en', 'da'];
   }
 
-  getLocaleDisplayName(locale: string): string {
-    if (locale === 'en') {
-      return 'English';
-    }
-    if (locale === 'da') {
-      return 'Danish';
-    }
-    return locale;
-  }
-
-  setLocale(locale: 'en' | 'da'): Promise<void> {
-    this.localeSignal.set(locale);
-    return Promise.resolve();
+  // DKFDS: language names are written in their own language.
+  getLocaleDisplayName(locale: LocaleCode): string {
+    return locale === 'en' ? 'English' : 'Dansk';
   }
 }
 
 describe('App', () => {
+  let i18n: MockI18nService;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [App, RouterTestingModule],
+      imports: [App],
       providers: [
         { provide: I18nService, useClass: MockI18nService },
+        provideRouter([
+          { path: 'sessions', component: BlankPage },
+          { path: 'session/:id', component: BlankPage },
+        ]),
       ],
-      schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
+    i18n = TestBed.inject(I18nService) as unknown as MockI18nService;
   });
 
-  it('should create the app', () => {
+  async function render(url: string) {
     const fixture = TestBed.createComponent(App);
-    expect(fixture.componentInstance).toBeTruthy();
+    await TestBed.inject(Router).navigateByUrl(url);
+    await fixture.whenStable();
+    return { fixture, root: fixture.nativeElement as HTMLElement };
+  }
+
+  const languageLinks = (root: HTMLElement) =>
+    Array.from(root.querySelectorAll<HTMLAnchorElement>('footer .language-switcher li a'));
+
+  it('renders a DKFDS header whose solution title links to the sessions page', async () => {
+    const { root } = await render('/sessions');
+    const homeLink = root.querySelector('header.header .solution-info .solution-heading a');
+
+    expect(homeLink?.textContent?.trim()).toBe('Grouper');
+    expect(homeLink?.getAttribute('href')).toBe('/sessions');
+    expect(root.querySelectorAll('header button')).toHaveLength(0);
   });
 
-  it('should render localized app title', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
+  it('lists languages in their own language, current first and marked as current', async () => {
+    const { root } = await render('/sessions');
+    const links = languageLinks(root);
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.app-title')?.textContent).toContain('Grouper');
+    expect(links.map((link) => [link.textContent?.trim(), link.getAttribute('lang'), link.getAttribute('aria-current')])).toEqual([
+      ['English', 'en', 'true'],
+      ['Dansk', 'da', null],
+    ]);
+    expect(links[0].querySelector('svg use')?.getAttribute('href')).toContain('#check');
+    expect(links[1].querySelector('svg')).toBeNull();
   });
 
-  it('should not render a theme toggle in the header', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
+  it('keeps the current page in the language links', async () => {
+    const { root } = await render('/session/s1');
 
-    expect(fixture.nativeElement.querySelectorAll('.app-header button')).toHaveLength(0);
+    expect(languageLinks(root).map((link) => link.getAttribute('href'))).toEqual([
+      '/session/s1?lang=en',
+      '/session/s1?lang=da',
+    ]);
   });
 
-  it('should list both supported locales in selector', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
+  it('switches language from the ?lang= query parameter and reorders the list', async () => {
+    const { fixture, root } = await render('/sessions?lang=da');
 
-    const options = Array.from(fixture.nativeElement.querySelectorAll('select option')) as HTMLOptionElement[];
-    const values = options.map((option) => option.value);
+    expect(i18n.setLocale).toHaveBeenCalledWith('da');
+    await fixture.whenStable();
+    expect(languageLinks(root).map((link) => link.textContent?.trim())).toEqual(['Dansk', 'English']);
+  });
 
-    expect(values).toEqual(['en', 'da']);
+  it.each(['/sessions?lang=fr', '/sessions?lang=en', '/sessions'])('does not change language for %s', async (url) => {
+    await render(url);
+
+    expect(i18n.setLocale).not.toHaveBeenCalled();
   });
 });

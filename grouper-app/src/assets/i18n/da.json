@@ -1,13 +1,13 @@
 {
   "app": {
     "title": "Grouper",
-    "sessionsNav": "Sessioner",
-    "languageLabel": "Sprog",
+    "languageLabel": "Vælg sprog",
     "skipToContent": "Gå til sidens indhold",
     "languages": {
-      "en": "Engelsk",
+      "en": "English",
       "da": "Dansk"
-    }
+    },
+    "homeLinkLabel": "Grouper, forside"
   },
   "notifications": {
     "success": "Succes:",

@@ -1,9 +1,17 @@
-.weight-editor {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 0.75rem;
-  align-items: end;
-  margin-bottom: 1rem;
+// DKFDS cards fill their parent's height (equal height with the grouping card beside it);
+// the host must pass the column's height through.
+:host {
+  display: block;
+  height: 100%;
+}
+
+// DKFDS forms are vertical: name, mode, then the action.
+.weight-editor,
+.weight-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .weight-editor .form-group,
@@ -11,27 +19,15 @@
   margin: 0;
 }
 
-.weight-delete {
-  align-self: center;
+.weight-divider {
+  align-self: stretch; // .weight-row aligns children to flex-start
+  margin: 0;
 }
 
 .weight-list {
+  align-self: stretch; // DKFDS .card-content aligns children to flex-start
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-}
-
-.weight-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 0.75rem;
-  align-items: end;
-}
-
-
-@media (max-width: 900px) {
-  .weight-editor,
-  .weight-row {
-    grid-template-columns: 1fr;
-  }
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
