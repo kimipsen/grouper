@@ -11,6 +11,7 @@
     "watch": "ng build --watch --configuration development",
     "pretest": "npm run write-version",
     "test": "ng test",
+    "posttest": "node --test scripts/",
     "pretest:a11y": "npm run write-version",
     "test:a11y": "ng test --watch=false --include src/app/**/*.a11y.spec.ts",
     "prelint": "npm run write-version",

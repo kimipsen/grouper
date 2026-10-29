@@ -47,7 +47,7 @@ describe('App', () => {
       imports: [App],
       providers: [
         { provide: I18nService, useClass: MockI18nService },
-        { provide: APP_VERSION, useValue: 'v1.2.3-4-gabc1234' },
+        { provide: APP_VERSION, useValue: 'v1.2.3 (abc1234)' },
         provideRouter([
           { path: 'sessions', component: BlankPage },
           { path: 'session/:id', component: BlankPage },
@@ -115,7 +115,7 @@ describe('App', () => {
   it('shows the build version in the DKFDS footer', async () => {
     const { root } = await render('/sessions');
 
-    expect(root.querySelector('footer .footer .app-version')?.textContent?.trim()).toBe('Version v1.2.3-4-gabc1234');
+    expect(root.querySelector('footer .footer .app-version')?.textContent?.trim()).toBe('Version v1.2.3 (abc1234)');
     expect(root.querySelector('footer .footer .app-version a')).toBeNull();
   });
 

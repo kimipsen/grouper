@@ -1,18 +1,20 @@
 // Writes the app version, derived from git, to src/app/core/version.generated.ts.
-// Order: APP_VERSION env (release workflow, Docker) → `git describe` → Cloudflare commit SHA → 'unknown'.
+// Order: APP_VERSION env (release workflow, Docker) → git (see version-format.mjs) → Cloudflare commit SHA → 'unknown'.
 import { execFileSync } from 'node:child_process';
 import { existsSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { formatVersion } from './version-format.mjs';
 
 // Absolute paths so the build never runs a `git` found via a writable PATH entry.
-const GIT_PATHS = ['/usr/bin/git', '/usr/local/bin/git', '/opt/homebrew/bin/git'];
+const GIT_PATH = ['/usr/bin/git', '/usr/local/bin/git', '/opt/homebrew/bin/git'].find((path) => existsSync(path));
 
-function gitDescribe() {
-  const git = GIT_PATHS.find((path) => existsSync(path));
-  if (!git) {
+function git(...args) {
+  if (!GIT_PATH) {
     return '';
   }
   try {
-    return execFileSync(git, ['describe', '--tags', '--always', '--match', 'v[0-9]*'], {
+    return execFileSync(GIT_PATH, args, {
+      cwd: fileURLToPath(new URL('.', import.meta.url)),
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     }).trim();
@@ -21,9 +23,37 @@ function gitDescribe() {
   }
 }
 
+function latestTag() {
+  return git('describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*');
+}
+
+// CI checkouts are often detached; prefer the branch name the CI system reports.
+function currentBranch() {
+  return (
+    process.env.WORKERS_CI_BRANCH ||
+    process.env.GITHUB_HEAD_REF ||
+    process.env.GITHUB_REF_NAME ||
+    git('rev-parse', '--abbrev-ref', 'HEAD')
+  );
+}
+
+function gitVersion() {
+  const sha = git('rev-parse', '--short', 'HEAD');
+  if (!sha) {
+    return '';
+  }
+  // CI builds (e.g. Cloudflare Workers Builds) clone shallow without tags; fetch them and the history to count commits.
+  if (git('rev-parse', '--is-shallow-repository') === 'true') {
+    git('fetch', '--quiet', '--unshallow', '--tags', 'origin');
+  }
+  const tag = latestTag();
+  const commitsSinceTag = tag ? Number(git('rev-list', '--count', `${tag}..HEAD`)) : 0;
+  return formatVersion({ tag, sha, commitsSinceTag, branch: currentBranch() });
+}
+
 const version =
   process.env.APP_VERSION?.trim() ||
-  gitDescribe() ||
+  gitVersion() ||
   process.env.WORKERS_CI_COMMIT_SHA?.slice(0, 7) ||
   'unknown';
 
