@@ -34,7 +34,10 @@ This repository publishes application versions as GitHub Releases with a product
 The footer shows the version the app was built from. `npm start`, `build`, `test` and `lint` first run `npm run write-version`, which writes `src/app/core/version.generated.ts` (not committed) using the first available of:
 
 1. `APP_VERSION` environment variable (set by the release workflow, so releases show exactly `vX.Y.Z`)
-2. git: latest `v*` tag and commit, for example `v1.4.0 (abc1234)`. Shallow CI clones without tags (Cloudflare) fetch them first; with no tag, just the commit SHA
+2. git, from the latest `v*` tag and the commit (shallow CI clones without tags, like Cloudflare's, fetch them first):
+   - `master`/`main`, or the tagged commit itself: `v1.0.0 (abc1234)`
+   - other branches: next patch as a release candidate, `v1.0.1-rc.3 (abc1234)` (3 = commits since the tag)
+   - no tag: just the commit SHA
 3. Cloudflare Workers Builds commit SHA (`WORKERS_CI_COMMIT_SHA`)
 4. `unknown` (for example Docker builds, where `.git` is excluded; pass `APP_VERSION` to set it)
 
