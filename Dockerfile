@@ -4,11 +4,11 @@ FROM node:24-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 WORKDIR /app/grouper-app
 COPY grouper-app/package*.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 COPY grouper-app/ ./
 RUN npm run build
