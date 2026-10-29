@@ -1,3 +1,5 @@
+<a class="skipnav" href="#main-content" (click)="skipToMain($event)">{{ 'app.skipToContent' | t }}</a>
+
 <header class="app-header">
   <div class="app-header__inner">
     <p class="app-title">{{ 'app.title' | t }}</p>
@@ -15,6 +17,6 @@
   </div>
 </header>
 
-<main class="app-container">
+<main #main id="main-content" class="app-container" tabindex="-1">
   <router-outlet (activate)="onRouteActivate()"></router-outlet>
 </main>

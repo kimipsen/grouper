@@ -46,6 +46,7 @@
     "@angular/compiler-cli": "^22.2.3",
     "@vitest/coverage-v8": "^4.0.18",
     "angular-eslint": "22.6.0",
+    "axe-core": "^4.11.3",
     "eslint": "^9.39.2",
     "eslint-plugin-sonarjs": "^4.0.0",
     "jsdom": "^28.1.0",

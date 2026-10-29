@@ -49,9 +49,10 @@
           <div class="drawer-list">
             @for (targetPerson of otherPeople(); track targetPerson.id) {
               <div class="drawer-row">
-                <span>{{ targetPerson.name }}</span>
+                <label [for]="'person-preference-' + targetPerson.id">{{ targetPerson.name || ('sessionDetail.unnamedPerson' | t) }}</label>
                 <select
                   #preferenceSelect
+                  [id]="'person-preference-' + targetPerson.id"
                   class="form-select preference-select"
                   [value]="getPreference(targetPerson.id)"
                   (change)="updatePreference.emit({ targetPersonId: targetPerson.id, value: preferenceSelect.value })">
@@ -72,9 +73,10 @@
         } @else {
           @for (weight of customWeights(); track weight.id) {
             <div class="drawer-row">
-              <span>{{ weight.name }}</span>
+              <label [for]="'person-weight-' + weight.id">{{ weight.name || ('sessionDetail.customWeights.weightLabel' | t) }}</label>
               <input
                 #drawerWeightInput
+                [id]="'person-weight-' + weight.id"
                 type="number"
                 class="form-input weight-input"
                 [value]="selectedPerson().weights?.[weight.id] ?? 0"
