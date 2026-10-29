@@ -1,6 +1,22 @@
 <div class="session-list-container">
   <app-session-list-header (create)="createNewSession()" (import)="importSession()" />
 
+  @if (errorKey(); as key) {
+    <div class="alert alert-error" role="alert">
+      <svg class="icon-svg alert-icon" focusable="false" aria-hidden="true">
+        <use href="assets/dkfds/dist/img/all-svg-icons.svg#error"></use>
+      </svg>
+      <div class="alert-body">
+        <p class="alert-heading"><span class="sr-only">{{ 'notifications.error' | t }}</span> {{ key | t }}</p>
+      </div>
+      <button class="alert-close" type="button" (click)="dismissError()">
+        <svg class="icon-svg" focusable="false" aria-hidden="true">
+          <use href="assets/dkfds/dist/img/all-svg-icons.svg#close"></use>
+        </svg>{{ 'common.close' | t }}
+      </button>
+    </div>
+  }
+
   @if (sessions().length === 0) {
     <app-session-list-empty-state (create)="createNewSession()" />
   } @else {

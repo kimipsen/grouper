@@ -1,9 +1,8 @@
-import { APP_INITIALIZER, importProvidersFrom, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { APP_INITIALIZER, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withXhr } from '@angular/common/http';
 import { TitleStrategy, provideRouter } from '@angular/router';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
 import * as DKFDS from 'dkfds';
 import { App } from './app/app';
 import { I18nService } from './app/core/services/i18n.service';
@@ -20,7 +19,6 @@ bootstrapApplication(App, {
     provideHttpClient(withXhr()),
     provideRouter(routes),
     { provide: TitleStrategy, useExisting: AppTitleStrategy },
-    importProvidersFrom(MatSnackBarModule),
     {
       provide: APP_INITIALIZER,
       multi: true,

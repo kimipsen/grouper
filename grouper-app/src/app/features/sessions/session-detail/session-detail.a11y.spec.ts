@@ -1,7 +1,6 @@
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { BehaviorSubject } from 'rxjs';
 import { GroupingService } from '../../../core/services/grouping.service';
 import { I18nService } from '../../../core/services/i18n.service';
@@ -98,7 +97,6 @@ describe('SessionDetail accessibility', () => {
             }),
           },
         },
-        { provide: MatSnackBar, useValue: { open: vi.fn() } },
         { provide: I18nService, useClass: MockI18nService },
       ],
       schemas: [NO_ERRORS_SCHEMA],

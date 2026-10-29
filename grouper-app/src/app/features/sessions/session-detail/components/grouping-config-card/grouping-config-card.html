@@ -2,6 +2,17 @@
   <div class="card-content grouping-config">
     <h2 class="card-heading">{{ 'sessionDetail.createGroupsTitle' | t }}</h2>
 
+    @if (error(); as message) {
+      <div class="alert alert-error" role="alert">
+        <svg class="icon-svg alert-icon" focusable="false" aria-hidden="true">
+          <use href="assets/dkfds/dist/img/all-svg-icons.svg#error"></use>
+        </svg>
+        <div class="alert-body">
+          <p class="alert-heading"><span class="sr-only">{{ 'notifications.error' | t }}</span> {{ message.key | t:message.params }}</p>
+        </div>
+      </div>
+    }
+
     <div class="form-group">
       <label class="form-label" for="gender-mode">{{ 'sessionDetail.genderMode.label' | t }}</label>
       <select id="gender-mode" class="form-select" [formControl]="genderModeControl()">

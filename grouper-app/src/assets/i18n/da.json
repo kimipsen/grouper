@@ -9,6 +9,12 @@
       "da": "Dansk"
     }
   },
+  "notifications": {
+    "success": "Succes:",
+    "info": "Information:",
+    "warning": "Advarsel:",
+    "error": "Fejl:"
+  },
   "common": {
     "close": "Luk",
     "open": "Åbn",
