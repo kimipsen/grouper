@@ -68,8 +68,8 @@
     </fieldset>
 
     @if (groupingStrategyControl().value === GroupingStrategy.PREFERENCE_BASED) {
-      <div class="preference-scoring">
-        <p class="weight-help">{{ 'sessionDetail.preferenceScoring.title' | t }}</p>
+      <fieldset class="preference-scoring form-group">
+        <legend class="form-label">{{ 'sessionDetail.preferenceScoring.title' | t }}</legend>
         <div class="preference-scoring-grid">
           <div class="form-group">
             <label class="form-label" for="pref-want">{{ 'sessionDetail.preferenceScoring.wantWith' | t }}</label>
@@ -80,7 +80,7 @@
             <input id="pref-avoid" class="form-input" type="number" [formControl]="preferenceAvoidControl()" />
           </div>
         </div>
-      </div>
+      </fieldset>
     }
 
     @let groupSizeError = errorsByField().get('group-size');
@@ -148,9 +148,10 @@
       </fieldset>
     }
 
+    <hr class="reset-divider" />
     <div class="reset-section">
-      <p class="reset-help">{{ 'sessionDetail.resetSessionHelp' | t }}</p>
-      <button class="button button-warning" type="button" (click)="resetSession.emit()">
+      <p id="reset-session-help" class="form-hint">{{ 'sessionDetail.resetSessionHelp' | t }}</p>
+      <button class="button button-warning" type="button" aria-describedby="reset-session-help" (click)="resetSession.emit()">
         {{ 'sessionDetail.resetSession' | t }}
       </button>
     </div>

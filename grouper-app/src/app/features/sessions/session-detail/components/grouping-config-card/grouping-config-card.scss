@@ -21,14 +21,20 @@
   gap: 0.75rem;
 }
 
-.weight-help,
-.reset-help {
-  margin: 0;
-  color: #454545;
-}
-
 .weight-selection {
   margin: 0;
+}
+
+// DKFDS cards fill their parent's height (equal height with the custom weights card beside it);
+// the host must pass the column's height through.
+:host {
+  display: block;
+  height: 100%;
+}
+
+.reset-divider {
+  align-self: stretch; // DKFDS .card-content aligns children to flex-start
+  margin: 0.5rem 0 0;
 }
 
 .reset-section {
@@ -36,9 +42,10 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #d9d9d9;
+
+  .form-hint {
+    margin: 0;
+  }
 }
 
 .weight-select-list {

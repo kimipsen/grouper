@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, afterNextRender, computed, input, output, viewChild } from '@angular/core';
 import { CustomWeightDefinition } from '../../../../../models/session.model';
 import { Gender, Person } from '../../../../../models/person.model';
 import { PreferenceMap } from '../../../../../models/preference.model';
@@ -16,6 +16,8 @@ export class PersonDrawer {
   readonly people = input.required<Person[]>();
   readonly customWeights = input.required<CustomWeightDefinition[]>();
   readonly preferences = input.required<PreferenceMap>();
+  /** Where focus goes when the panel opens: its heading, or the name field for a newly added person. */
+  readonly initialFocus = input<'heading' | 'name'>('heading');
 
   readonly closeDrawer = output<void>();
   readonly updateName = output<string>();
@@ -35,6 +37,16 @@ export class PersonDrawer {
     { value: 'wantWith', labelKey: 'sessionDetail.preferenceWantWith' },
     { value: 'avoid', labelKey: 'sessionDetail.preferenceAvoid' },
   ] as const;
+
+  private readonly heading = viewChild.required<ElementRef<HTMLElement>>('heading');
+  private readonly nameInput = viewChild.required<ElementRef<HTMLInputElement>>('nameInput');
+
+  constructor() {
+    afterNextRender(() => {
+      const target = this.initialFocus() === 'name' ? this.nameInput() : this.heading();
+      target.nativeElement.focus();
+    });
+  }
 
   readonly otherPeople = computed(() => this.people().filter(person => person.id !== this.selectedPerson().id));
 

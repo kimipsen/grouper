@@ -1,25 +1,44 @@
 <a class="skipnav" href="#main-content" (click)="skipToMain($event)">{{ 'app.skipToContent' | t }}</a>
 
-<header class="app-header">
-  <div class="app-header__inner">
-    <p class="app-title">{{ 'app.title' | t }}</p>
-    <nav class="app-nav" [attr.aria-label]="'app.sessionsNav' | t">
-      <a class="button button-secondary" routerLink="/sessions">{{ 'app.sessionsNav' | t }}</a>
-    </nav>
-    <div class="form-group app-locale">
-      <label class="form-label" for="locale-select">{{ 'app.languageLabel' | t }}</label>
-      <select id="locale-select" class="form-select" [formControl]="localeControl">
-        @for (locale of availableLocales; track locale) {
-          <option [value]="locale">{{ i18nService.getLocaleDisplayName(locale) }}</option>
-        }
-      </select>
+<header class="header">
+  <div class="solution-info">
+    <div class="solution-info-inner container">
+      <div class="solution-heading">
+        <a routerLink="/sessions" [attr.aria-label]="'app.homeLinkLabel' | t">{{ 'app.title' | t }}</a>
+      </div>
     </div>
   </div>
 </header>
 
-<main #main id="main-content" class="app-container" tabindex="-1">
+<main #main id="main-content" class="container pt-6 pb-8" tabindex="-1">
   <app-toast-container />
   <router-outlet (activate)="onRouteActivate()"></router-outlet>
 </main>
+
+<footer>
+  <div class="language-switcher">
+    <div class="container">
+      <ul [attr.aria-label]="'app.languageLabel' | t">
+        @for (locale of orderedLocales(); track locale) {
+          @let active = locale === i18nService.currentLocale();
+          <li>
+            <a
+              [routerLink]="currentPath()"
+              [queryParams]="{ lang: locale }"
+              queryParamsHandling="merge"
+              [attr.lang]="locale"
+              [attr.aria-current]="active ? 'true' : null">
+              @if (active) {
+                <svg class="icon-svg" focusable="false" aria-hidden="true">
+                  <use href="assets/dkfds/dist/img/all-svg-icons.svg#check"></use>
+                </svg>
+              }{{ i18nService.getLocaleDisplayName(locale) }}
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  </div>
+</footer>
 
 <app-confirm-modal />

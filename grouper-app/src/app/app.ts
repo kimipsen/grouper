@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, effect, inject, viewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { I18nService, LocaleCode } from './core/services/i18n.service';
+import { filter } from 'rxjs';
+import { I18nService } from './core/services/i18n.service';
 import { TranslatePipe } from './core/pipes/translate.pipe';
 import { ToastContainer } from './core/components/toast-container/toast-container';
 import { ConfirmModal } from './core/components/confirm-modal/confirm-modal';
@@ -11,29 +10,38 @@ import { ConfirmModal } from './core/components/confirm-modal/confirm-modal';
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
-  styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, RouterOutlet, TranslatePipe, ToastContainer, ConfirmModal]
+  imports: [RouterLink, RouterOutlet, TranslatePipe, ToastContainer, ConfirmModal]
 })
 export class App {
   readonly i18nService = inject(I18nService);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly localeControl = new FormControl<LocaleCode>('en', { nonNullable: true });
-  readonly availableLocales = this.i18nService.getAvailableLocales();
+  private readonly router = inject(Router);
   private readonly main = viewChild.required<ElementRef<HTMLElement>>('main');
 
-  constructor() {
-    this.localeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((locale) => {
-      void this.i18nService.setLocale(locale);
-    });
+  /** Current path without query/fragment; language links stay on the current page. */
+  readonly currentPath = signal('/');
 
-    effect(() => {
-      const currentLocale = this.i18nService.currentLocale();
-      if (this.localeControl.value !== currentLocale) {
-        this.localeControl.setValue(currentLocale, { emitEvent: false });
-      }
-    });
+  /** DKFDS language switcher: the current language is always listed first. */
+  readonly orderedLocales = computed(() => {
+    const current = this.i18nService.currentLocale();
+    return [current, ...this.i18nService.getAvailableLocales().filter((locale) => locale !== current)];
+  });
+
+  constructor() {
+    // The language switcher links set ?lang=…, so a language is also selectable by URL.
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        const tree = this.router.parseUrl(this.router.url);
+        tree.queryParams = {};
+        tree.fragment = null;
+        this.currentPath.set(this.router.serializeUrl(tree));
+        this.applyLocaleFromUrl();
+      });
   }
 
   // Handled in code because a plain "#main-content" href resolves against <base href> and would navigate.
@@ -44,5 +52,13 @@ export class App {
 
   onRouteActivate(): void {
     queueMicrotask(() => this.cdr.detectChanges());
+  }
+
+  private applyLocaleFromUrl(): void {
+    const requested = this.router.routerState.snapshot.root.queryParamMap.get('lang');
+    const supported = this.i18nService.getAvailableLocales().find((locale) => locale === requested);
+    if (supported && supported !== this.i18nService.currentLocale()) {
+      void this.i18nService.setLocale(supported);
+    }
   }
 }

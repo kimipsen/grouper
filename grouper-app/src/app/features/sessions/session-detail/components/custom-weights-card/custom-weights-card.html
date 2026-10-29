@@ -41,6 +41,7 @@
     <div class="weight-list">
       @for (weight of customWeights(); track weight.id) {
         <div class="weight-row">
+          <hr class="weight-divider" />
           <div class="form-group">
             <label class="form-label" [for]="'weight-name-' + weight.id">{{ 'sessionDetail.customWeights.weightLabel' | t }}</label>
             <input

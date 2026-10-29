@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, Injector, OnInit, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DOCUMENT, DestroyRef, Injector, OnInit, afterNextRender, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -42,6 +42,7 @@ export class SessionDetail implements OnInit {
   private destroyRef = inject(DestroyRef);
   private injector = inject(Injector);
   private cdr = inject(ChangeDetectorRef);
+  private document = inject(DOCUMENT);
   private sessionService = inject(SessionService);
   private groupingService = inject(GroupingService);
   private notifications = inject(NotificationService);
@@ -61,6 +62,7 @@ export class SessionDetail implements OnInit {
   readonly newWeightModeControl = new FormControl<WeightedGroupingMode>('balance', { nonNullable: true });
   selectedWeightIds: string[] = [];
   selectedPersonId: string | null = null;
+  panelFocus: 'heading' | 'name' = 'heading';
 
   /**
    * Looked up on every read: SessionService replaces person objects inside a session that is
@@ -151,6 +153,7 @@ export class SessionDetail implements OnInit {
       createdAt: new Date()
     };
     this.sessionService.addPersonToSession(this.session.id, person);
+    this.panelFocus = 'name';
     this.selectedPersonId = person.id;
     this.notifications.success('sessionDetail.snackbar.personAdded');
   }
@@ -250,11 +253,17 @@ export class SessionDetail implements OnInit {
   }
 
   openPersonWeights(person: Person): void {
+    this.panelFocus = 'heading';
     this.selectedPersonId = person.id;
   }
 
+  /** Closes the person panel and returns focus to that person's name in the list. */
   closePersonWeights(): void {
+    const personId = this.selectedPersonId;
     this.selectedPersonId = null;
+    if (personId) {
+      afterNextRender(() => this.document.getElementById(`person-name-${personId}`)?.focus(), { injector: this.injector });
+    }
   }
 
   toggleWeightSelection(weightId: string): void {

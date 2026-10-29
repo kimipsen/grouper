@@ -11,11 +11,11 @@ class MockI18nService {
   t(key: string): string {
     const labels: Record<string, string> = {
       'app.title': 'Grouper',
-      'app.sessionsNav': 'Sessions',
-      'app.languageLabel': 'Language',
+      'app.languageLabel': 'Choose language',
+      'app.homeLinkLabel': 'Grouper, front page',
       'app.skipToContent': 'Skip to main content',
       'app.languages.en': 'English',
-      'app.languages.da': 'Danish',
+      'app.languages.da': 'Dansk',
     };
     return labels[key] ?? key;
   }
@@ -25,7 +25,7 @@ class MockI18nService {
   }
 
   getLocaleDisplayName(locale: 'en' | 'da'): string {
-    return locale === 'en' ? 'English' : 'Danish';
+    return locale === 'en' ? 'English' : 'Dansk';
   }
 
   setLocale(): Promise<void> {
@@ -34,7 +34,7 @@ class MockI18nService {
 }
 
 describe('App accessibility', () => {
-  it('has accessible toolbar actions and landmarks', async () => {
+  it('has DKFDS header, main and footer landmarks with named controls', async () => {
     await TestBed.configureTestingModule({
       imports: [App, RouterTestingModule],
       providers: [
@@ -47,8 +47,11 @@ describe('App accessibility', () => {
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    const h1OrTitle = root.querySelector('.app-title');
-    expect(h1OrTitle?.textContent?.trim()).toBe('Grouper');
+    const homeLink = root.querySelector('header.header .solution-heading a');
+    expect(homeLink?.textContent?.trim()).toBe('Grouper');
+    // WCAG 2.5.3: the accessible name contains the visible text.
+    expect(homeLink?.getAttribute('aria-label')).toBe('Grouper, front page');
+    expect(root.querySelector('main#main-content')).not.toBeNull();
 
     const buttons = Array.from(root.querySelectorAll('button')) as HTMLButtonElement[];
     const hasUnnamedButton = buttons.some((button) => {
@@ -58,9 +61,8 @@ describe('App accessibility', () => {
     });
     expect(hasUnnamedButton).toBe(false);
 
-    const languageSelect = root.querySelector('select');
-    expect(languageSelect).toBeTruthy();
-    expect(root.textContent).toContain('Language');
+    expect(root.querySelector('select')).toBeNull();
+    expect(root.querySelector('footer .language-switcher ul')?.getAttribute('aria-label')).toBe('Choose language');
   });
 
   it('has a skip link that moves focus to the main landmark without navigating', async () => {

@@ -353,6 +353,7 @@ describe('SessionDetail', () => {
         removeCustomWeight: vi.fn(),
         resetSession: vi.fn(),
         updatePersonInSession: vi.fn(),
+        addPersonToSession: vi.fn(),
       };
 
       await TestBed.configureTestingModule({
@@ -479,6 +480,30 @@ describe('SessionDetail', () => {
       await fixture.whenStable();
       expect(component.selectedPerson).toBeNull();
       expect(root.querySelector('app-person-drawer')).toBeNull();
+    });
+
+    it('returns focus to the person name when the panel closes, and focuses the name field for a new person', async () => {
+      const { fixture, component, sessionService } = await setup();
+      const root: HTMLElement = fixture.nativeElement;
+      document.body.appendChild(root);
+      sessionService.addPersonToSession.mockImplementation((_id: string, added: Person) => {
+        (sessionService.currentSession() as Session).people.push(added);
+      });
+
+      root.querySelector<HTMLButtonElement>('#person-name-p1')?.click();
+      await fixture.whenStable();
+      expect(document.activeElement?.id).toBe('person-drawer-heading');
+
+      root.querySelector<HTMLButtonElement>('app-person-drawer .drawer-header button')?.click();
+      await fixture.whenStable();
+      expect(root.querySelector('app-person-drawer')).toBeNull();
+      expect(document.activeElement?.id).toBe('person-name-p1');
+
+      root.querySelector<HTMLButtonElement>('#add-person-button')?.click();
+      await fixture.whenStable();
+      expect(component.panelFocus).toBe('name');
+      expect(document.activeElement?.id).toBe('person-name');
+      root.remove();
     });
   });
 });

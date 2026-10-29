@@ -1,72 +1,78 @@
 @if (session) {
-  <div class="session-detail-container">
-    <a class="back-link" routerLink="/sessions">
-      <svg class="icon-svg" focusable="false" aria-hidden="true">
-        <use href="assets/dkfds/dist/img/all-svg-icons.svg#chevron-left"></use>
-      </svg>{{ 'common.back' | t }}
-    </a>
-    <h1 class="page-title">{{ session.name }}</h1>
+  <a class="back-link" routerLink="/sessions">
+    <svg class="icon-svg" focusable="false" aria-hidden="true">
+      <use href="assets/dkfds/dist/img/all-svg-icons.svg#chevron-left"></use>
+    </svg>{{ 'common.back' | t }}
+  </a>
+  <h1 class="page-title">{{ session.name }}</h1>
 
-    <div class="content-layout">
-      <div class="layout-row top-row">
-        <app-session-people-card
-          [people]="sortedPeople"
-          (addPerson)="addPerson()"
-          (openPerson)="openPersonWeights($event)"
-          (removePerson)="removePerson($event)" />
+  <div class="row">
+    <div class="col-12" [class.col-lg-7]="selectedPerson">
+      <app-session-people-card
+        [people]="sortedPeople"
+        (addPerson)="addPerson()"
+        (openPerson)="openPersonWeights($event)"
+        (removePerson)="removePerson($event)" />
+    </div>
 
-        @if (selectedPerson; as currentPerson) {
-          @for (person of [currentPerson]; track person.id) {
-            <app-person-drawer
-              [selectedPerson]="person"
-              [people]="sortedPeople"
-              [customWeights]="session.customWeights"
-              [preferences]="session.preferences"
-              (closeDrawer)="closePersonWeights()"
-              (updateName)="updatePersonName(person.id, $event)"
-              (updateGender)="updatePersonGender(person.id, $event)"
-              (updatePreference)="onPreferenceChange(person.id, $event.targetPersonId, $event.value)"
-              (updateWeight)="updatePersonWeight(person.id, $event.weightId, $event.value)" />
-          }
+    @if (selectedPerson; as currentPerson) {
+      <div class="col-12 col-lg-5">
+        @for (person of [currentPerson]; track person.id) {
+          <app-person-drawer
+            [selectedPerson]="person"
+            [people]="sortedPeople"
+            [customWeights]="session.customWeights"
+            [preferences]="session.preferences"
+            [initialFocus]="panelFocus"
+            (closeDrawer)="closePersonWeights()"
+            (updateName)="updatePersonName(person.id, $event)"
+            (updateGender)="updatePersonGender(person.id, $event)"
+            (updatePreference)="onPreferenceChange(person.id, $event.targetPersonId, $event.value)"
+            (updateWeight)="updatePersonWeight(person.id, $event.weightId, $event.value)" />
         }
       </div>
+    }
+  </div>
 
-      <div class="layout-row middle-row">
-        <app-grouping-config-card
-          [groupingStrategyControl]="groupingStrategyControl"
-          [groupSizeControl]="groupSizeControl"
-          [allowPartialGroupsControl]="allowPartialGroupsControl"
-          [genderModeControl]="genderModeControl"
-          [preferenceWantWithControl]="preferenceWantWithControl"
-          [preferenceAvoidControl]="preferenceAvoidControl"
-          [customWeights]="session.customWeights"
-          [selectedWeightIds]="selectedWeightIds"
-          [genderWeightId]="genderWeightId"
-          [peopleCount]="session.people.length"
-          [error]="groupingError()"
-          [fieldErrors]="groupingFieldErrors()"
-          (generateGroups)="generateGroups()"
-          (resetSession)="resetSession()"
-          (toggleWeightSelection)="toggleWeightSelection($event)" />
-
-        <app-custom-weights-card
-          [customWeights]="session.customWeights"
-          [newWeightNameControl]="newWeightNameControl"
-          [newWeightModeControl]="newWeightModeControl"
-          (addWeight)="addCustomWeight()"
-          (renameWeight)="renameCustomWeight($event.weight, $event.name)"
-          (updateWeightMode)="updateCustomWeightMode($event.weight, $event.mode)"
-          (removeWeight)="removeCustomWeight($event)" />
-      </div>
-
-      @if (currentResult) {
-        <div class="layout-row bottom-row">
-          <app-groups-result-card
-            [result]="currentResult"
-            [people]="session.people"
-            (regenerate)="regenerateGroups()" />
-        </div>
-      }
+  <div class="row">
+    <div class="col-12 col-lg-6">
+      <app-grouping-config-card
+        [groupingStrategyControl]="groupingStrategyControl"
+        [groupSizeControl]="groupSizeControl"
+        [allowPartialGroupsControl]="allowPartialGroupsControl"
+        [genderModeControl]="genderModeControl"
+        [preferenceWantWithControl]="preferenceWantWithControl"
+        [preferenceAvoidControl]="preferenceAvoidControl"
+        [customWeights]="session.customWeights"
+        [selectedWeightIds]="selectedWeightIds"
+        [genderWeightId]="genderWeightId"
+        [peopleCount]="session.people.length"
+        [error]="groupingError()"
+        [fieldErrors]="groupingFieldErrors()"
+        (generateGroups)="generateGroups()"
+        (resetSession)="resetSession()"
+        (toggleWeightSelection)="toggleWeightSelection($event)" />
+    </div>
+    <div class="col-12 col-lg-6">
+      <app-custom-weights-card
+        [customWeights]="session.customWeights"
+        [newWeightNameControl]="newWeightNameControl"
+        [newWeightModeControl]="newWeightModeControl"
+        (addWeight)="addCustomWeight()"
+        (renameWeight)="renameCustomWeight($event.weight, $event.name)"
+        (updateWeightMode)="updateCustomWeightMode($event.weight, $event.mode)"
+        (removeWeight)="removeCustomWeight($event)" />
     </div>
   </div>
+
+  @if (currentResult) {
+    <div class="row">
+      <div class="col-12">
+        <app-groups-result-card
+          [result]="currentResult"
+          [people]="session.people"
+          (regenerate)="regenerateGroups()" />
+      </div>
+    </div>
+  }
 }

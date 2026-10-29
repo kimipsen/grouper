@@ -9,7 +9,11 @@
         @for (person of people(); track person.id) {
           @let displayName = person.name || ('sessionDetail.unnamedPerson' | t);
           <li class="person-item">
-            <button class="function-link person-name" type="button" (click)="openPerson.emit(person)">
+            <button
+              class="function-link person-name"
+              type="button"
+              [id]="'person-name-' + person.id"
+              (click)="openPerson.emit(person)">
               {{ displayName }}
             </button>
             <button class="function-link person-delete" type="button" (click)="removePerson.emit(person)">
