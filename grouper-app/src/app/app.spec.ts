@@ -24,6 +24,7 @@ class MockI18nService {
       'app.title': 'Grouper',
       'app.homeLinkLabel': 'Grouper, front page',
       'app.languageLabel': 'Choose language',
+      'app.sourceCode': 'Source code on GitHub',
     };
     return labels[key] ?? key;
   }
@@ -53,10 +54,11 @@ describe('App', () => {
         ]),
       ],
     }).compileComponents();
-    i18n = TestBed.inject(I18nService) as unknown as MockI18nService;
   });
 
+  // Injecting here, not in beforeEach, lets a test override providers before rendering.
   async function render(url: string) {
+    i18n = TestBed.inject(I18nService) as unknown as MockI18nService;
     const fixture = TestBed.createComponent(App);
     await TestBed.inject(Router).navigateByUrl(url);
     await fixture.whenStable();
@@ -114,5 +116,31 @@ describe('App', () => {
     const { root } = await render('/sessions');
 
     expect(root.querySelector('footer .footer .app-version')?.textContent?.trim()).toBe('Version v1.2.3-4-gabc1234');
+    expect(root.querySelector('footer .footer .app-version a')).toBeNull();
+  });
+
+  it('follows the DKFDS footer order: footer content, then the language switcher', async () => {
+    const { root } = await render('/sessions');
+    const sections = Array.from(root.querySelectorAll('footer > div')).map((element) => element.className);
+
+    expect(sections).toEqual(['footer', 'language-switcher']);
+  });
+
+  it('links to the GitHub repository from the footer', async () => {
+    const { root } = await render('/sessions');
+    const link = root.querySelector<HTMLAnchorElement>('footer .footer .inline-list a.app-source-link');
+
+    expect(link?.textContent?.trim()).toBe('Source code on GitHub');
+    expect(link?.getAttribute('href')).toBe('https://github.com/kimipsen/grouper');
+    expect(link?.getAttribute('target')).toBeNull();
+  });
+
+  it('links a release version to its GitHub release', async () => {
+    TestBed.overrideProvider(APP_VERSION, { useValue: 'v1.2.3' });
+    const { root } = await render('/sessions');
+    const link = root.querySelector<HTMLAnchorElement>('footer .footer .app-version a');
+
+    expect(link?.textContent?.trim()).toBe('Version v1.2.3');
+    expect(link?.getAttribute('href')).toBe('https://github.com/kimipsen/grouper/releases/tag/v1.2.3');
   });
 });

@@ -16,6 +16,21 @@
 </main>
 
 <footer>
+  <!-- DKFDS footer order: footer content first, then the language switcher. -->
+  <div class="footer">
+    <div class="container">
+      <ul class="align-text-left unstyled-list inline-list">
+        <li class="app-version">
+          @if (releaseUrl) {
+            <a [href]="releaseUrl">{{ 'app.version' | t: { version: appVersion } }}</a>
+          } @else {
+            {{ 'app.version' | t: { version: appVersion } }}
+          }
+        </li>
+        <li><a class="app-source-link" [href]="repositoryUrl">{{ 'app.sourceCode' | t }}</a></li>
+      </ul>
+    </div>
+  </div>
   <div class="language-switcher">
     <div class="container">
       <ul [attr.aria-label]="'app.languageLabel' | t">
@@ -37,11 +52,6 @@
           </li>
         }
       </ul>
-    </div>
-  </div>
-  <div class="footer">
-    <div class="container">
-      <p class="app-version">{{ 'app.version' | t: { version: appVersion } }}</p>
     </div>
   </div>
 </footer>
