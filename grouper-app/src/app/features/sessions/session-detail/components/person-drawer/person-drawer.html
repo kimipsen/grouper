@@ -96,6 +96,9 @@
         <h4>{{ 'sessionDetail.customWeights.personWeightsTitle' | t }}</h4>
         @if (customWeights().length === 0) {
           <p class="drawer-muted">{{ 'sessionDetail.customWeights.empty' | t }}</p>
+          <button type="button" class="function-link" (click)="addWeights.emit()">
+            {{ 'sessionDetail.customWeights.addFromPerson' | t }}
+          </button>
         } @else {
           @for (weight of customWeights(); track weight.id) {
             <div class="drawer-row">

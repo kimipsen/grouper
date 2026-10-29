@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DOCUMENT, ElementRef, afterRenderEffect, computed, inject, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, afterRenderEffect, computed, input, output, viewChild } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { GenderMode, GroupingStrategy } from '../../../../../models/group.model';
 import { CustomWeightDefinition } from '../../../../../models/session.model';
@@ -32,11 +32,12 @@ export class GroupingConfigCard {
 
   readonly errorsByField = computed(() => new Map(this.fieldErrors().map((error) => [error.fieldId, error])));
   private readonly errorSummary = viewChild<ElementRef<HTMLElement>>('errorSummary');
-  private readonly document = inject(DOCUMENT);
 
   readonly generateGroups = output<void>();
   readonly resetSession = output<void>();
   readonly toggleWeightSelection = output<string>();
+  /** Emits the id of the field an error summary link points to; the field may be on another tab. */
+  readonly focusField = output<string>();
 
   readonly GroupingStrategy = GroupingStrategy;
 
@@ -61,8 +62,8 @@ export class GroupingConfigCard {
     });
   }
 
-  focusField(event: Event, fieldId: string): void {
+  followErrorLink(event: Event, fieldId: string): void {
     event.preventDefault();
-    this.document.getElementById(fieldId)?.focus();
+    this.focusField.emit(fieldId);
   }
 }

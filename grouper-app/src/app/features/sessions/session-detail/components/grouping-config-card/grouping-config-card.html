@@ -13,7 +13,7 @@
             <ul class="alert-text nobullet-list">
               @for (fieldError of fieldErrors(); track fieldError.key) {
                 <li>
-                  <a class="function-link" [href]="'#' + fieldError.fieldId" (click)="focusField($event, fieldError.fieldId)">
+                  <a class="function-link" [href]="'#' + fieldError.fieldId" (click)="followErrorLink($event, fieldError.fieldId)">
                     {{ fieldError.key | t:fieldError.params }}
                   </a>
                 </li>

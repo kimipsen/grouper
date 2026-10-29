@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DOCUMENT, DestroyRef, Injector, OnInit, afterNextRender, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DOCUMENT, DestroyRef, ElementRef, Injector, OnInit, afterNextRender, afterRenderEffect, effect, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Tabs } from 'dkfds';
 import { v4 as uuidv4 } from 'uuid';
 import { DEFAULT_PREFERENCE_SCORING, Session, CustomWeightDefinition } from '../../../models/session.model';
 import { Gender, Person } from '../../../models/person.model';
@@ -19,6 +20,14 @@ import { PersonDrawer } from './components/person-drawer/person-drawer';
 import { GroupingConfigCard, GroupingFieldError } from './components/grouping-config-card/grouping-config-card';
 import { CustomWeightsCard } from './components/custom-weights-card/custom-weights-card';
 import { GroupsResultCard } from './components/groups-result-card/groups-result-card';
+
+export type SessionTab = 'people' | 'weights' | 'groups' | 'results';
+
+const SESSION_TABS: readonly SessionTab[] = ['people', 'weights', 'groups', 'results'];
+
+function isSessionTab(value: string | null | undefined): value is SessionTab {
+  return SESSION_TABS.some((tab) => tab === value);
+}
 
 @Component({
   selector: 'app-session-detail',
@@ -89,6 +98,27 @@ export class SessionDetail implements OnInit {
   // Enum for template
   GroupingStrategy = GroupingStrategy;
 
+  readonly tabs: { id: SessionTab; labelKey: string }[] = [
+    { id: 'people', labelKey: 'sessionDetail.tabs.people' },
+    { id: 'weights', labelKey: 'sessionDetail.tabs.weights' },
+    { id: 'groups', labelKey: 'sessionDetail.tabs.groups' },
+    { id: 'results', labelKey: 'sessionDetail.tabs.results' },
+  ];
+  readonly activeTab = signal<SessionTab>('people');
+  private readonly tabContainer = viewChild<ElementRef<HTMLElement>>('tabContainer');
+  private dkfdsTabs: { container: HTMLElement; tabs: Tabs } | null = null;
+
+  constructor() {
+    // The tab container is rendered once a session is loaded; DKFDS tabs are initialised once per container.
+    afterRenderEffect(() => {
+      const container = this.tabContainer()?.nativeElement;
+      if (!container || this.dkfdsTabs?.container === container) return;
+      const tabs = new Tabs(container);
+      tabs.init();
+      this.dkfdsTabs = { container, tabs };
+    });
+  }
+
   get sortedPeople(): Person[] {
     if (!this.session) {
       return [];
@@ -105,6 +135,11 @@ export class SessionDetail implements OnInit {
   }
 
   ngOnInit(): void {
+    const initialTab = this.route.snapshot.queryParamMap.get('tab');
+    if (isSessionTab(initialTab)) {
+      this.activeTab.set(initialTab);
+    }
+
     this.route.params
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(params => {
@@ -338,14 +373,51 @@ export class SessionDetail implements OnInit {
 
       this.sessionService.addGroupingResult(this.session.id, this.currentResult);
       this.showGroupingErrors([]);
+      this.showResults();
       this.notifications.success('sessionDetail.snackbar.groupsGenerated');
     } catch (error: unknown) {
       this.showGroupingErrors([this.getGroupingErrorMessage(error)]);
     }
   }
 
+  /** Called by DKFDS when a tab is selected; keeps the selected tab in the URL so reloading keeps it. */
+  onTabSelected(tab: SessionTab): void {
+    this.activeTab.set(tab);
+    this.router.navigate([], {
+      queryParams: { tab: tab === 'people' ? null : tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  selectTab(tab: SessionTab): void {
+    const button = this.document.getElementById(`session-tab-${tab}`);
+    if (this.dkfdsTabs && button) {
+      this.dkfdsTabs.tabs.activateTab(button, false);
+    } else {
+      this.onTabSelected(tab);
+    }
+  }
+
+  /** Moves focus to a field, first selecting the tab it is on (for links that cross tabs). */
+  focusField(fieldId: string): void {
+    const field = this.document.getElementById(fieldId);
+    const tab = field?.closest('[role="tabpanel"]')?.id.replace('session-tabpanel-', '');
+    if (isSessionTab(tab) && tab !== this.activeTab()) {
+      this.selectTab(tab);
+    }
+    field?.focus();
+  }
+
   regenerateGroups(): void {
     this.generateGroups();
+  }
+
+  /** After generating from the Create groups tab, show the Results tab and move focus to it. */
+  private showResults(): void {
+    if (this.activeTab() === 'results') return;
+    this.selectTab('results');
+    this.document.getElementById('session-tabpanel-results')?.focus();
   }
 
   /**

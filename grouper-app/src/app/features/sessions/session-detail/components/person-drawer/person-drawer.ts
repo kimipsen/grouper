@@ -24,6 +24,8 @@ export class PersonDrawer {
   readonly updateGender = output<Gender>();
   readonly updatePreference = output<{ targetPersonId: string; value: string }>();
   readonly updateWeight = output<{ weightId: string; value: number }>();
+  /** Asks to go to the Custom weights tab to add a weight. */
+  readonly addWeights = output<void>();
 
   readonly genderOptions: { value: Gender; labelKey: string }[] = [
     { value: 'female', labelKey: 'sessionDetail.gender.female' },

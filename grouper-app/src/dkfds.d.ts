@@ -7,4 +7,10 @@ declare module 'dkfds' {
     show(event?: Event | null): void;
     hide(): void;
   }
+
+  export class Tabs {
+    constructor(tabContainer: HTMLElement);
+    init(): void;
+    activateTab(tab: HTMLElement, setFocus: boolean): void;
+  }
 }
