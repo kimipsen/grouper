@@ -62,6 +62,9 @@ jobs:
 
       - name: Build production bundle
         run: npm run build -- --configuration production
+        env:
+          # A manual run may build an untagged commit; report the release tag exactly.
+          APP_VERSION: ${{ steps.tag.outputs.value }}
 
       - name: Package build artifact
         id: package

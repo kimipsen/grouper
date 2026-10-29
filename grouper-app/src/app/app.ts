@@ -6,6 +6,7 @@ import { I18nService } from './core/services/i18n.service';
 import { TranslatePipe } from './core/pipes/translate.pipe';
 import { ToastContainer } from './core/components/toast-container/toast-container';
 import { ConfirmModal } from './core/components/confirm-modal/confirm-modal';
+import { APP_VERSION } from './core/version';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +16,7 @@ import { ConfirmModal } from './core/components/confirm-modal/confirm-modal';
 })
 export class App {
   readonly i18nService = inject(I18nService);
+  readonly appVersion = inject(APP_VERSION);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
   private readonly main = viewChild.required<ElementRef<HTMLElement>>('main');

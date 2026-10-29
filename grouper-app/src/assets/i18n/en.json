@@ -7,7 +7,8 @@
       "en": "English",
       "da": "Dansk"
     },
-    "homeLinkLabel": "Grouper, front page"
+    "homeLinkLabel": "Grouper, front page",
+    "version": "Version {{version}}"
   },
   "notifications": {
     "success": "Success:",
