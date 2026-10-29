@@ -21,6 +21,9 @@ class MockI18nService {
       'sessionDetail.generatedGroups': 'Generated Groups',
       'sessionDetail.regenerateGroups': 'Generate new groups',
       'sessionDetail.unnamedPerson': 'Unnamed person',
+      'sessionDetail.gender.female': 'Female',
+      'sessionDetail.gender.male': 'Male',
+      'sessionDetail.gender.unspecified': 'Unspecified',
     };
     return labels[key] ?? key;
   }
@@ -60,6 +63,35 @@ describe('GroupsResultCard', () => {
     expect(regenSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('shows each member\'s gender as a badge, falling back to unspecified', async () => {
+    await TestBed.configureTestingModule({
+      imports: [GroupsResultCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(GroupsResultCard);
+    fixture.componentRef.setInput('people', [
+      { id: 'p1', name: 'Alice', gender: 'female', createdAt: new Date() } as Person,
+      { id: 'p2', name: 'Sam', createdAt: new Date() } as Person,
+    ]);
+    fixture.componentRef.setInput('result', {
+      groups: [{ id: 'g1', name: 'Group 1', memberIds: ['p1', 'p2'] }],
+      strategy: GroupingStrategy.RANDOM,
+      settings: { strategy: GroupingStrategy.RANDOM, groupSize: 2, allowPartialGroups: true },
+      timestamp: new Date(),
+    });
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+
+    const members = Array.from(root.querySelectorAll<HTMLElement>('.group-members li'));
+    expect(members.map((member) => member.querySelector('.badge')?.textContent?.trim())).toEqual(['Female', 'Unspecified']);
+    expect(members.map((member) => member.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+      'Alice, Female',
+      'Sam, Unspecified',
+    ]);
+    expect(await getAxeViolations(root)).toEqual([]);
+  });
+
   it('uses DKFDS cards and badges, a distinct regenerate label, and falls back for unnamed members', async () => {
     await TestBed.configureTestingModule({
       imports: [GroupsResultCard],
@@ -91,9 +123,9 @@ describe('GroupsResultCard', () => {
     const groups = Array.from(root.querySelectorAll<HTMLElement>('.card-row > li .group-card'));
     expect(groups.map((group) => group.querySelector('h3')?.textContent?.trim())).toEqual(['Group 1', 'Group 2']);
     expect(groups[0].getAttribute('aria-labelledby')).toBe(groups[0].querySelector('h3')?.id);
-    expect(groups[0].querySelector('.badge')?.textContent?.trim()).toBe('Score 8');
-    expect(groups[1].querySelector('.badge')).toBeNull();
-    expect(groups[1].querySelector('.group-members li')?.textContent?.trim()).toBe('Unnamed person');
+    expect(groups[0].querySelector('.card-content > .badge')?.textContent?.trim()).toBe('Score 8');
+    expect(groups[1].querySelector('.card-content > .badge')).toBeNull();
+    expect(groups[1].querySelector('.group-members li')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Unnamed person, Male');
     expect(await getAxeViolations(root)).toEqual([]);
   });
 });

@@ -482,6 +482,23 @@ describe('SessionDetail', () => {
       expect(root.querySelector('app-person-drawer')).toBeNull();
     });
 
+    it('updates the gender badge in the people list when gender changes in the person panel', async () => {
+      const { fixture, sessionService } = await setup();
+      const session = sessionService.currentSession() as Session;
+      const root: HTMLElement = fixture.nativeElement;
+      sessionService.updatePersonInSession.mockImplementation((_id: string, updated: Person) => {
+        session.people = session.people.map((existing) => (existing.id === updated.id ? updated : existing));
+      });
+
+      root.querySelector<HTMLButtonElement>('#person-name-p1')?.click();
+      await fixture.whenStable();
+      expect(root.querySelector('#person-name-p1 .badge')?.textContent?.trim()).toBe('sessionDetail.gender.female');
+
+      root.querySelector<HTMLInputElement>('#person-gender-male')?.click();
+      await fixture.whenStable();
+      expect(root.querySelector('#person-name-p1 .badge')?.textContent?.trim()).toBe('sessionDetail.gender.male');
+    });
+
     it('returns focus to the person name when the panel closes, and focuses the name field for a new person', async () => {
       const { fixture, component, sessionService } = await setup();
       const root: HTMLElement = fixture.nativeElement;

@@ -14,7 +14,8 @@
               type="button"
               [id]="'person-name-' + person.id"
               (click)="openPerson.emit(person)">
-              {{ displayName }}
+              {{ displayName }}<span class="sr-only">, </span>
+              <span class="badge person-gender">{{ 'sessionDetail.gender.' + (person.gender ?? 'unspecified') | t }}</span>
             </button>
             <button class="function-link person-delete" type="button" (click)="removePerson.emit(person)">
               <svg class="icon-svg" focusable="false" aria-hidden="true">
