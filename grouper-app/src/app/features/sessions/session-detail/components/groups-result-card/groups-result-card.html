@@ -1,35 +1,35 @@
 <section class="card section-card groups-display">
   <div class="card-content">
     <div class="groups-header">
-      <h2 class="card-heading">
-        {{ 'sessionDetail.generatedGroups' | t }}
-        @if (result().overallSatisfaction !== undefined) {
-          <span class="satisfaction-badge">
-            {{ 'sessionDetail.satisfaction' | t:{ score: result().overallSatisfaction ?? 0 } }}
-          </span>
-        }
-      </h2>
-      <button class="button button-secondary" type="button" (click)="regenerate.emit()">
-        {{ 'sessionDetail.generateGroups' | t }}
+      <h2 class="card-heading">{{ 'sessionDetail.generatedGroups' | t }}</h2>
+      @if (result().overallSatisfaction !== undefined) {
+        <span class="badge badge-info">
+          {{ 'sessionDetail.satisfaction' | t:{ score: result().overallSatisfaction ?? 0 } }}
+        </span>
+      }
+      <button class="button button-secondary regenerate-button" type="button" (click)="regenerate.emit()">
+        {{ 'sessionDetail.regenerateGroups' | t }}
       </button>
     </div>
 
-    <div class="groups-grid">
+    <ul class="card-row row">
       @for (group of result().groups; track group.id; let i = $index) {
-        <section class="group-card">
-          <div class="group-header">
-            <h3>{{ 'sessionDetail.groupLabel' | t:{ index: i + 1 } }}</h3>
-            @if (group.satisfactionScore !== undefined) {
-              <span class="score">{{ 'sessionDetail.score' | t:{ score: group.satisfactionScore } }}</span>
-            }
-          </div>
-          <ul class="group-members">
-            @for (memberId of group.memberIds; track memberId) {
-              <li class="member">{{ getPersonName(memberId) }}</li>
-            }
-          </ul>
-        </section>
+        <li class="col-12 col-sm-6 col-lg-4">
+          <section class="card group-card" [attr.aria-labelledby]="'group-heading-' + group.id">
+            <div class="card-content">
+              <h3 class="card-heading" [id]="'group-heading-' + group.id">{{ 'sessionDetail.groupLabel' | t:{ index: i + 1 } }}</h3>
+              @if (group.satisfactionScore !== undefined) {
+                <span class="badge">{{ 'sessionDetail.score' | t:{ score: group.satisfactionScore } }}</span>
+              }
+              <ul class="nobullet-list group-members">
+                @for (memberId of group.memberIds; track memberId) {
+                  <li>{{ getPersonName(memberId) || ('sessionDetail.unnamedPerson' | t) }}</li>
+                }
+              </ul>
+            </div>
+          </section>
+        </li>
       }
-    </div>
+    </ul>
   </div>
 </section>

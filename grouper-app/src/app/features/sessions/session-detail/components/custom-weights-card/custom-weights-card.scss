@@ -11,6 +11,10 @@
   margin: 0;
 }
 
+.weight-delete {
+  align-self: center;
+}
+
 .weight-list {
   display: flex;
   flex-direction: column;
@@ -24,11 +28,6 @@
   align-items: end;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 1.25rem;
-  color: #454545;
-}
 
 @media (max-width: 900px) {
   .weight-editor,

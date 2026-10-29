@@ -18,6 +18,7 @@ class MockI18nService {
       'sessionDetail.preferencesTitle': 'Preferences',
       'sessionDetail.preferencesMinPeople': 'Need more people',
       'sessionDetail.preferenceNone': 'None',
+      'sessionDetail.preferencePerson': 'Person',
       'sessionDetail.preferenceWantWith': 'Want with',
       'sessionDetail.preferenceAvoid': 'Avoid',
       'sessionDetail.customWeights.empty': 'No weights',
@@ -79,12 +80,9 @@ describe('PersonDrawer', () => {
     const closeButton = fixture.nativeElement.querySelector('.drawer-header button');
     closeButton.click();
 
-    const selects = fixture.nativeElement.querySelectorAll('select');
-    selects[0].value = 'male';
-    selects[0].dispatchEvent(new Event('change'));
-
-    selects[1].value = 'avoid';
-    selects[1].dispatchEvent(new Event('change'));
+    expect(fixture.nativeElement.querySelector('#person-preference-p2-wantWith').checked).toBe(true);
+    fixture.nativeElement.querySelector('#person-gender-male').click();
+    fixture.nativeElement.querySelector('#person-preference-p2-avoid').click();
 
     const weightInput = fixture.nativeElement.querySelector('.weight-input');
     weightInput.value = '9';
@@ -97,7 +95,7 @@ describe('PersonDrawer', () => {
     expect(weightSpy).toHaveBeenCalledWith({ weightId: 'w1', value: 9 });
   });
 
-  it('labels every preference select and weight input and has no axe violations', async () => {
+  it('uses radio groups for gender and a labelled preference table, and has no axe violations', async () => {
     await TestBed.configureTestingModule({
       imports: [PersonDrawer],
       providers: [{ provide: I18nService, useClass: MockI18nService }],
@@ -111,11 +109,23 @@ describe('PersonDrawer', () => {
     fixture.detectChanges();
 
     const root: HTMLElement = fixture.nativeElement;
-    const preferenceSelect = root.querySelector<HTMLSelectElement>('.preference-select');
     const weightInput = root.querySelector<HTMLInputElement>('.weight-input');
 
-    expect(preferenceSelect?.id).toBe('person-preference-p2');
-    expect(root.querySelector(`label[for="person-preference-p2"]`)?.textContent?.trim()).toBe('Bob');
+    expect(root.querySelector('select')).toBeNull();
+    expect(Array.from(root.querySelectorAll('.preference-table thead th')).map((th) => th.textContent?.trim())).toEqual([
+      'Person',
+      'None',
+      'Want with',
+      'Avoid',
+    ]);
+    expect(root.querySelector('.preference-table tbody th[scope="row"]')?.textContent?.trim()).toBe('Bob');
+    expect(Array.from(root.querySelectorAll('.preference-table tbody label')).map((label) => label.textContent?.trim())).toEqual([
+      'Bob: None',
+      'Bob: Want with',
+      'Bob: Avoid',
+    ]);
+    expect(root.querySelector<HTMLInputElement>('#person-preference-p2-none')?.checked).toBe(true);
+    expect(root.querySelector<HTMLInputElement>('#person-gender-female')?.checked).toBe(true);
     expect(weightInput?.id).toBe('person-weight-w1');
     expect(root.querySelector(`label[for="person-weight-w1"]`)?.textContent?.trim()).toBe('Karakter');
     expect(await getAxeViolations(root)).toEqual([]);
@@ -135,7 +145,8 @@ describe('PersonDrawer', () => {
     fixture.detectChanges();
 
     const root: HTMLElement = fixture.nativeElement;
-    expect(root.querySelector('label[for="person-preference-p2"]')?.textContent?.trim()).toBe('Unnamed person');
+    expect(root.querySelector('.preference-table tbody th')?.textContent?.trim()).toBe('Unnamed person');
+    expect(root.querySelector('label[for="person-preference-p2-avoid"]')?.textContent?.trim()).toBe('Unnamed person: Avoid');
     expect(root.querySelector('label[for="person-weight-w1"]')?.textContent?.trim()).toBe('Weight');
     expect(await getAxeViolations(root)).toEqual([]);
   });

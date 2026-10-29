@@ -16,6 +16,7 @@ class MockI18nService {
       'sessionDetail.customWeights.modeBalance': 'Balance across groups',
       'sessionDetail.customWeights.modeMatchSimilar': 'Match similar in groups',
       'sessionDetail.customWeights.empty': 'No weights',
+      'common.delete': 'Delete',
       'sessionDetail.customWeights.nameRequired': 'Enter a name for the weight',
       'notifications.error': 'Error:',
     };
@@ -53,14 +54,13 @@ describe('CustomWeightsCard', () => {
 
     const addButton = fixture.nativeElement.querySelector('.weight-editor button');
     const renameInput = fixture.nativeElement.querySelector('.weight-row input');
-    const modeSelect = fixture.nativeElement.querySelector('.weight-row select');
-    const removeButton = fixture.nativeElement.querySelector('.weight-row .button-warning');
+    const modeRadio = fixture.nativeElement.querySelector('#weight-mode-w1-match-similar');
+    const removeButton = fixture.nativeElement.querySelector('.weight-row .weight-delete');
 
     addButton.click();
     renameInput.value = 'Renamed';
     renameInput.dispatchEvent(new Event('input'));
-    modeSelect.value = 'match-similar';
-    modeSelect.dispatchEvent(new Event('change'));
+    modeRadio.click();
     removeButton.click();
 
     expect(addSpy).toHaveBeenCalledTimes(1);
@@ -104,5 +104,41 @@ describe('CustomWeightsCard', () => {
     expect(addSpy).toHaveBeenCalledTimes(1);
     expect(root.querySelector('#new-weight-name-error')).toBeNull();
     root.remove();
+  });
+
+  it('uses labelled radio groups for weight mode, function links for delete, and passes axe', async () => {
+    await TestBed.configureTestingModule({
+      imports: [CustomWeightsCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(CustomWeightsCard);
+    const modeControl = new FormControl<'balance' | 'match-similar'>('balance', { nonNullable: true });
+    fixture.componentRef.setInput('customWeights', weights);
+    fixture.componentRef.setInput('newWeightNameControl', new FormControl<string>('', { nonNullable: true }));
+    fixture.componentRef.setInput('newWeightModeControl', modeControl);
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+
+    expect(root.querySelector('select')).toBeNull();
+    const fieldsets = Array.from(root.querySelectorAll('fieldset'));
+    expect(fieldsets.map((fieldset) => fieldset.querySelector('legend')?.textContent?.trim())).toEqual(['Mode', 'Mode', 'Mode']);
+
+    root.querySelector<HTMLInputElement>('#new-weight-mode-match-similar')?.click();
+    expect(modeControl.value).toBe('match-similar');
+
+    expect(root.querySelector<HTMLInputElement>('#weight-mode-w1-balance')?.checked).toBe(true);
+    expect(root.querySelector<HTMLInputElement>('#weight-mode-w2-match-similar')?.checked).toBe(true);
+    expect(root.querySelector<HTMLInputElement>('#weight-mode-w1-balance')?.name).not.toBe(
+      root.querySelector<HTMLInputElement>('#weight-mode-w2-balance')?.name,
+    );
+
+    const deletes = Array.from(root.querySelectorAll<HTMLButtonElement>('.weight-delete'));
+    expect(deletes.map((button) => button.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+      'Delete Karakter',
+      'Delete Opførsel',
+    ]);
+    expect(root.querySelector('.button-warning')).toBeNull();
+    expect(await getAxeViolations(root)).toEqual([]);
   });
 });

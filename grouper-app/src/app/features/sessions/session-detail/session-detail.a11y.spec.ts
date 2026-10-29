@@ -1,6 +1,6 @@
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { GroupingService } from '../../../core/services/grouping.service';
 import { I18nService } from '../../../core/services/i18n.service';
@@ -36,7 +36,7 @@ class MockI18nService {
       'sessionDetail.preferenceWantWith': 'Want with',
       'sessionDetail.preferenceAvoid': 'Avoid',
       'common.back': 'Back',
-      'sessionDetail.regenerateGroupsAria': 'Regenerate groups',
+      'sessionDetail.regenerateGroups': 'Generate new groups',
       'sessionDetail.genderMode.label': 'Gender mode',
       'sessionDetail.genderMode.mixed': 'Mixed',
       'sessionDetail.genderMode.single': 'Single',
@@ -75,7 +75,7 @@ describe('SessionDetail accessibility', () => {
       imports: [SessionDetail],
       providers: [
         { provide: ActivatedRoute, useValue: { params: params$ } },
-        { provide: Router, useValue: { navigate: vi.fn() } },
+        provideRouter([]),
         {
           provide: SessionService,
           useValue: {
@@ -106,8 +106,10 @@ describe('SessionDetail accessibility', () => {
     fixture.detectChanges();
 
     const root = fixture.nativeElement as HTMLElement;
-    const backButton = root.querySelector('button[aria-label]');
-    expect(backButton?.getAttribute('aria-label')).toBe('Back');
+    const backLink = root.querySelector('a.back-link');
+    expect(backLink?.textContent?.trim()).toBe('Back');
+    expect(backLink?.getAttribute('href')).toBe('/sessions');
+    expect(backLink?.nextElementSibling?.tagName).toBe('H1');
 
     const labels = root.textContent ?? '';
     expect(labels).toContain('Create Groups');

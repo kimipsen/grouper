@@ -11,10 +11,26 @@
       <li class="info-item">{{ session().updatedAt | date:'short':undefined:currentDateLocale() }}</li>
     </ul>
 
-    <div class="card-actions button-group">
-      <button class="button button-secondary" type="button" (click)="open.emit()">{{ 'common.open' | t }}</button>
-      <button class="button button-secondary" type="button" (click)="export.emit()">{{ 'common.export' | t }}</button>
-      <button class="button button-warning" type="button" (click)="remove.emit()">{{ 'common.delete' | t }}</button>
+    <div class="card-actions">
+      <button class="button button-secondary" type="button" (click)="open.emit()">
+        {{ 'common.open' | t }}<span class="sr-only"> {{ session().name }}</span>
+      </button>
+      <ul class="nobullet-list card-function-links">
+        <li>
+          <button class="function-link" type="button" (click)="export.emit()">
+            <svg class="icon-svg" focusable="false" aria-hidden="true">
+              <use href="assets/dkfds/dist/img/all-svg-icons.svg#download"></use>
+            </svg>{{ 'common.export' | t }}<span class="sr-only"> {{ session().name }}</span>
+          </button>
+        </li>
+        <li>
+          <button class="function-link" type="button" (click)="remove.emit()">
+            <svg class="icon-svg" focusable="false" aria-hidden="true">
+              <use href="assets/dkfds/dist/img/all-svg-icons.svg#delete"></use>
+            </svg>{{ 'common.delete' | t }}<span class="sr-only"> {{ session().name }}</span>
+          </button>
+        </li>
+      </ul>
     </div>
   </div>
 </article>

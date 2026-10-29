@@ -81,7 +81,12 @@ describe('SessionListCard', () => {
     const buttons: HTMLButtonElement[] = Array.from(fixture.nativeElement.querySelectorAll('button'));
     const infoItems: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('.info-item'));
 
-    expect(buttons.map((button) => button.textContent?.trim())).toEqual(['Open', 'Export', 'Delete']);
+    expect(buttons.map((button) => button.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+      'Open Session 1',
+      'Export Session 1',
+      'Delete Session 1',
+    ]);
+    expect(buttons.map((button) => button.className)).toEqual(['button button-secondary', 'function-link', 'function-link']);
     expect(infoItems[2].textContent?.trim()).toMatch(/\d{2}\.\d{2}\.\d{4}/);
   });
 

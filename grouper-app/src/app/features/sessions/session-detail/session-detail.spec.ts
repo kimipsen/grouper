@@ -1,6 +1,6 @@
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { GroupingService } from '../../../core/services/grouping.service';
 import { I18nService } from '../../../core/services/i18n.service';
@@ -39,7 +39,7 @@ class MockI18nService {
       'sessionDetail.preferenceWantWith': 'Want with',
       'sessionDetail.preferenceAvoid': 'Avoid',
       'common.back': 'Back',
-      'sessionDetail.regenerateGroupsAria': 'Regenerate groups',
+      'sessionDetail.regenerateGroups': 'Generate new groups',
     };
     return labels[key] ?? key;
   }
@@ -69,7 +69,7 @@ describe('SessionDetail', () => {
       imports: [SessionDetail],
       providers: [
         { provide: ActivatedRoute, useValue: { params: params$ } },
-        { provide: Router, useValue: { navigate: vi.fn() } },
+        provideRouter([]),
         {
           provide: SessionService,
           useValue: {
@@ -126,7 +126,7 @@ describe('SessionDetail', () => {
       imports: [SessionDetail],
       providers: [
         { provide: ActivatedRoute, useValue: { params: params$ } },
-        { provide: Router, useValue: { navigate: vi.fn() } },
+        provideRouter([]),
         {
           provide: SessionService,
           useValue: {
@@ -164,7 +164,7 @@ describe('SessionDetail', () => {
     const addedPerson = addPersonToSession.mock.calls[0][1] as { name: string; gender: string };
     expect(addedPerson.name).toBe('');
     expect(addedPerson.gender).toBe('unspecified');
-    expect(fixture.componentInstance.selectedPerson).toEqual(expect.objectContaining({ name: '', gender: 'unspecified' }));
+    expect(fixture.componentInstance.selectedPersonId).toBe((addedPerson as unknown as { id: string }).id);
   });
 
   describe('grouping feedback', () => {
@@ -191,7 +191,7 @@ describe('SessionDetail', () => {
         imports: [SessionDetail],
         providers: [
           { provide: ActivatedRoute, useValue: { params: new BehaviorSubject({ id: 'session-1' }) } },
-          { provide: Router, useValue: { navigate: vi.fn() } },
+          provideRouter([]),
           {
             provide: SessionService,
             useValue: {
@@ -352,13 +352,14 @@ describe('SessionDetail', () => {
         removePersonFromSession: vi.fn(),
         removeCustomWeight: vi.fn(),
         resetSession: vi.fn(),
+        updatePersonInSession: vi.fn(),
       };
 
       await TestBed.configureTestingModule({
         imports: [SessionDetail],
         providers: [
           { provide: ActivatedRoute, useValue: { params: new BehaviorSubject({ id: 'session-1' }) } },
-          { provide: Router, useValue: { navigate: vi.fn() } },
+          provideRouter([]),
           { provide: SessionService, useValue: sessionService },
           { provide: GroupingService, useValue: {} },
           { provide: I18nService, useClass: MockI18nService },
@@ -446,6 +447,38 @@ describe('SessionDetail', () => {
       await fixture.whenStable();
 
       expect(fixture.nativeElement.querySelectorAll('.person-item')).toHaveLength(0);
+    });
+
+    it('keeps the person panel in sync when the person object is replaced or removed', async () => {
+      const { fixture, component, sessionService, confirmDialog } = await setup();
+      const session = sessionService.currentSession() as Session;
+      const root: HTMLElement = fixture.nativeElement;
+      const panelHeading = () => root.querySelector('app-person-drawer h3')?.textContent?.trim();
+      // Like SessionService: replace the Person object inside the same, mutated session.
+      sessionService.updatePersonInSession.mockImplementation((_id: string, updated: Person) => {
+        session.people = session.people.map((existing) => (existing.id === updated.id ? updated : existing));
+      });
+      sessionService.removePersonFromSession.mockImplementation(() => {
+        session.people = [];
+      });
+
+      root.querySelector<HTMLButtonElement>('.person-name')?.click();
+      await fixture.whenStable();
+      expect(panelHeading()).toBe('sessionDetail.unnamedPerson');
+
+      const nameInput = root.querySelector<HTMLInputElement>('#person-name') as HTMLInputElement;
+      nameInput.value = 'Renamed';
+      nameInput.dispatchEvent(new Event('input'));
+      await fixture.whenStable();
+      expect(component.selectedPerson?.name).toBe('Renamed');
+      expect(panelHeading()).toBe('Renamed');
+
+      const deletion = component.removePerson(person);
+      confirmDialog.settle(true);
+      await deletion;
+      await fixture.whenStable();
+      expect(component.selectedPerson).toBeNull();
+      expect(root.querySelector('app-person-drawer')).toBeNull();
     });
   });
 });

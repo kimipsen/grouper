@@ -88,7 +88,7 @@
       "nameRequired": "Indtast et navn til vægten"
     },
     "preferencesTitle": "Præferencer",
-    "preferenceNone": "-",
+    "preferenceNone": "Ingen",
     "preferenceWantWith": "Foretræk",
     "preferenceAvoid": "Undgå",
     "preferenceScoring": {
@@ -107,7 +107,7 @@
     "generateGroups": "Generer grupper",
     "generatedGroups": "Genererede grupper",
     "satisfaction": "Tilfredshed: {{score}}",
-    "regenerateGroupsAria": "Generer grupper igen",
+    "regenerateGroups": "Generer nye grupper",
     "groupLabel": "Gruppe {{index}}",
     "score": "Score: {{score}}",
     "prompt": {
@@ -136,7 +136,8 @@
     },
     "resetSession": "Nulstil session",
     "errorSummaryTitle": "Der er et problem",
-    "resetSessionHelp": "Fjerner alle personer, vægte og grupperinger fra sessionen."
+    "resetSessionHelp": "Fjerner alle personer, vægte og grupperinger fra sessionen.",
+    "preferencePerson": "Person"
   },
   "grouping": {
     "errors": {

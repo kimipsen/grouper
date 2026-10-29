@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, Injector, OnInit, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { v4 as uuidv4 } from 'uuid';
 import { DEFAULT_PREFERENCE_SCORING, Session, CustomWeightDefinition } from '../../../models/session.model';
@@ -26,7 +26,9 @@ import { GroupsResultCard } from './components/groups-result-card/groups-result-
   styleUrl: './session-detail.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,    TranslatePipe,
+    CommonModule,
+    RouterLink,
+    TranslatePipe,
     SessionPeopleCard,
     PersonDrawer,
     GroupingConfigCard,
@@ -58,7 +60,15 @@ export class SessionDetail implements OnInit {
   readonly newWeightNameControl = new FormControl<string>('', { nonNullable: true });
   readonly newWeightModeControl = new FormControl<WeightedGroupingMode>('balance', { nonNullable: true });
   selectedWeightIds: string[] = [];
-  selectedPerson: Person | null = null;
+  selectedPersonId: string | null = null;
+
+  /**
+   * Looked up on every read: SessionService replaces person objects inside a session that is
+   * mutated in place, so a stored Person reference would go stale (e.g. the panel heading).
+   */
+  get selectedPerson(): Person | null {
+    return this.selectedPersonId ? this.getPersonById(this.selectedPersonId) : null;
+  }
   readonly genderWeightId = '__gender__';
 
   // Current grouping result
@@ -114,10 +124,6 @@ export class SessionDetail implements OnInit {
       const scoring = session.preferenceScoring ?? DEFAULT_PREFERENCE_SCORING;
       this.preferenceWantWithControl.setValue(scoring.wantWith, { emitEvent: false });
       this.preferenceAvoidControl.setValue(scoring.avoid, { emitEvent: false });
-
-      if (this.selectedPerson) {
-        this.selectedPerson = session.people.find(person => person.id === this.selectedPerson?.id) ?? null;
-      }
     }, { injector: this.injector });
 
     this.genderModeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(mode => {
@@ -145,7 +151,7 @@ export class SessionDetail implements OnInit {
       createdAt: new Date()
     };
     this.sessionService.addPersonToSession(this.session.id, person);
-    this.selectedPerson = person;
+    this.selectedPersonId = person.id;
     this.notifications.success('sessionDetail.snackbar.personAdded');
   }
 
@@ -244,11 +250,11 @@ export class SessionDetail implements OnInit {
   }
 
   openPersonWeights(person: Person): void {
-    this.selectedPerson = person;
+    this.selectedPersonId = person.id;
   }
 
   closePersonWeights(): void {
-    this.selectedPerson = null;
+    this.selectedPersonId = null;
   }
 
   toggleWeightSelection(weightId: string): void {
@@ -331,10 +337,6 @@ export class SessionDetail implements OnInit {
 
   regenerateGroups(): void {
     this.generateGroups();
-  }
-
-  back(): void {
-    this.router.navigate(['/sessions']);
   }
 
   /**

@@ -40,6 +40,18 @@ export class GroupingConfigCard {
 
   readonly GroupingStrategy = GroupingStrategy;
 
+  readonly genderModeOptions: { value: GenderMode; labelKey: string }[] = [
+    { value: 'mixed', labelKey: 'sessionDetail.genderMode.mixed' },
+    { value: 'single', labelKey: 'sessionDetail.genderMode.single' },
+    { value: 'ignore', labelKey: 'sessionDetail.genderMode.ignore' },
+  ];
+
+  readonly strategyOptions: { value: GroupingStrategy; labelKey: string }[] = [
+    { value: GroupingStrategy.RANDOM, labelKey: 'sessionDetail.strategyRandom' },
+    { value: GroupingStrategy.PREFERENCE_BASED, labelKey: 'sessionDetail.strategyPreferenceBased' },
+    { value: GroupingStrategy.WEIGHTED, labelKey: 'sessionDetail.strategyWeighted' },
+  ];
+
   constructor() {
     // Move focus to the error summary each time a new set of field errors is shown.
     afterRenderEffect(() => {

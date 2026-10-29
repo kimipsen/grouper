@@ -29,5 +29,7 @@ describe('SessionListEmptyState', () => {
 
     expect(fixture.nativeElement.textContent).toContain('No sessions');
     expect(createSpy).toHaveBeenCalledTimes(1);
+    // The page header's "New session" is the page's single primary action.
+    expect(fixture.nativeElement.querySelector('button').className).toBe('button button-secondary');
   });
 });
