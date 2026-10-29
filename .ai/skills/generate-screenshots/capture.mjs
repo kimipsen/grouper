@@ -31,6 +31,14 @@ const DEMO_SESSION_ID = 'demo-session';
 const PAGES = [
   { name: 'session-list', url: '/sessions' },
   { name: 'session-detail', url: `/session/${DEMO_SESSION_ID}` },
+  { name: 'session-detail-weights', url: `/session/${DEMO_SESSION_ID}?tab=weights` },
+  { name: 'session-detail-groups', url: `/session/${DEMO_SESSION_ID}?tab=groups` },
+  {
+    name: 'session-detail-results',
+    url: `/session/${DEMO_SESSION_ID}?tab=groups`,
+    // Generating groups switches to the Results tab.
+    prepare: (page) => page.locator('#session-tabpanel-groups .button-primary').click(),
+  },
 ];
 
 function parseArgs(argv) {
@@ -132,6 +140,7 @@ async function main() {
         const page = await context.newPage();
         for (const target of PAGES) {
           await page.goto(`${baseUrl}${target.url}`, { waitUntil: 'networkidle' });
+          await target.prepare?.(page);
           await page.evaluate(() => document.fonts.ready);
           const file = path.join(outDir, `${target.name}-${locale}-${viewportName}.png`);
           await page.screenshot({ path: file, fullPage: true, animations: 'disabled' });

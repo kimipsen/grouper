@@ -87,7 +87,8 @@
       "genderWeight": "Balancer køn",
       "editPerson": "Rediger vægte",
       "personWeightsTitle": "Vægte for person",
-      "nameRequired": "Indtast et navn til vægten"
+      "nameRequired": "Indtast et navn til vægten",
+      "addFromPerson": "Tilføj brugerdefinerede vægte"
     },
     "preferencesTitle": "Præferencer",
     "preferenceNone": "Ingen",
@@ -139,7 +140,15 @@
     "resetSession": "Nulstil session",
     "errorSummaryTitle": "Der er et problem",
     "resetSessionHelp": "Fjerner alle personer, vægte og grupperinger fra sessionen.",
-    "preferencePerson": "Person"
+    "preferencePerson": "Person",
+    "tabs": {
+      "label": "Sessionens afsnit",
+      "people": "Personer",
+      "weights": "Brugerdefinerede vægte",
+      "groups": "Opret grupper",
+      "results": "Resultater",
+      "resultsEmpty": "Ingen grupper endnu. Generer grupper under fanebladet Opret grupper."
+    }
   },
   "grouping": {
     "errors": {

@@ -10,3 +10,13 @@ body {
 * {
   box-sizing: border-box;
 }
+
+// Inside a DKFDS tab panel the panel is the frame, so the section cards drop their own border and padding.
+.tab-panel .section-card {
+  border: 0;
+  margin: 0;
+
+  > .card-content {
+    padding: 0;
+  }
+}

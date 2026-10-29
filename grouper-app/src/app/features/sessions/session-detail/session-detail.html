@@ -6,36 +6,84 @@
   </a>
   <h1 class="page-title">{{ session.name }}</h1>
 
-  <div class="row">
-    <div class="col-12" [class.col-lg-7]="selectedPerson">
-      <app-session-people-card
-        [people]="sortedPeople"
-        (addPerson)="addPerson()"
-        (openPerson)="openPersonWeights($event)"
-        (removePerson)="removePerson($event)" />
+  <div #tabContainer class="tab-container">
+    <div class="tab-list" role="tablist" [attr.aria-label]="'sessionDetail.tabs.label' | t">
+      @for (tab of tabs; track tab.id) {
+        <button
+          type="button"
+          class="tab-button"
+          role="tab"
+          [id]="'session-tab-' + tab.id"
+          [attr.aria-controls]="'session-tabpanel-' + tab.id"
+          [attr.aria-selected]="activeTab() === tab.id"
+          [attr.tabindex]="activeTab() === tab.id ? 0 : -1"
+          (fds.tab.selected)="onTabSelected(tab.id)">
+          <span>{{ tab.labelKey | t }}</span>
+        </button>
+      }
     </div>
 
-    @if (selectedPerson; as currentPerson) {
-      <div class="col-12 col-lg-5">
-        @for (person of [currentPerson]; track person.id) {
-          <app-person-drawer
-            [selectedPerson]="person"
+    <div
+      class="tab-panel"
+      role="tabpanel"
+      tabindex="0"
+      id="session-tabpanel-people"
+      aria-labelledby="session-tab-people"
+      [hidden]="activeTab() !== 'people'">
+      <div class="row">
+        <div class="col-12" [class.col-lg-7]="selectedPerson">
+          <app-session-people-card
             [people]="sortedPeople"
-            [customWeights]="session.customWeights"
-            [preferences]="session.preferences"
-            [initialFocus]="panelFocus"
-            (closeDrawer)="closePersonWeights()"
-            (updateName)="updatePersonName(person.id, $event)"
-            (updateGender)="updatePersonGender(person.id, $event)"
-            (updatePreference)="onPreferenceChange(person.id, $event.targetPersonId, $event.value)"
-            (updateWeight)="updatePersonWeight(person.id, $event.weightId, $event.value)" />
+            (addPerson)="addPerson()"
+            (openPerson)="openPersonWeights($event)"
+            (removePerson)="removePerson($event)" />
+        </div>
+
+        @if (selectedPerson; as currentPerson) {
+          <div class="col-12 col-lg-5">
+            @for (person of [currentPerson]; track person.id) {
+              <app-person-drawer
+                [selectedPerson]="person"
+                [people]="sortedPeople"
+                [customWeights]="session.customWeights"
+                [preferences]="session.preferences"
+                [initialFocus]="panelFocus"
+                (closeDrawer)="closePersonWeights()"
+                (addWeights)="focusField('new-weight-name')"
+                (updateName)="updatePersonName(person.id, $event)"
+                (updateGender)="updatePersonGender(person.id, $event)"
+                (updatePreference)="onPreferenceChange(person.id, $event.targetPersonId, $event.value)"
+                (updateWeight)="updatePersonWeight(person.id, $event.weightId, $event.value)" />
+            }
+          </div>
         }
       </div>
-    }
-  </div>
+    </div>
 
-  <div class="row">
-    <div class="col-12 col-lg-6">
+    <div
+      class="tab-panel"
+      role="tabpanel"
+      tabindex="0"
+      id="session-tabpanel-weights"
+      aria-labelledby="session-tab-weights"
+      [hidden]="activeTab() !== 'weights'">
+      <app-custom-weights-card
+        [customWeights]="session.customWeights"
+        [newWeightNameControl]="newWeightNameControl"
+        [newWeightModeControl]="newWeightModeControl"
+        (addWeight)="addCustomWeight()"
+        (renameWeight)="renameCustomWeight($event.weight, $event.name)"
+        (updateWeightMode)="updateCustomWeightMode($event.weight, $event.mode)"
+        (removeWeight)="removeCustomWeight($event)" />
+    </div>
+
+    <div
+      class="tab-panel"
+      role="tabpanel"
+      tabindex="0"
+      id="session-tabpanel-groups"
+      aria-labelledby="session-tab-groups"
+      [hidden]="activeTab() !== 'groups'">
       <app-grouping-config-card
         [groupingStrategyControl]="groupingStrategyControl"
         [groupSizeControl]="groupSizeControl"
@@ -51,28 +99,25 @@
         [fieldErrors]="groupingFieldErrors()"
         (generateGroups)="generateGroups()"
         (resetSession)="resetSession()"
+        (focusField)="focusField($event)"
         (toggleWeightSelection)="toggleWeightSelection($event)" />
     </div>
-    <div class="col-12 col-lg-6">
-      <app-custom-weights-card
-        [customWeights]="session.customWeights"
-        [newWeightNameControl]="newWeightNameControl"
-        [newWeightModeControl]="newWeightModeControl"
-        (addWeight)="addCustomWeight()"
-        (renameWeight)="renameCustomWeight($event.weight, $event.name)"
-        (updateWeightMode)="updateCustomWeightMode($event.weight, $event.mode)"
-        (removeWeight)="removeCustomWeight($event)" />
-    </div>
-  </div>
 
-  @if (currentResult) {
-    <div class="row">
-      <div class="col-12">
+    <div
+      class="tab-panel"
+      role="tabpanel"
+      tabindex="0"
+      id="session-tabpanel-results"
+      aria-labelledby="session-tab-results"
+      [hidden]="activeTab() !== 'results'">
+      @if (currentResult) {
         <app-groups-result-card
           [result]="currentResult"
           [people]="session.people"
           (regenerate)="regenerateGroups()" />
-      </div>
+      } @else {
+        <p class="mt-0 mb-0">{{ 'sessionDetail.tabs.resultsEmpty' | t }}</p>
+      }
     </div>
-  }
+  </div>
 }

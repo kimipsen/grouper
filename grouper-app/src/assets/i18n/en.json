@@ -87,7 +87,8 @@
       "genderWeight": "Balance gender",
       "editPerson": "Edit weights",
       "personWeightsTitle": "Weights for person",
-      "nameRequired": "Enter a name for the weight"
+      "nameRequired": "Enter a name for the weight",
+      "addFromPerson": "Add custom weights"
     },
     "preferencesTitle": "Preferences",
     "preferenceNone": "None",
@@ -139,7 +140,15 @@
     "resetSession": "Reset Session",
     "errorSummaryTitle": "There is a problem",
     "resetSessionHelp": "Removes all people, weights and groupings from this session.",
-    "preferencePerson": "Person"
+    "preferencePerson": "Person",
+    "tabs": {
+      "label": "Session sections",
+      "people": "People",
+      "weights": "Custom weights",
+      "groups": "Create groups",
+      "results": "Results",
+      "resultsEmpty": "No groups yet. Generate groups on the Create groups tab."
+    }
   },
   "grouping": {
     "errors": {

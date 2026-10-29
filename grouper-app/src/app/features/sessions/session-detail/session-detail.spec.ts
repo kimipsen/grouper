@@ -1,6 +1,6 @@
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { GroupingService } from '../../../core/services/grouping.service';
 import { I18nService } from '../../../core/services/i18n.service';
@@ -10,6 +10,7 @@ import { Session } from '../../../models/session.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { Person } from '../../../models/person.model';
+import { getAxeViolations } from '../../../../testing/axe';
 import { SessionDetail } from './session-detail';
 
 class MockI18nService {
@@ -521,6 +522,220 @@ describe('SessionDetail', () => {
       expect(component.panelFocus).toBe('name');
       expect(document.activeElement?.id).toBe('person-name');
       root.remove();
+    });
+  });
+
+  describe('tabs', () => {
+    const person: Person = { id: 'p1', name: 'Ada', gender: 'female', createdAt: new Date() };
+    const result = {
+      groups: [],
+      strategy: GroupingStrategy.RANDOM,
+      settings: { strategy: GroupingStrategy.RANDOM, groupSize: 2, allowPartialGroups: true },
+      timestamp: new Date(),
+    };
+
+    async function setup(options: { people?: Person[]; tab?: string } = {}) {
+      const currentSession = signal<Session | null>({
+        id: 'session-1',
+        name: 'Demo Session',
+        description: '',
+        people: options.people ?? [person],
+        preferences: {},
+        groupingHistory: [],
+        customWeights: [],
+        genderMode: 'mixed',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const queryParams: Record<string, string> = options.tab ? { tab: options.tab } : {};
+
+      await TestBed.configureTestingModule({
+        imports: [SessionDetail],
+        providers: [
+          provideRouter([]),
+          { provide: ActivatedRoute, useValue: { params: new BehaviorSubject({ id: 'session-1' }), snapshot: { queryParamMap: convertToParamMap(queryParams) } } },
+          {
+            provide: SessionService,
+            useValue: {
+              currentSession,
+              setCurrentSession: vi.fn(),
+              updateSessionGenderMode: vi.fn(),
+              updatePreferenceScoring: vi.fn(),
+              addGroupingResult: vi.fn(),
+            },
+          },
+          {
+            provide: GroupingService,
+            useValue: {
+              validateSettings: vi.fn().mockReturnValue({ isValid: true, errors: [], warnings: [] }),
+              createGroupsWithSession: vi.fn().mockReturnValue(result),
+            },
+          },
+          { provide: I18nService, useClass: MockI18nService },
+        ],
+        schemas: [NO_ERRORS_SCHEMA],
+      }).compileComponents();
+
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const fixture = TestBed.createComponent(SessionDetail);
+      const root: HTMLElement = fixture.nativeElement;
+      document.body.appendChild(root);
+      await fixture.whenStable();
+      return { fixture, component: fixture.componentInstance, root, navigate };
+    }
+
+    function tab(root: HTMLElement, id: string): HTMLButtonElement {
+      return root.querySelector<HTMLButtonElement>(`#session-tab-${id}`) as HTMLButtonElement;
+    }
+
+    function visiblePanels(root: HTMLElement): string[] {
+      return Array.from(root.querySelectorAll<HTMLElement>('.tab-panel'))
+        .filter((panel) => !panel.hidden)
+        .map((panel) => panel.id);
+    }
+
+    afterEach(() => document.querySelectorAll('app-session-detail').forEach((element) => element.remove()));
+
+    it('renders DKFDS tabs with the People tab selected and no axe violations', async () => {
+      const { root } = await setup();
+
+      const tablist = root.querySelector('.tab-container > .tab-list[role="tablist"]');
+      const buttons = Array.from(root.querySelectorAll<HTMLButtonElement>('.tab-list > button.tab-button[role="tab"]'));
+      expect(tablist?.getAttribute('aria-label')).toBe('sessionDetail.tabs.label');
+      expect(buttons.map((button) => button.textContent?.trim())).toEqual([
+        'sessionDetail.tabs.people',
+        'sessionDetail.tabs.weights',
+        'sessionDetail.tabs.groups',
+        'sessionDetail.tabs.results',
+      ]);
+      expect(buttons.map((button) => button.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false', 'false']);
+      expect(buttons.map((button) => button.getAttribute('tabindex'))).toEqual(['0', '-1', '-1', '-1']);
+      for (const button of buttons) {
+        const panel = root.querySelector(`#${button.getAttribute('aria-controls')}`);
+        expect(panel?.getAttribute('role')).toBe('tabpanel');
+        expect(panel?.getAttribute('aria-labelledby')).toBe(button.id);
+      }
+      expect(visiblePanels(root)).toEqual(['session-tabpanel-people']);
+      expect(await getAxeViolations(root)).toEqual([]);
+    });
+
+    it('switches tabs on click and with the arrow, Home and End keys, keeping the tab in the URL', async () => {
+      const { fixture, component, root, navigate } = await setup();
+
+      tab(root, 'groups').click();
+      await fixture.whenStable();
+      expect(component.activeTab()).toBe('groups');
+      expect(visiblePanels(root)).toEqual(['session-tabpanel-groups']);
+      expect(tab(root, 'groups').getAttribute('aria-selected')).toBe('true');
+      expect(tab(root, 'people').getAttribute('tabindex')).toBe('-1');
+      expect(navigate).toHaveBeenLastCalledWith([], { queryParams: { tab: 'groups' }, queryParamsHandling: 'merge', replaceUrl: true });
+
+      tab(root, 'groups').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      await fixture.whenStable();
+      expect(component.activeTab()).toBe('results');
+      expect(document.activeElement).toBe(tab(root, 'results'));
+
+      tab(root, 'results').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      await fixture.whenStable();
+      expect(document.activeElement).toBe(tab(root, 'people'));
+      expect(navigate).toHaveBeenLastCalledWith([], { queryParams: { tab: null }, queryParamsHandling: 'merge', replaceUrl: true });
+
+      tab(root, 'people').dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+      await fixture.whenStable();
+      expect(component.activeTab()).toBe('results');
+
+      tab(root, 'results').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+      await fixture.whenStable();
+      expect(component.activeTab()).toBe('groups');
+      expect(visiblePanels(root)).toEqual(['session-tabpanel-groups']);
+
+      tab(root, 'groups').dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+      await fixture.whenStable();
+      expect(component.activeTab()).toBe('people');
+      expect(document.activeElement).toBe(tab(root, 'people'));
+    });
+
+    it('opens the tab named in the URL and ignores unknown tab names', async () => {
+      const { root } = await setup({ tab: 'weights' });
+      expect(visiblePanels(root)).toEqual(['session-tabpanel-weights']);
+      expect(tab(root, 'weights').getAttribute('aria-selected')).toBe('true');
+      root.remove();
+      TestBed.resetTestingModule();
+
+      const fallback = await setup({ tab: 'unknown' });
+      expect(visiblePanels(fallback.root)).toEqual(['session-tabpanel-people']);
+    });
+
+    it('shows an empty state on the Results tab before groups are generated', async () => {
+      const { root } = await setup({ tab: 'results' });
+
+      const panel = root.querySelector('#session-tabpanel-results');
+      expect(visiblePanels(root)).toEqual(['session-tabpanel-results']);
+      expect(panel?.textContent).toContain('sessionDetail.tabs.resultsEmpty');
+      expect(panel?.querySelector('app-groups-result-card')).toBeNull();
+    });
+
+    it('switches to the Results tab and focuses it after groups are generated', async () => {
+      const { fixture, component, root } = await setup({ tab: 'groups' });
+
+      root.querySelector<HTMLButtonElement>('#session-tabpanel-groups .button-primary')?.click();
+      await fixture.whenStable();
+
+      expect(component.activeTab()).toBe('results');
+      expect(visiblePanels(root)).toEqual(['session-tabpanel-results']);
+      expect(document.activeElement?.id).toBe('session-tabpanel-results');
+      expect(root.querySelector('#session-tabpanel-results app-groups-result-card')).not.toBeNull();
+    });
+
+    it('keeps focus on the Results tab when groups are regenerated there', async () => {
+      const { fixture, component, root } = await setup({ tab: 'results' });
+      component.generateGroups();
+      await fixture.whenStable();
+
+      const regenerate = root.querySelector<HTMLButtonElement>('#session-tabpanel-results app-groups-result-card button');
+      regenerate?.focus();
+      regenerate?.click();
+      await fixture.whenStable();
+
+      expect(component.activeTab()).toBe('results');
+      expect(document.activeElement).toBe(regenerate);
+    });
+
+    it('follows an error summary link to the Add person button on the People tab', async () => {
+      const { fixture, component, root } = await setup({ people: [], tab: 'groups' });
+      component.generateGroups();
+      await fixture.whenStable();
+
+      root.querySelector<HTMLAnchorElement>('#session-tabpanel-groups nav a.function-link')?.click();
+      await fixture.whenStable();
+
+      expect(component.activeTab()).toBe('people');
+      expect(visiblePanels(root)).toEqual(['session-tabpanel-people']);
+      expect(tab(root, 'people').getAttribute('aria-selected')).toBe('true');
+      expect(document.activeElement?.id).toBe('add-person-button');
+    });
+
+    it('stays on the current tab when an error summary link points to a field on it', async () => {
+      const { fixture, component } = await setup({ tab: 'groups' });
+      await fixture.whenStable();
+
+      component.focusField('group-size');
+
+      expect(component.activeTab()).toBe('groups');
+      expect(document.activeElement?.id).toBe('group-size');
+    });
+
+    it('goes from the person panel to the weight name field on the Custom weights tab', async () => {
+      const { fixture, component, root } = await setup();
+      root.querySelector<HTMLButtonElement>('#person-name-p1')?.click();
+      await fixture.whenStable();
+
+      root.querySelector<HTMLButtonElement>('app-person-drawer .drawer-section button.function-link')?.click();
+      await fixture.whenStable();
+
+      expect(component.activeTab()).toBe('weights');
+      expect(visiblePanels(root)).toEqual(['session-tabpanel-weights']);
+      expect(document.activeElement?.id).toBe('new-weight-name');
     });
   });
 });

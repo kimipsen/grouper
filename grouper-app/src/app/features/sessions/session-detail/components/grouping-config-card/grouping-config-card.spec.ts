@@ -183,16 +183,18 @@ describe('GroupingConfigCard', () => {
       expect(await getAxeViolations(root)).toEqual([]);
     });
 
-    it('moves focus to the field when a summary link is followed, without navigating', async () => {
+    it('asks to focus the field when a summary link is followed, without navigating', async () => {
       const { fixture, root } = await setup(GroupingStrategy.RANDOM);
       fixture.componentRef.setInput('fieldErrors', [{ key: 'grouping.errors.groupSizeMin', fieldId: 'group-size' }]);
       await fixture.whenStable();
+      const focusField = vi.fn();
+      fixture.componentInstance.focusField.subscribe(focusField);
 
       const click = new MouseEvent('click', { bubbles: true, cancelable: true });
       root.querySelector('nav a.function-link')?.dispatchEvent(click);
 
       expect(click.defaultPrevented).toBe(true);
-      expect(document.activeElement?.id).toBe('group-size');
+      expect(focusField).toHaveBeenCalledWith('group-size');
     });
 
     it('shows no summary or field error state without field errors', async () => {
