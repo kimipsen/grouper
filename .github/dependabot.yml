@@ -22,3 +22,11 @@ updates:
       - "mergequeue"
     assignees:
       - "kimipsen"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels:
+      - "mergequeue"
+    assignees:
+      - "kimipsen"
