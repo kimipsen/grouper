@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { I18nService } from '../../../../../core/services/i18n.service';
 import { GroupingStrategy } from '../../../../../models/group.model';
+import { getAxeViolations } from '../../../../../../testing/axe';
 import { GroupingConfigCard } from './grouping-config-card';
 
 class MockI18nService {
@@ -11,6 +12,11 @@ class MockI18nService {
     }
     const labels: Record<string, string> = {
       'notifications.error': 'Error:',
+      'sessionDetail.errorSummaryTitle': 'There is a problem',
+      'sessionDetail.resetSessionHelp': 'Removes everything',
+      'grouping.errors.groupSizeMin': 'Group size must be at least 1',
+      'grouping.errors.noWeightsSelected': 'Select at least one weight',
+      'sessionDetail.snackbar.addPeopleFirst': 'Please add people first',
       'sessionDetail.createGroupsTitle': 'Create Groups',
       'sessionDetail.genderMode.label': 'Gender Mode',
       'sessionDetail.genderMode.mixed': 'Mixed',
@@ -108,5 +114,93 @@ describe('GroupingConfigCard', () => {
     expect(alert?.querySelector('.alert-heading')?.textContent?.trim()).toBe(
       'Error: Group size 3 is larger than 2 people',
     );
+  });
+
+  describe('error summary and field errors', () => {
+    async function setup(strategy: GroupingStrategy, peopleCount = 2) {
+      await TestBed.configureTestingModule({
+        imports: [GroupingConfigCard],
+        providers: [{ provide: I18nService, useClass: MockI18nService }],
+      }).compileComponents();
+
+      const fixture = TestBed.createComponent(GroupingConfigCard);
+      fixture.componentRef.setInput('groupingStrategyControl', new FormControl(strategy, { nonNullable: true }));
+      fixture.componentRef.setInput('groupSizeControl', new FormControl(0, { nonNullable: true }));
+      fixture.componentRef.setInput('allowPartialGroupsControl', new FormControl(true, { nonNullable: true }));
+      fixture.componentRef.setInput('genderModeControl', new FormControl('mixed', { nonNullable: true }));
+      fixture.componentRef.setInput('preferenceWantWithControl', new FormControl(2, { nonNullable: true }));
+      fixture.componentRef.setInput('preferenceAvoidControl', new FormControl(-2, { nonNullable: true }));
+      fixture.componentRef.setInput('customWeights', []);
+      fixture.componentRef.setInput('selectedWeightIds', []);
+      fixture.componentRef.setInput('genderWeightId', '__gender__');
+      fixture.componentRef.setInput('peopleCount', peopleCount);
+      const root: HTMLElement = fixture.nativeElement;
+      document.body.appendChild(root);
+      await fixture.whenStable();
+      return { fixture, root };
+    }
+
+    afterEach(() => document.querySelectorAll('[ng-version]').forEach((element) => element.remove()));
+
+    it('keeps Generate groups enabled with no people and renders reset as a separate warning action', async () => {
+      const { root } = await setup(GroupingStrategy.RANDOM, 0);
+      const generate = Array.from(root.querySelectorAll<HTMLButtonElement>('button')).find(
+        (button) => button.textContent?.trim() === 'Generate Groups',
+      );
+
+      expect(generate?.disabled).toBe(false);
+      expect(root.querySelector('.reset-section .button-warning')?.textContent?.trim()).toBe('Reset Session');
+    });
+
+    it('shows an error summary linking to each field, focuses it, and marks the group size field', async () => {
+      const { fixture, root } = await setup(GroupingStrategy.WEIGHTED);
+
+      fixture.componentRef.setInput('fieldErrors', [
+        { key: 'grouping.errors.groupSizeMin', fieldId: 'group-size' },
+        { key: 'grouping.errors.noWeightsSelected', fieldId: 'weight-gender' },
+      ]);
+      await fixture.whenStable();
+
+      const summary = root.querySelector<HTMLElement>('nav .alert-error');
+      const links = Array.from(root.querySelectorAll<HTMLAnchorElement>('nav a.function-link'));
+      expect(summary?.querySelector('h3')?.textContent?.trim()).toBe('There is a problem');
+      expect(links.map((link) => [link.getAttribute('href'), link.textContent?.trim()])).toEqual([
+        ['#group-size', 'Group size must be at least 1'],
+        ['#weight-gender', 'Select at least one weight'],
+      ]);
+      expect(document.activeElement).toBe(summary);
+
+      const groupSize = root.querySelector<HTMLInputElement>('#group-size');
+      expect(groupSize?.closest('.form-group')?.classList).toContain('form-error');
+      expect(groupSize?.getAttribute('aria-invalid')).toBe('true');
+      expect(groupSize?.getAttribute('aria-describedby')).toBe('group-size-error');
+      expect(root.querySelector('#group-size-error')?.textContent?.trim()).toBe('Error: Group size must be at least 1');
+
+      const weights = root.querySelector('fieldset.weight-selection');
+      expect(weights?.classList).toContain('form-error');
+      expect(weights?.getAttribute('aria-describedby')).toBe('weights-error');
+      expect(weights?.querySelector('legend')?.textContent?.trim()).toBe('Select weights');
+      expect(await getAxeViolations(root)).toEqual([]);
+    });
+
+    it('moves focus to the field when a summary link is followed, without navigating', async () => {
+      const { fixture, root } = await setup(GroupingStrategy.RANDOM);
+      fixture.componentRef.setInput('fieldErrors', [{ key: 'grouping.errors.groupSizeMin', fieldId: 'group-size' }]);
+      await fixture.whenStable();
+
+      const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+      root.querySelector('nav a.function-link')?.dispatchEvent(click);
+
+      expect(click.defaultPrevented).toBe(true);
+      expect(document.activeElement?.id).toBe('group-size');
+    });
+
+    it('shows no summary or field error state without field errors', async () => {
+      const { root } = await setup(GroupingStrategy.RANDOM);
+
+      expect(root.querySelector('nav')).toBeNull();
+      expect(root.querySelector('.form-error')).toBeNull();
+      expect(root.querySelector('#group-size')?.hasAttribute('aria-invalid')).toBe(false);
+    });
   });
 });

@@ -6,13 +6,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { I18nService, LocaleCode } from './core/services/i18n.service';
 import { TranslatePipe } from './core/pipes/translate.pipe';
 import { ToastContainer } from './core/components/toast-container/toast-container';
+import { ConfirmModal } from './core/components/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, RouterOutlet, TranslatePipe, ToastContainer]
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, RouterOutlet, TranslatePipe, ToastContainer, ConfirmModal]
 })
 export class App {
   readonly i18nService = inject(I18nService);

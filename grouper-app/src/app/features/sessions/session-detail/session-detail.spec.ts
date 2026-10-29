@@ -8,6 +8,7 @@ import { SessionService } from '../../../core/services/session.service';
 import { GroupingStrategy } from '../../../models/group.model';
 import { Session } from '../../../models/session.model';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { Person } from '../../../models/person.model';
 import { SessionDetail } from './session-detail';
 
@@ -219,15 +220,37 @@ describe('SessionDetail', () => {
       timestamp: new Date(),
     };
 
-    it('shows an error alert instead of a toast when there are no people', async () => {
+    it('links the "add people first" error to the Add person button in the error summary', async () => {
       const { fixture, notifications } = await setup([], { validateSettings: vi.fn() });
 
       fixture.componentInstance.generateGroups();
       fixture.detectChanges();
 
-      expect(fixture.componentInstance.groupingError()).toEqual({ key: 'sessionDetail.snackbar.addPeopleFirst' });
-      expect(fixture.nativeElement.querySelector('.alert-error')?.textContent).toContain('sessionDetail.snackbar.addPeopleFirst');
+      expect(fixture.componentInstance.groupingFieldErrors()).toEqual([
+        { key: 'sessionDetail.snackbar.addPeopleFirst', fieldId: 'add-person-button' },
+      ]);
+      expect(fixture.componentInstance.groupingError()).toBeNull();
+      const link = fixture.nativeElement.querySelector('nav .alert-error a.function-link');
+      expect(link?.getAttribute('href')).toBe('#add-person-button');
+      expect(fixture.nativeElement.querySelector('#add-person-button')).not.toBeNull();
       expect(notifications.toasts()).toEqual([]);
+    });
+
+    it('splits validation errors into field errors and a general alert', async () => {
+      const { fixture } = await setup(people, {
+        validateSettings: vi.fn().mockReturnValue({
+          isValid: false,
+          errors: [{ key: 'grouping.errors.groupSizeMin' }, { key: 'unmapped.error', params: { n: 1 } }],
+          warnings: [],
+        }),
+      });
+
+      fixture.componentInstance.generateGroups();
+
+      expect(fixture.componentInstance.groupingFieldErrors()).toEqual([
+        { key: 'grouping.errors.groupSizeMin', fieldId: 'group-size' },
+      ]);
+      expect(fixture.componentInstance.groupingError()).toEqual({ key: 'unmapped.error', params: { n: 1 } });
     });
 
     it('shows the first validation error with its params', async () => {
@@ -245,16 +268,33 @@ describe('SessionDetail', () => {
       const { fixture } = await setup(people, {
         validateSettings: vi.fn().mockReturnValue({ isValid: true, errors: [], warnings: [] }),
         createGroupsWithSession: vi.fn(() => {
-          throw { message: 'grouping.errors.noWeightsSelected', params: { count: 0 } };
+          throw { message: 'grouping.errors.preferencesRequired', params: { count: 0 } };
         }),
       });
 
       fixture.componentInstance.generateGroups();
 
       expect(fixture.componentInstance.groupingError()).toEqual({
-        key: 'grouping.errors.noWeightsSelected',
+        key: 'grouping.errors.preferencesRequired',
         params: { count: 0 },
       });
+      expect(fixture.componentInstance.groupingFieldErrors()).toEqual([]);
+    });
+
+    it('links a thrown "no weights selected" error to the weight checkboxes', async () => {
+      const { fixture } = await setup(people, {
+        validateSettings: vi.fn().mockReturnValue({ isValid: true, errors: [], warnings: [] }),
+        createGroupsWithSession: vi.fn(() => {
+          throw { message: 'grouping.errors.noWeightsSelected' };
+        }),
+      });
+
+      fixture.componentInstance.generateGroups();
+
+      expect(fixture.componentInstance.groupingFieldErrors()).toEqual([
+        { key: 'grouping.errors.noWeightsSelected', params: undefined, fieldId: 'weight-gender' },
+      ]);
+      expect(fixture.componentInstance.groupingError()).toBeNull();
     });
 
     it('falls back to a generic message for unknown errors', async () => {
@@ -276,13 +316,136 @@ describe('SessionDetail', () => {
         createGroupsWithSession: vi.fn().mockReturnValue(result),
       });
       fixture.componentInstance.groupingError.set({ key: 'previous' });
+      fixture.componentInstance.groupingFieldErrors.set([{ key: 'grouping.errors.groupSizeMin', fieldId: 'group-size' }]);
 
       fixture.componentInstance.generateGroups();
 
       expect(fixture.componentInstance.groupingError()).toBeNull();
+      expect(fixture.componentInstance.groupingFieldErrors()).toEqual([]);
       expect(notifications.toasts()).toEqual([
         expect.objectContaining({ variant: 'success', key: 'sessionDetail.snackbar.groupsGenerated' }),
       ]);
+    });
+  });
+
+  describe('destructive actions', () => {
+    const person: Person = { id: 'p1', name: '', gender: 'female', createdAt: new Date() };
+    const weight = { id: 'w1', name: 'Skill', mode: 'balance' as const };
+
+    async function setup() {
+      const sessionService = {
+        currentSession: signal<Session | null>({
+          id: 'session-1',
+          name: 'Demo Session',
+          description: '',
+          people: [person],
+          preferences: {},
+          groupingHistory: [],
+          customWeights: [weight],
+          genderMode: 'mixed',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+        setCurrentSession: vi.fn(),
+        updateSessionGenderMode: vi.fn(),
+        updatePreferenceScoring: vi.fn(),
+        removePersonFromSession: vi.fn(),
+        removeCustomWeight: vi.fn(),
+        resetSession: vi.fn(),
+      };
+
+      await TestBed.configureTestingModule({
+        imports: [SessionDetail],
+        providers: [
+          { provide: ActivatedRoute, useValue: { params: new BehaviorSubject({ id: 'session-1' }) } },
+          { provide: Router, useValue: { navigate: vi.fn() } },
+          { provide: SessionService, useValue: sessionService },
+          { provide: GroupingService, useValue: {} },
+          { provide: I18nService, useClass: MockI18nService },
+        ],
+        schemas: [NO_ERRORS_SCHEMA],
+      }).compileComponents();
+
+      const fixture = TestBed.createComponent(SessionDetail);
+      fixture.detectChanges();
+      return {
+        fixture,
+        component: fixture.componentInstance,
+        sessionService,
+        confirmDialog: TestBed.inject(ConfirmDialogService),
+        notifications: TestBed.inject(NotificationService),
+      };
+    }
+
+    it.each([
+      {
+        action: 'removePerson',
+        run: (component: SessionDetail) => component.removePerson(person),
+        request: {
+          titleKey: 'sessionDetail.confirm.deletePersonTitle',
+          messageKey: 'sessionDetail.confirm.deletePerson',
+          confirmKey: 'sessionDetail.confirm.deletePersonAction',
+          params: { name: 'sessionDetail.unnamedPerson' },
+        },
+        serviceMethod: 'removePersonFromSession',
+        serviceArgs: ['session-1', 'p1'],
+      },
+      {
+        action: 'removeCustomWeight',
+        run: (component: SessionDetail) => component.removeCustomWeight(weight),
+        request: {
+          titleKey: 'sessionDetail.confirm.deleteWeightTitle',
+          messageKey: 'sessionDetail.confirm.deleteWeight',
+          confirmKey: 'sessionDetail.confirm.deleteWeightAction',
+          params: { name: 'Skill' },
+        },
+        serviceMethod: 'removeCustomWeight',
+        serviceArgs: ['session-1', 'w1'],
+      },
+      {
+        action: 'resetSession',
+        run: (component: SessionDetail) => component.resetSession(),
+        request: {
+          titleKey: 'sessionDetail.confirm.resetSessionTitle',
+          messageKey: 'sessionDetail.confirm.resetSession',
+          confirmKey: 'sessionDetail.confirm.resetSessionAction',
+          params: { name: 'Demo Session' },
+        },
+        serviceMethod: 'resetSession',
+        serviceArgs: ['session-1'],
+      },
+    ] as const)('$action asks for confirmation and only acts when confirmed', async ({ run, request, serviceMethod, serviceArgs }) => {
+      const nativeConfirm = vi.spyOn(window, 'confirm');
+      const { component, sessionService, confirmDialog } = await setup();
+
+      const cancelled = run(component);
+      expect(confirmDialog.request()).toEqual(expect.objectContaining(request));
+      confirmDialog.settle(false);
+      await cancelled;
+      expect(sessionService[serviceMethod]).not.toHaveBeenCalled();
+
+      const confirmed = run(component);
+      confirmDialog.settle(true);
+      await confirmed;
+      expect(sessionService[serviceMethod]).toHaveBeenCalledWith(...serviceArgs);
+      expect(nativeConfirm).not.toHaveBeenCalled();
+    });
+
+    it('re-renders the people list after a delete confirmed in the shared modal', async () => {
+      const { fixture, component, sessionService, confirmDialog } = await setup();
+      sessionService.removePersonFromSession.mockImplementation(() => {
+        // SessionService mutates the session in place without changing the signal's reference.
+        const session = sessionService.currentSession();
+        if (session) session.people = [];
+      });
+      expect(fixture.nativeElement.querySelectorAll('.person-item')).toHaveLength(1);
+
+      const deletion = component.removePerson(person);
+      confirmDialog.settle(true);
+      await deletion;
+      await fixture.whenStable();
+
+      expect(fixture.nativeElement.querySelectorAll('.person-item')).toHaveLength(0);
     });
   });
 });

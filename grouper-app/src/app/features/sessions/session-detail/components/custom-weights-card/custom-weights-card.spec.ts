@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { I18nService } from '../../../../../core/services/i18n.service';
 import { CustomWeightDefinition } from '../../../../../models/session.model';
+import { getAxeViolations } from '../../../../../../testing/axe';
 import { CustomWeightsCard } from './custom-weights-card';
 
 class MockI18nService {
@@ -15,6 +16,8 @@ class MockI18nService {
       'sessionDetail.customWeights.modeBalance': 'Balance across groups',
       'sessionDetail.customWeights.modeMatchSimilar': 'Match similar in groups',
       'sessionDetail.customWeights.empty': 'No weights',
+      'sessionDetail.customWeights.nameRequired': 'Enter a name for the weight',
+      'notifications.error': 'Error:',
     };
     return labels[key] ?? key;
   }
@@ -64,5 +67,42 @@ describe('CustomWeightsCard', () => {
     expect(renameSpy).toHaveBeenCalledWith({ weight: weights[0], name: 'Renamed' });
     expect(modeSpy).toHaveBeenCalledWith({ weight: weights[0], mode: 'match-similar' });
     expect(removeSpy).toHaveBeenCalledWith(weights[0]);
+  });
+
+  it.each(['', '  '])('shows a field error and focuses the name field instead of adding name %j', async (name) => {
+    await TestBed.configureTestingModule({
+      imports: [CustomWeightsCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(CustomWeightsCard);
+    const nameControl = new FormControl<string>(name, { nonNullable: true });
+    fixture.componentRef.setInput('customWeights', []);
+    fixture.componentRef.setInput('newWeightNameControl', nameControl);
+    fixture.componentRef.setInput('newWeightModeControl', new FormControl<'balance' | 'match-similar'>('balance', { nonNullable: true }));
+    const addSpy = vi.fn();
+    fixture.componentInstance.addWeight.subscribe(addSpy);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    fixture.detectChanges();
+
+    root.querySelector<HTMLButtonElement>('.weight-editor button')?.click();
+    fixture.detectChanges();
+
+    const input = root.querySelector<HTMLInputElement>('#new-weight-name');
+    expect(addSpy).not.toHaveBeenCalled();
+    expect(root.querySelector('#new-weight-name-error')?.textContent?.trim()).toBe('Error: Enter a name for the weight');
+    expect(input?.getAttribute('aria-invalid')).toBe('true');
+    expect(input?.getAttribute('aria-describedby')).toBe('new-weight-name-error');
+    expect(document.activeElement).toBe(input);
+    expect(await getAxeViolations(root)).toEqual([]);
+
+    nameControl.setValue('Skill');
+    root.querySelector<HTMLButtonElement>('.weight-editor button')?.click();
+    fixture.detectChanges();
+
+    expect(addSpy).toHaveBeenCalledTimes(1);
+    expect(root.querySelector('#new-weight-name-error')).toBeNull();
+    root.remove();
   });
 });

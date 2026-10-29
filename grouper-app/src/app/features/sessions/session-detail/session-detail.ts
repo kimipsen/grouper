@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnInit, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, Injector, OnInit, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,11 +11,12 @@ import { GenderMode, GroupingStrategy, GroupingSettings, GroupingResult, Weighte
 import { GroupingService, ValidationMessage } from '../../../core/services/grouping.service';
 import { SessionService } from '../../../core/services/session.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { I18nService } from '../../../core/services/i18n.service';
 import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 import { SessionPeopleCard } from './components/session-people-card/session-people-card';
 import { PersonDrawer } from './components/person-drawer/person-drawer';
-import { GroupingConfigCard } from './components/grouping-config-card/grouping-config-card';
+import { GroupingConfigCard, GroupingFieldError } from './components/grouping-config-card/grouping-config-card';
 import { CustomWeightsCard } from './components/custom-weights-card/custom-weights-card';
 import { GroupsResultCard } from './components/groups-result-card/groups-result-card';
 
@@ -38,9 +39,11 @@ export class SessionDetail implements OnInit {
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
   private injector = inject(Injector);
+  private cdr = inject(ChangeDetectorRef);
   private sessionService = inject(SessionService);
   private groupingService = inject(GroupingService);
   private notifications = inject(NotificationService);
+  private confirmDialog = inject(ConfirmDialogService);
   private i18n = inject(I18nService);
 
   session: Session | null = null;
@@ -61,6 +64,15 @@ export class SessionDetail implements OnInit {
   // Current grouping result
   currentResult: GroupingResult | null = null;
   readonly groupingError = signal<ValidationMessage | null>(null);
+  readonly groupingFieldErrors = signal<GroupingFieldError[]>([]);
+
+  /** Grouping errors that belong to a control; they are linked from the error summary. */
+  private static readonly GROUPING_ERROR_FIELDS: Record<string, string> = {
+    'sessionDetail.snackbar.addPeopleFirst': 'add-person-button',
+    'grouping.errors.noPeople': 'add-person-button',
+    'grouping.errors.groupSizeMin': 'group-size',
+    'grouping.errors.noWeightsSelected': 'weight-gender',
+  };
 
   // Enum for template
   GroupingStrategy = GroupingStrategy;
@@ -137,20 +149,36 @@ export class SessionDetail implements OnInit {
     this.notifications.success('sessionDetail.snackbar.personAdded');
   }
 
-  removePerson(person: Person): void {
+  async removePerson(person: Person): Promise<void> {
     if (!this.session) return;
 
+    const confirmed = await this.confirmDialog.confirm({
+      titleKey: 'sessionDetail.confirm.deletePersonTitle',
+      messageKey: 'sessionDetail.confirm.deletePerson',
+      confirmKey: 'sessionDetail.confirm.deletePersonAction',
+      params: { name: person.name || this.i18n.t('sessionDetail.unnamedPerson') },
+    });
+    if (!confirmed || !this.session) return;
+
     this.sessionService.removePersonFromSession(this.session.id, person.id);
+    this.refreshAfterConfirm();
     this.notifications.success('sessionDetail.snackbar.personRemoved');
   }
 
-  resetSession(): void {
+  async resetSession(): Promise<void> {
     if (!this.session) return;
 
-    if (confirm(this.i18n.t('sessionDetail.confirm.resetSession', { name: this.session.name }))) {
-      this.sessionService.resetSession(this.session.id);
-      this.notifications.success('sessionDetail.snackbar.sessionReset');
-    }
+    const confirmed = await this.confirmDialog.confirm({
+      titleKey: 'sessionDetail.confirm.resetSessionTitle',
+      messageKey: 'sessionDetail.confirm.resetSession',
+      confirmKey: 'sessionDetail.confirm.resetSessionAction',
+      params: { name: this.session.name },
+    });
+    if (!confirmed || !this.session) return;
+
+    this.sessionService.resetSession(this.session.id);
+    this.refreshAfterConfirm();
+    this.notifications.success('sessionDetail.snackbar.sessionReset');
   }
 
   addCustomWeight(): void {
@@ -172,9 +200,19 @@ export class SessionDetail implements OnInit {
     this.sessionService.updateCustomWeightMode(this.session.id, weight.id, mode);
   }
 
-  removeCustomWeight(weight: CustomWeightDefinition): void {
+  async removeCustomWeight(weight: CustomWeightDefinition): Promise<void> {
     if (!this.session) return;
+
+    const confirmed = await this.confirmDialog.confirm({
+      titleKey: 'sessionDetail.confirm.deleteWeightTitle',
+      messageKey: 'sessionDetail.confirm.deleteWeight',
+      confirmKey: 'sessionDetail.confirm.deleteWeightAction',
+      params: { name: weight.name || this.i18n.t('sessionDetail.customWeights.weightLabel') },
+    });
+    if (!confirmed || !this.session) return;
+
     this.sessionService.removeCustomWeight(this.session.id, weight.id);
+    this.refreshAfterConfirm();
 
     if (this.selectedWeightIds.includes(weight.id)) {
       this.selectedWeightIds = this.selectedWeightIds.filter(id => id !== weight.id);
@@ -258,7 +296,7 @@ export class SessionDetail implements OnInit {
     if (!this.session) return;
 
     if (this.session.people.length === 0) {
-      this.groupingError.set({ key: 'sessionDetail.snackbar.addPeopleFirst' });
+      this.showGroupingErrors([{ key: 'sessionDetail.snackbar.addPeopleFirst' }]);
       return;
     }
 
@@ -272,7 +310,7 @@ export class SessionDetail implements OnInit {
 
     const validation = this.groupingService.validateSettings(this.session.people.length, settings);
     if (!validation.isValid) {
-      this.groupingError.set(validation.errors[0]);
+      this.showGroupingErrors(validation.errors);
       return;
     }
 
@@ -284,10 +322,10 @@ export class SessionDetail implements OnInit {
       );
 
       this.sessionService.addGroupingResult(this.session.id, this.currentResult);
-      this.groupingError.set(null);
+      this.showGroupingErrors([]);
       this.notifications.success('sessionDetail.snackbar.groupsGenerated');
     } catch (error: unknown) {
-      this.groupingError.set(this.getGroupingErrorMessage(error));
+      this.showGroupingErrors([this.getGroupingErrorMessage(error)]);
     }
   }
 
@@ -297,6 +335,24 @@ export class SessionDetail implements OnInit {
 
   back(): void {
     this.router.navigate(['/sessions']);
+  }
+
+  /**
+   * SessionService mutates the session in place, so currentSession() keeps the same reference and
+   * doesn't notify this view. Actions confirmed in the shared modal finish outside this view's own
+   * event handlers, so the view has to be marked for check explicitly.
+   */
+  private refreshAfterConfirm(): void {
+    this.cdr.markForCheck();
+  }
+
+  /** Field errors go to the error summary; the first error without a field is shown as an alert. */
+  private showGroupingErrors(errors: ValidationMessage[]): void {
+    const fields = SessionDetail.GROUPING_ERROR_FIELDS;
+    this.groupingFieldErrors.set(
+      errors.filter((error) => fields[error.key]).map((error) => ({ ...error, fieldId: fields[error.key] })),
+    );
+    this.groupingError.set(errors.find((error) => !fields[error.key]) ?? null);
   }
 
   private getGroupingErrorMessage(error: unknown): ValidationMessage {

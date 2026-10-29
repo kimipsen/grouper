@@ -1,5 +1,9 @@
 <div class="session-list-container">
-  <app-session-list-header (create)="createNewSession()" (import)="importSession()" />
+  <app-session-list-header (create)="openCreateForm()" (import)="importSession()" />
+
+  @if (showCreateForm()) {
+    <app-session-create-form (created)="createNewSession($event)" (cancelled)="cancelCreateForm()" />
+  }
 
   @if (errorKey(); as key) {
     <div class="alert alert-error" role="alert">
@@ -18,7 +22,9 @@
   }
 
   @if (sessions().length === 0) {
-    <app-session-list-empty-state (create)="createNewSession()" />
+    @if (!showCreateForm()) {
+      <app-session-list-empty-state (create)="openCreateForm()" />
+    }
   } @else {
     <div class="sessions-grid">
       @for (session of sessions(); track session.id) {
