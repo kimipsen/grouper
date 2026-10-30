@@ -22,6 +22,21 @@ updates:
       interval: cron
       cronjob: "0 6 * * 1,3,5"
       timezone: "Europe/Copenhagen"
+    # Vitest packages pin each other's exact version as a peer, so they must
+    # be bumped in the same PR or npm ci fails with ERESOLVE.
+    groups:
+      vitest:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+      # Angular packages are released in lockstep and share peer ranges.
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "@schematics/angular"
+          - "angular-eslint"
+          - "@angular-eslint/*"
     labels:
       - "mergequeue"
     assignees:
