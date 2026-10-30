@@ -29,6 +29,14 @@ updates:
         patterns:
           - "vitest"
           - "@vitest/*"
+      # Angular packages are released in lockstep and share peer ranges.
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "@schematics/angular"
+          - "angular-eslint"
+          - "@angular-eslint/*"
     labels:
       - "mergequeue"
     assignees:
