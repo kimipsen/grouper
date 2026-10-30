@@ -50,7 +50,7 @@
     "@angular/compiler-cli": "^22.2.3",
     "@emnapi/core": "^1.11.3",
     "@emnapi/runtime": "^1.11.3",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/coverage-v8": "^5.0.5",
     "angular-eslint": "22.6.0",
     "axe-core": "^4.14.0",
     "eslint": "^9.39.2",
