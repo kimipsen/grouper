@@ -1,0 +1,502 @@
+{
+  "id": "86e70fac-274c-4a77-ae9d-89f6c4af566b",
+  "name": "Sample class 7A",
+  "description": "Sample data set: 26 students with gender, a \"Reading level\" weight and want-with/avoid preferences.",
+  "people": [
+    {
+      "id": "aaa5e12d-0059-4753-a484-fc726e3b6ed0",
+      "name": "Clara Olsen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 1
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "2501839b-f61a-4003-8821-08e5aec8b993",
+      "name": "August Poulsen",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 4
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "c937eef4-44de-4777-88d6-67fd129b12c3",
+      "name": "Johan Sørensen",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 1
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "ad6677aa-1d28-4696-9d72-95e3d4b9c11b",
+      "name": "Josefine Pedersen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 2
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "def137e0-c808-4279-8abc-2d6550de5fea",
+      "name": "August Sørensen",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 2
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "286aab04-d870-4c8e-939e-d4b04f9e1413",
+      "name": "Theo Madsen",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 1
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "9a1694c6-4b94-4be8-91bb-41a48be7369d",
+      "name": "Freja Andersen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 1
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "a8a82f7a-4d17-4a09-8215-2e415b50afd8",
+      "name": "Mikkel Madsen",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 4
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "672556f9-44d2-4dac-9961-ef2b047d8cb1",
+      "name": "Carl Johansen",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 2
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "fa4b2f98-2a57-44ef-ac46-ab66c832b74c",
+      "name": "Sofia Larsen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 4
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "824f4d77-b400-43fc-90dd-aeb903fe401a",
+      "name": "August Hansen",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 5
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "9d3d5e89-4f88-4384-a086-b2f5ea032f2e",
+      "name": "Alma Christiansen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 3
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "7b888b76-33aa-4a8e-b72a-485f6dcf881b",
+      "name": "Valdemar Kristensen",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 1
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "567397fa-d920-414f-a264-f7760d829ed4",
+      "name": "Kim Christensen",
+      "gender": "nonbinary",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 5
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "a4530c2b-a9a4-4b18-b45c-6fd602825508",
+      "name": "Agnes Petersen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 5
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "7c77f4af-6dc1-41c9-bdfb-97a0953ab125",
+      "name": "Anna Jensen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 3
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "7bdb2a66-cab8-4896-b4e7-04f4a8bb9ff7",
+      "name": "Emma Johansen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 2
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "ebfdb001-1e9a-4ee6-b896-e3eb6c04ae10",
+      "name": "Asta Jørgensen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 3
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "46328c32-d0c8-49bb-8b71-825c98f3ebcc",
+      "name": "Nora Mortensen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 3
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "c084989e-4fa8-41bb-b63d-e9168e87312f",
+      "name": "Anton Johansen",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 1
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "07c51bcc-a846-4d0c-92cc-21ee77e1917b",
+      "name": "Karla Sørensen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 5
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "f489bb11-6691-4cc6-8d85-178c5f61bd93",
+      "name": "Noah Mortensen",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 5
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "5b05913b-59e3-41cb-b23d-3083c96706b2",
+      "name": "Emma Jørgensen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 5
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "5f586845-9941-4cd8-8081-6330c4f19ad3",
+      "name": "Freja Christensen",
+      "gender": "female",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 4
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "08c0f365-1a4a-4eef-86c4-23d6a7e7ac28",
+      "name": "William Møller",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 5
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    },
+    {
+      "id": "1bff3e25-d202-4741-bf16-12541d570dd5",
+      "name": "Anton Pedersen",
+      "gender": "male",
+      "weights": {
+        "f988383d-7522-4fbf-86c0-81f4383b445a": 2
+      },
+      "createdAt": "2026-11-01T08:00:00.000Z"
+    }
+  ],
+  "preferences": {
+    "aaa5e12d-0059-4753-a484-fc726e3b6ed0": {
+      "wantWith": [
+        "fa4b2f98-2a57-44ef-ac46-ab66c832b74c"
+      ],
+      "avoid": [
+        "07c51bcc-a846-4d0c-92cc-21ee77e1917b",
+        "c937eef4-44de-4777-88d6-67fd129b12c3"
+      ]
+    },
+    "2501839b-f61a-4003-8821-08e5aec8b993": {
+      "wantWith": [
+        "a8a82f7a-4d17-4a09-8215-2e415b50afd8",
+        "fa4b2f98-2a57-44ef-ac46-ab66c832b74c"
+      ],
+      "avoid": [
+        "46328c32-d0c8-49bb-8b71-825c98f3ebcc"
+      ]
+    },
+    "c937eef4-44de-4777-88d6-67fd129b12c3": {
+      "wantWith": [
+        "7b888b76-33aa-4a8e-b72a-485f6dcf881b"
+      ],
+      "avoid": [
+        "9a1694c6-4b94-4be8-91bb-41a48be7369d",
+        "672556f9-44d2-4dac-9961-ef2b047d8cb1"
+      ]
+    },
+    "ad6677aa-1d28-4696-9d72-95e3d4b9c11b": {
+      "wantWith": [
+        "2501839b-f61a-4003-8821-08e5aec8b993",
+        "a8a82f7a-4d17-4a09-8215-2e415b50afd8",
+        "9a1694c6-4b94-4be8-91bb-41a48be7369d"
+      ],
+      "avoid": [
+        "7bdb2a66-cab8-4896-b4e7-04f4a8bb9ff7"
+      ]
+    },
+    "def137e0-c808-4279-8abc-2d6550de5fea": {
+      "wantWith": [
+        "1bff3e25-d202-4741-bf16-12541d570dd5"
+      ],
+      "avoid": [
+        "567397fa-d920-414f-a264-f7760d829ed4"
+      ]
+    },
+    "286aab04-d870-4c8e-939e-d4b04f9e1413": {
+      "wantWith": [
+        "672556f9-44d2-4dac-9961-ef2b047d8cb1"
+      ],
+      "avoid": [
+        "a8a82f7a-4d17-4a09-8215-2e415b50afd8"
+      ]
+    },
+    "9a1694c6-4b94-4be8-91bb-41a48be7369d": {
+      "wantWith": [
+        "a4530c2b-a9a4-4b18-b45c-6fd602825508",
+        "672556f9-44d2-4dac-9961-ef2b047d8cb1",
+        "c937eef4-44de-4777-88d6-67fd129b12c3"
+      ],
+      "avoid": [
+        "5b05913b-59e3-41cb-b23d-3083c96706b2"
+      ]
+    },
+    "a8a82f7a-4d17-4a09-8215-2e415b50afd8": {
+      "wantWith": [
+        "7b888b76-33aa-4a8e-b72a-485f6dcf881b",
+        "7bdb2a66-cab8-4896-b4e7-04f4a8bb9ff7",
+        "def137e0-c808-4279-8abc-2d6550de5fea"
+      ],
+      "avoid": [
+        "286aab04-d870-4c8e-939e-d4b04f9e1413",
+        "f489bb11-6691-4cc6-8d85-178c5f61bd93"
+      ]
+    },
+    "672556f9-44d2-4dac-9961-ef2b047d8cb1": {
+      "wantWith": [
+        "ad6677aa-1d28-4696-9d72-95e3d4b9c11b"
+      ],
+      "avoid": [
+        "aaa5e12d-0059-4753-a484-fc726e3b6ed0"
+      ]
+    },
+    "fa4b2f98-2a57-44ef-ac46-ab66c832b74c": {
+      "wantWith": [
+        "c084989e-4fa8-41bb-b63d-e9168e87312f",
+        "286aab04-d870-4c8e-939e-d4b04f9e1413"
+      ],
+      "avoid": [
+        "9d3d5e89-4f88-4384-a086-b2f5ea032f2e"
+      ]
+    },
+    "824f4d77-b400-43fc-90dd-aeb903fe401a": {
+      "wantWith": [
+        "08c0f365-1a4a-4eef-86c4-23d6a7e7ac28",
+        "a4530c2b-a9a4-4b18-b45c-6fd602825508",
+        "c937eef4-44de-4777-88d6-67fd129b12c3"
+      ],
+      "avoid": [
+        "567397fa-d920-414f-a264-f7760d829ed4",
+        "f489bb11-6691-4cc6-8d85-178c5f61bd93"
+      ]
+    },
+    "9d3d5e89-4f88-4384-a086-b2f5ea032f2e": {
+      "wantWith": [
+        "672556f9-44d2-4dac-9961-ef2b047d8cb1"
+      ],
+      "avoid": [
+        "ebfdb001-1e9a-4ee6-b896-e3eb6c04ae10"
+      ]
+    },
+    "7b888b76-33aa-4a8e-b72a-485f6dcf881b": {
+      "wantWith": [
+        "7bdb2a66-cab8-4896-b4e7-04f4a8bb9ff7",
+        "07c51bcc-a846-4d0c-92cc-21ee77e1917b",
+        "c084989e-4fa8-41bb-b63d-e9168e87312f"
+      ],
+      "avoid": [
+        "def137e0-c808-4279-8abc-2d6550de5fea"
+      ]
+    },
+    "567397fa-d920-414f-a264-f7760d829ed4": {
+      "wantWith": [
+        "7c77f4af-6dc1-41c9-bdfb-97a0953ab125",
+        "824f4d77-b400-43fc-90dd-aeb903fe401a"
+      ],
+      "avoid": [
+        "fa4b2f98-2a57-44ef-ac46-ab66c832b74c"
+      ]
+    },
+    "a4530c2b-a9a4-4b18-b45c-6fd602825508": {
+      "wantWith": [
+        "ad6677aa-1d28-4696-9d72-95e3d4b9c11b",
+        "07c51bcc-a846-4d0c-92cc-21ee77e1917b",
+        "286aab04-d870-4c8e-939e-d4b04f9e1413"
+      ],
+      "avoid": [
+        "7b888b76-33aa-4a8e-b72a-485f6dcf881b"
+      ]
+    },
+    "7c77f4af-6dc1-41c9-bdfb-97a0953ab125": {
+      "wantWith": [
+        "7bdb2a66-cab8-4896-b4e7-04f4a8bb9ff7"
+      ],
+      "avoid": [
+        "def137e0-c808-4279-8abc-2d6550de5fea",
+        "567397fa-d920-414f-a264-f7760d829ed4"
+      ]
+    },
+    "7bdb2a66-cab8-4896-b4e7-04f4a8bb9ff7": {
+      "wantWith": [
+        "7b888b76-33aa-4a8e-b72a-485f6dcf881b"
+      ],
+      "avoid": [
+        "ebfdb001-1e9a-4ee6-b896-e3eb6c04ae10"
+      ]
+    },
+    "ebfdb001-1e9a-4ee6-b896-e3eb6c04ae10": {
+      "wantWith": [
+        "5b05913b-59e3-41cb-b23d-3083c96706b2",
+        "c937eef4-44de-4777-88d6-67fd129b12c3"
+      ],
+      "avoid": [
+        "7b888b76-33aa-4a8e-b72a-485f6dcf881b"
+      ]
+    },
+    "46328c32-d0c8-49bb-8b71-825c98f3ebcc": {
+      "wantWith": [
+        "2501839b-f61a-4003-8821-08e5aec8b993",
+        "7b888b76-33aa-4a8e-b72a-485f6dcf881b",
+        "286aab04-d870-4c8e-939e-d4b04f9e1413"
+      ],
+      "avoid": [
+        "824f4d77-b400-43fc-90dd-aeb903fe401a"
+      ]
+    },
+    "c084989e-4fa8-41bb-b63d-e9168e87312f": {
+      "wantWith": [
+        "a4530c2b-a9a4-4b18-b45c-6fd602825508",
+        "824f4d77-b400-43fc-90dd-aeb903fe401a",
+        "ebfdb001-1e9a-4ee6-b896-e3eb6c04ae10"
+      ],
+      "avoid": [
+        "ad6677aa-1d28-4696-9d72-95e3d4b9c11b"
+      ]
+    },
+    "07c51bcc-a846-4d0c-92cc-21ee77e1917b": {
+      "wantWith": [
+        "46328c32-d0c8-49bb-8b71-825c98f3ebcc",
+        "567397fa-d920-414f-a264-f7760d829ed4",
+        "08c0f365-1a4a-4eef-86c4-23d6a7e7ac28"
+      ],
+      "avoid": [
+        "5b05913b-59e3-41cb-b23d-3083c96706b2"
+      ]
+    },
+    "f489bb11-6691-4cc6-8d85-178c5f61bd93": {
+      "wantWith": [
+        "824f4d77-b400-43fc-90dd-aeb903fe401a",
+        "672556f9-44d2-4dac-9961-ef2b047d8cb1",
+        "def137e0-c808-4279-8abc-2d6550de5fea"
+      ],
+      "avoid": [
+        "2501839b-f61a-4003-8821-08e5aec8b993"
+      ]
+    },
+    "5b05913b-59e3-41cb-b23d-3083c96706b2": {
+      "wantWith": [
+        "672556f9-44d2-4dac-9961-ef2b047d8cb1",
+        "7c77f4af-6dc1-41c9-bdfb-97a0953ab125",
+        "824f4d77-b400-43fc-90dd-aeb903fe401a"
+      ],
+      "avoid": [
+        "7b888b76-33aa-4a8e-b72a-485f6dcf881b"
+      ]
+    },
+    "5f586845-9941-4cd8-8081-6330c4f19ad3": {
+      "wantWith": [
+        "f489bb11-6691-4cc6-8d85-178c5f61bd93",
+        "ad6677aa-1d28-4696-9d72-95e3d4b9c11b"
+      ],
+      "avoid": [
+        "ebfdb001-1e9a-4ee6-b896-e3eb6c04ae10"
+      ]
+    },
+    "08c0f365-1a4a-4eef-86c4-23d6a7e7ac28": {
+      "wantWith": [
+        "824f4d77-b400-43fc-90dd-aeb903fe401a",
+        "7bdb2a66-cab8-4896-b4e7-04f4a8bb9ff7",
+        "1bff3e25-d202-4741-bf16-12541d570dd5"
+      ],
+      "avoid": [
+        "46328c32-d0c8-49bb-8b71-825c98f3ebcc"
+      ]
+    },
+    "1bff3e25-d202-4741-bf16-12541d570dd5": {
+      "wantWith": [
+        "07c51bcc-a846-4d0c-92cc-21ee77e1917b",
+        "9d3d5e89-4f88-4384-a086-b2f5ea032f2e",
+        "f489bb11-6691-4cc6-8d85-178c5f61bd93"
+      ],
+      "avoid": [
+        "824f4d77-b400-43fc-90dd-aeb903fe401a"
+      ]
+    }
+  },
+  "preferenceScoring": {
+    "wantWith": 2,
+    "avoid": -2
+  },
+  "groupingHistory": [],
+  "customWeights": [
+    {
+      "id": "f988383d-7522-4fbf-86c0-81f4383b445a",
+      "name": "Reading level",
+      "mode": "balance"
+    }
+  ],
+  "genderMode": "mixed",
+  "createdAt": "2026-11-01T08:00:00.000Z",
+  "updatedAt": "2026-11-01T08:00:00.000Z"
+}
