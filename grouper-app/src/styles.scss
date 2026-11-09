@@ -13,10 +13,12 @@ body {
 
 // Inside a DKFDS tab panel the panel is the frame, so the section cards drop their own border and padding.
 // DKFDS sizes a card as calc(100% - its bottom margin); without that margin the card would be cut off.
+// Without padding, controls sit on the card edge, so the card's overflow: hidden would clip their focus outline.
 .tab-panel .section-card {
   border: 0;
   margin: 0;
   height: auto;
+  overflow: visible;
 
   > .card-content {
     padding: 0;
