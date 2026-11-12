@@ -14,11 +14,15 @@ COPY grouper-app/ ./
 RUN npm run build
 
 # Stage 2: Serve
-FROM nginx:alpine AS runtime
+# nginx-unprivileged runs as the non-root "nginx" user (uid 101) and keeps its
+# pid/temp files in writable locations, so the server never needs root.
+FROM nginxinc/nginx-unprivileged:alpine AS runtime
 
 COPY --from=builder /app/grouper-app/dist/grouper-app/browser /usr/share/nginx/html
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+USER nginx
 
 EXPOSE 4204
 
