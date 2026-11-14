@@ -113,6 +113,25 @@
     "regenerateGroups": "Generer nye grupper",
     "groupLabel": "Gruppe {{index}}",
     "score": "Score: {{score}}",
+    "history": {
+      "title": "Tidligere grupperinger",
+      "count": "{{count}} grupperinger",
+      "entryLabel": "{{strategy}}, {{date}}, {{satisfaction}}",
+      "viewingFrom": "Viser gruppering fra {{date}}",
+      "showLatest": "Vis seneste resultat"
+    },
+    "result": {
+      "generatedAt": "Genereret {{date}}",
+      "settings": {
+        "title": "Grupperingsindstillinger",
+        "groupSize": "Gruppestørrelse: {{size}}",
+        "partialGroupsOn": "Delvise grupper tilladt",
+        "partialGroupsOff": "Delvise grupper ikke tilladt",
+        "genderMode": "Kønstilstand: {{mode}}",
+        "weights": "Anvendte vægte: {{count}}"
+      }
+    },
+    "removedPerson": "Fjernet person",
     "prompt": {
       "personName": "Indtast personnavn:",
       "gender": "Indtast køn (kvinde, mand, ikke-binær, ikke angivet):"

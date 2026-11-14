@@ -110,11 +110,27 @@
       id="session-tabpanel-results"
       aria-labelledby="session-tab-results"
       [hidden]="activeTab() !== 'results'">
-      @if (currentResult) {
+      @if (viewedResult; as viewed) {
+        @if (isViewingHistory) {
+          <div class="alert alert-info" role="status" id="history-alert" tabindex="-1">
+            <div class="alert-body">
+              <p class="alert-text">{{ 'sessionDetail.history.viewingFrom' | t:{ date: formatResultDate(viewed) } }}</p>
+              <button type="button" class="button button-secondary mt-4" (click)="showLatestResult()">
+                {{ 'sessionDetail.history.showLatest' | t }}
+              </button>
+            </div>
+          </div>
+        }
         <app-groups-result-card
-          [result]="currentResult"
+          [result]="viewed"
           [people]="session.people"
+          [historical]="isViewingHistory"
           (regenerate)="regenerateGroups()" />
+        <app-groups-history-list
+          [entries]="historyEntries()"
+          [selectedIndex]="viewedHistoryIndex()"
+          [locale]="dateLocale"
+          (selectEntry)="selectHistoryEntry($event)" />
       } @else {
         <p class="mt-0 mb-0">{{ 'sessionDetail.tabs.resultsEmpty' | t }}</p>
       }

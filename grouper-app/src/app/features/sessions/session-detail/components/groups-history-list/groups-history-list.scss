@@ -1,0 +1,31 @@
+.history-list {
+  margin-top: 2rem;
+}
+
+.history-count {
+  font-weight: normal;
+}
+
+.history-scroll {
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.history-scroll li {
+  margin-bottom: 0.5rem;
+}
+
+.history-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  width: 100%;
+  margin: 0;
+  text-align: left;
+
+  &[aria-current='true'] {
+    font-weight: bold;
+    border-width: 3px;
+  }
+}

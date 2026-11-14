@@ -1,11 +1,15 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { I18nService } from '../../../../../core/services/i18n.service';
-import { GroupingStrategy } from '../../../../../models/group.model';
+import { GroupingResult, GroupingStrategy } from '../../../../../models/group.model';
 import { Person } from '../../../../../models/person.model';
 import { getAxeViolations } from '../../../../../../testing/axe';
 import { GroupsResultCard } from './groups-result-card';
 
 class MockI18nService {
+  getCurrentDateLocale(): string {
+    return 'en-US';
+  }
+
   t(key: string, params?: Record<string, string | number>): string {
     if (key === 'sessionDetail.groupLabel') {
       return `Group ${params?.['index']}`;
@@ -17,7 +21,27 @@ class MockI18nService {
       return `Satisfaction ${params?.['score']}`;
     }
 
+    if (key === 'sessionDetail.result.generatedAt') {
+      return `Generated ${params?.['date']}`;
+    }
+    if (key === 'sessionDetail.result.settings.groupSize') {
+      return `Group size: ${params?.['size']}`;
+    }
+    if (key === 'sessionDetail.result.settings.genderMode') {
+      return `Gender mode: ${params?.['mode']}`;
+    }
+    if (key === 'sessionDetail.result.settings.weights') {
+      return `Weights used: ${params?.['count']}`;
+    }
+
     const labels: Record<string, string> = {
+      'sessionDetail.strategy': 'Strategy',
+      'sessionDetail.strategyRandom': 'Random',
+      'sessionDetail.strategyWeighted': 'Weighted',
+      'sessionDetail.removedPerson': 'Removed person',
+      'sessionDetail.genderMode.mixed': 'Mixed-gender',
+      'sessionDetail.result.settings.partialGroupsOn': 'Partial groups allowed',
+      'sessionDetail.result.settings.partialGroupsOff': 'Partial groups not allowed',
       'sessionDetail.generatedGroups': 'Generated Groups',
       'sessionDetail.regenerateGroups': 'Generate new groups',
       'sessionDetail.unnamedPerson': 'Unnamed person',
@@ -127,5 +151,100 @@ describe('GroupsResultCard', () => {
     expect(groups[1].querySelector('.card-content > .badge')).toBeNull();
     expect(groups[1].querySelector('.group-members li')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Unnamed person, Male');
     expect(await getAxeViolations(root)).toEqual([]);
+  });
+
+  async function createCard(
+    result: GroupingResult,
+    people: Person[],
+    historical?: boolean,
+  ): Promise<ComponentFixture<GroupsResultCard>> {
+    await TestBed.configureTestingModule({
+      imports: [GroupsResultCard],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(GroupsResultCard);
+    fixture.componentRef.setInput('people', people);
+    fixture.componentRef.setInput('result', result);
+    if (historical !== undefined) {
+      fixture.componentRef.setInput('historical', historical);
+    }
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  const alice = { id: 'p1', name: 'Alice', gender: 'female', createdAt: new Date() } as Person;
+  const weightedResult: GroupingResult = {
+    groups: [{ id: 'g1', name: 'Group 1', memberIds: ['p1', 'gone'] }],
+    strategy: GroupingStrategy.WEIGHTED,
+    settings: {
+      strategy: GroupingStrategy.WEIGHTED,
+      groupSize: 3,
+      allowPartialGroups: false,
+      genderMode: 'mixed',
+      weightIds: ['w1', 'w2'],
+    },
+    timestamp: new Date(2026, 0, 15, 9, 30),
+  };
+
+  it('hides the regenerate button when historical and shows it otherwise', async () => {
+    const historical = await createCard(weightedResult, [alice], true);
+    expect(historical.nativeElement.querySelector('.regenerate-button')).toBeNull();
+
+    TestBed.resetTestingModule();
+    const latest = await createCard(weightedResult, [alice], false);
+    expect(latest.nativeElement.querySelector('.regenerate-button')).not.toBeNull();
+  });
+
+  it('shows timestamp, strategy and settings in the summary', async () => {
+    const fixture = await createCard(weightedResult, [alice]);
+    const root: HTMLElement = fixture.nativeElement;
+
+    expect(root.querySelector('.result-summary-line')?.textContent?.trim()).toBe('Generated Jan 15, 2026, 9:30 AM');
+    const settings = Array.from(root.querySelectorAll('.result-settings li')).map(li => li.textContent?.trim());
+    expect(settings).toEqual([
+      'Strategy: Weighted',
+      'Group size: 3',
+      'Partial groups not allowed',
+      'Gender mode: Mixed-gender',
+      'Weights used: 2',
+    ]);
+  });
+
+  it('omits optional settings that were not recorded', async () => {
+    const fixture = await createCard(
+      {
+        groups: [],
+        strategy: GroupingStrategy.RANDOM,
+        settings: { strategy: GroupingStrategy.RANDOM, groupSize: 2 },
+        timestamp: new Date(2026, 0, 15, 9, 30),
+      },
+      [alice],
+    );
+    const settings = Array.from(fixture.nativeElement.querySelectorAll('.result-settings li')).map(
+      (li) => (li as HTMLElement).textContent?.trim(),
+    );
+    expect(settings).toEqual(['Strategy: Random', 'Group size: 2']);
+  });
+
+  it('labels people no longer in the session as removed, without a gender badge', async () => {
+    const fixture = await createCard(weightedResult, [alice], true);
+    const root: HTMLElement = fixture.nativeElement;
+
+    const members = Array.from(root.querySelectorAll<HTMLElement>('.group-members li'));
+    expect(members.map(member => member.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+      'Alice, Female',
+      'Removed person',
+    ]);
+    expect(members[1].querySelector('.badge')).toBeNull();
+  });
+
+  it('gives the heading a stable id and makes it programmatically focusable', async () => {
+    const fixture = await createCard(weightedResult, [alice]);
+    const heading = fixture.nativeElement.querySelector('h2') as HTMLElement;
+
+    expect(heading.id).toBe('results-heading');
+    expect(heading.getAttribute('tabindex')).toBe('-1');
+    expect(await getAxeViolations(fixture.nativeElement)).toEqual([]);
   });
 });

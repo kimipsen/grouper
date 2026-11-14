@@ -113,6 +113,25 @@
     "regenerateGroups": "Generate new groups",
     "groupLabel": "Group {{index}}",
     "score": "Score: {{score}}",
+    "history": {
+      "title": "Previous groupings",
+      "count": "{{count}} groupings",
+      "entryLabel": "{{strategy}}, {{date}}, {{satisfaction}}",
+      "viewingFrom": "Viewing grouping from {{date}}",
+      "showLatest": "Show latest result"
+    },
+    "result": {
+      "generatedAt": "Generated {{date}}",
+      "settings": {
+        "title": "Grouping settings",
+        "groupSize": "Group size: {{size}}",
+        "partialGroupsOn": "Partial groups allowed",
+        "partialGroupsOff": "Partial groups not allowed",
+        "genderMode": "Gender mode: {{mode}}",
+        "weights": "Weights used: {{count}}"
+      }
+    },
+    "removedPerson": "Removed person",
     "prompt": {
       "personName": "Enter person name:",
       "gender": "Enter gender (female, male, nonbinary, unspecified):"

@@ -1,0 +1,31 @@
+@if (visible()) {
+  <section class="history-list" aria-labelledby="history-list-heading">
+    <h3 id="history-list-heading" class="history-heading">
+      {{ 'sessionDetail.history.title' | t }}
+      <span class="history-count">({{ 'sessionDetail.history.count' | t:{ count: entries().length } }})</span>
+    </h3>
+    <div class="history-scroll">
+      <ul class="nobullet-list">
+        @for (entry of entries(); track entry.index) {
+          <li>
+            <button
+              type="button"
+              class="button button-secondary history-entry"
+              [attr.aria-current]="entry.index === currentIndex() ? 'true' : null"
+              [attr.aria-label]="entryLabel(entry)"
+              (click)="selectEntry.emit(entry.index)"
+            >
+              <span class="history-date">{{ formatDate(entry) }}</span>
+              <span class="history-strategy">{{ strategyKey(entry) | t }}</span>
+              @if (entry.result.overallSatisfaction !== undefined) {
+                <span class="badge badge-info" aria-hidden="true">
+                  {{ 'sessionDetail.satisfaction' | t:{ score: entry.result.overallSatisfaction } }}
+                </span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+}
