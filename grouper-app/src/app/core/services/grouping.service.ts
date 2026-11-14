@@ -115,9 +115,14 @@ export class GroupingService {
    * Validate grouping settings
    * @param peopleCount Number of people to group
    * @param settings Grouping settings
+   * @param genderCounts Optional per-gender head counts; only used when `settings.genderMode === 'single'`
    * @returns Validation result with any warnings or errors
    */
-  validateSettings(peopleCount: number, settings: GroupingSettings): ValidationResult {
+  validateSettings(
+    peopleCount: number,
+    settings: GroupingSettings,
+    genderCounts?: Record<string, number>
+  ): ValidationResult {
     const errors: ValidationMessage[] = [];
     const warnings: ValidationMessage[] = [];
 
@@ -134,6 +139,11 @@ export class GroupingService {
         key: 'grouping.warnings.groupSizeLargerThanPeople',
         params: { groupSize: settings.groupSize, peopleCount }
       });
+    }
+
+    if (settings.genderMode === 'single' && genderCounts) {
+      warnings.push(...this.validateSingleGenderCounts(genderCounts, settings));
+      return { isValid: errors.length === 0, errors, warnings };
     }
 
     const remainder = peopleCount % settings.groupSize;
@@ -163,6 +173,62 @@ export class GroupingService {
     const isValid = errors.length === 0;
 
     return { isValid, errors, warnings };
+  }
+
+  /**
+   * Count people per gender, the same way single-gender grouping buckets them.
+   * `'unspecified'` is an ordinary gender bucket: people without a gender are grouped together.
+   */
+  countByGender(people: Person[]): Record<string, number> {
+    const counts: Record<string, number> = {};
+    for (const person of people) {
+      const gender = person.gender ?? 'unspecified';
+      counts[gender] = (counts[gender] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  private validateSingleGenderCounts(
+    genderCounts: Record<string, number>,
+    settings: GroupingSettings
+  ): ValidationMessage[] {
+    const warnings: ValidationMessage[] = [];
+    const groupSize = settings.groupSize;
+    if (groupSize < 1) {
+      return warnings;
+    }
+    const allowPartialGroups = settings.allowPartialGroups ?? true;
+    const counts = Object.values(genderCounts).filter((count) => count > 0);
+
+    const tooSmall = counts.filter((count) => count < groupSize);
+    const tooSmallPeople = tooSmall.reduce((sum, count) => sum + count, 0);
+    if (tooSmallPeople > 0) {
+      warnings.push({
+        key: tooSmallPeople === 1
+          ? 'grouping.warnings.singleGenderTooSmallOne'
+          : 'grouping.warnings.singleGenderTooSmallMany',
+        params: { count: tooSmallPeople, groupSize }
+      });
+    }
+
+    if (!allowPartialGroups) {
+      const uneven = counts.filter((count) => count >= groupSize && count % groupSize !== 0);
+      const remainder = uneven.reduce((sum, count) => sum + (count % groupSize), 0);
+      if (remainder > 0) {
+        warnings.push({
+          key: remainder === 1
+            ? 'grouping.warnings.unevenDistributionOne'
+            : 'grouping.warnings.unevenDistributionMany',
+          params: {
+            peopleCount: uneven.reduce((sum, count) => sum + count, 0),
+            groupSize,
+            remainder
+          }
+        });
+      }
+    }
+
+    return warnings;
   }
 
   private createWeightedGroups(session: Session, settings: GroupingSettings): GroupingResult {
@@ -266,6 +332,10 @@ export class GroupingService {
   }
 
   private createSingleGenderGroups(people: Person[], settings: GroupingSettings): Group[] {
+    if (people.length > 0 && settings.groupSize < 1) {
+      throw new Error('Group size must be at least 1');
+    }
+
     const genderBuckets = new Map<string, Person[]>();
     for (const person of people) {
       const gender = person.gender ?? 'unspecified';
@@ -274,17 +344,43 @@ export class GroupingService {
       genderBuckets.set(gender, bucket);
     }
 
+    const allowPartialGroups = settings.allowPartialGroups ?? true;
     const groups: Group[] = [];
     for (const bucket of genderBuckets.values()) {
-      const bucketGroups = RandomGroupingAlgorithm.createGroups(
-        bucket,
-        settings.groupSize,
-        settings.allowPartialGroups ?? true
-      );
-      groups.push(...bucketGroups);
+      this.shuffleInPlace(bucket);
+      const sizes = this.calculateSingleGenderGroupSizes(bucket.length, settings.groupSize, allowPartialGroups);
+      let start = 0;
+      for (const size of sizes) {
+        groups.push({
+          id: uuidv4(),
+          name: `Group ${groups.length + 1}`,
+          memberIds: bucket.slice(start, start + size).map((person) => person.id)
+        });
+        start += size;
+      }
     }
 
     return groups;
+  }
+
+  /**
+   * Group sizes for one gender bucket. Sizes differ by at most 1 and every person is placed.
+   * - partial allowed: k = ceil(n / s) groups, never larger than s.
+   * - partial disallowed: g = floor(n / s) groups, remainder spread evenly (sizes may exceed s).
+   * - 0 < n < s: one undersized group in both modes.
+   */
+  private calculateSingleGenderGroupSizes(count: number, groupSize: number, allowPartialGroups: boolean): number[] {
+    if (count <= 0) {
+      return [];
+    }
+    if (count < groupSize) {
+      return [count];
+    }
+
+    const groupCount = allowPartialGroups ? Math.ceil(count / groupSize) : Math.floor(count / groupSize);
+    const base = Math.floor(count / groupCount);
+    const extra = count % groupCount;
+    return Array.from({ length: groupCount }, (_, index) => (index < extra ? base + 1 : base));
   }
 
   private assignGroupSatisfactionScores(

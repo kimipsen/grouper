@@ -183,7 +183,9 @@
       "unevenDistributionOne": "{{peopleCount}} people cannot be evenly divided into groups of {{groupSize}}. {{remainder}} person will be distributed across groups.",
       "unevenDistributionMany": "{{peopleCount}} people cannot be evenly divided into groups of {{groupSize}}. {{remainder}} people will be distributed across groups.",
       "partialGroupOne": "One group will have {{remainder}} person instead of {{groupSize}}",
-      "partialGroupMany": "One group will have {{remainder}} people instead of {{groupSize}}"
+      "partialGroupMany": "One group will have {{remainder}} people instead of {{groupSize}}",
+      "singleGenderTooSmallOne": "One person of the same gender cannot fill a group of {{groupSize}} and will be placed in a smaller group.",
+      "singleGenderTooSmallMany": "{{count}} people of the same gender cannot fill a group of {{groupSize}} and will be placed in a smaller group."
     }
   }
 }
