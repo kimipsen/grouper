@@ -54,6 +54,15 @@
   }
 }
 
+// DKFDS 11.3.0 radio geometry for radios without visible text in tables, mirrored from
+// `.table--selectable th/td:first-child` (dkfds/src/stylesheets/elements/_inputs.scss, lines 398-424),
+// which only reaches a table's first column. $checkbox-radio-size is units(5) = 24px. The ring and dot keep
+// DKFDS's text-zoom-safe offset, calc((units(5, 'rem') / 2) - ($checkbox-radio-size / 2)), without the 4px
+// hit-area offset; it is 0 at the default root font size. Re-check these rules when upgrading DKFDS.
+$dkfds-radio-size: 24px;
+$dkfds-radio-size-rem: 2.4rem;
+$dkfds-radio-text-zoom-offset: calc($dkfds-radio-size-rem / 2 - $dkfds-radio-size / 2);
+
 .preference-table {
   margin: 0;
 
@@ -65,8 +74,28 @@
     padding-right: 0.375rem;
   }
 
+  // The label holds only sr-only text, so the radio gets a radio-sized box, centred under its column header.
   td .form-group-radio {
-    margin: 0;
+    width: $dkfds-radio-size;
+    height: $dkfds-radio-size;
+    margin: 0 auto;
+
+    .form-radio {
+      margin-top: 0;
+
+      & + label {
+        padding-left: 0;
+
+        &::before {
+          margin-right: 0;
+          margin-top: $dkfds-radio-text-zoom-offset;
+        }
+
+        &::after {
+          margin-top: $dkfds-radio-text-zoom-offset;
+        }
+      }
+    }
   }
 }
 

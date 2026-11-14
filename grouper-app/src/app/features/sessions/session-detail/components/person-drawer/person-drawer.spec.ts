@@ -174,4 +174,68 @@ describe('PersonDrawer', () => {
     expect(root.querySelector('aside')?.getAttribute('aria-labelledby')).toBe('person-drawer-heading');
     root.remove();
   });
+
+  it('marks the preference table for DKFDS compact density and centred option headers', async () => {
+    await TestBed.configureTestingModule({
+      imports: [PersonDrawer],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(PersonDrawer);
+    fixture.componentRef.setInput('selectedPerson', selectedPerson);
+    fixture.componentRef.setInput('people', [selectedPerson, otherPerson]);
+    fixture.componentRef.setInput('customWeights', [{ id: 'w1', name: 'Karakter', mode: 'balance' }]);
+    fixture.componentRef.setInput('preferences', {});
+    fixture.detectChanges();
+
+    const root: HTMLElement = fixture.nativeElement;
+    const table = root.querySelector('.preference-table');
+    expect(table?.classList.contains('table--compact')).toBe(true);
+    expect(table?.classList.contains('table--extracompact')).toBe(false);
+    expect(Array.from(root.querySelectorAll('.preference-table thead th')).map((th) => th.classList.contains('align-text-center'))).toEqual([
+      false,
+      true,
+      true,
+      true,
+    ]);
+    const labels = Array.from(root.querySelectorAll('.preference-table tbody label'));
+    expect(labels).toHaveLength(3);
+    for (const label of labels) {
+      expect(label.children).toHaveLength(1);
+      expect(label.children[0].classList.contains('sr-only')).toBe(true);
+      expect(label.textContent).toBe(label.children[0].textContent);
+    }
+  });
+
+  it('applies the DKFDS radio geometry to every preference cell and to no other radio', async () => {
+    await TestBed.configureTestingModule({
+      imports: [PersonDrawer],
+      providers: [{ provide: I18nService, useClass: MockI18nService }],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(PersonDrawer);
+    fixture.componentRef.setInput('selectedPerson', selectedPerson);
+    fixture.componentRef.setInput('people', [selectedPerson, otherPerson]);
+    fixture.componentRef.setInput('customWeights', [{ id: 'w1', name: 'Karakter', mode: 'balance' }]);
+    fixture.componentRef.setInput('preferences', {});
+    fixture.detectChanges();
+
+    // jsdom has no layout and no DKFDS stylesheet here, but it does cascade this component's own styles onto elements
+    // and their ::before/::after, so this guards the scoped rules and their selectors. Whether they win over DKFDS and
+    // give the right geometry is verified in a browser.
+    const root: HTMLElement = fixture.nativeElement;
+    const groups = Array.from(root.querySelectorAll<HTMLElement>('.preference-table td .form-group-radio'));
+    expect(groups).toHaveLength(3);
+    for (const group of groups) {
+      const style = getComputedStyle(group);
+      const label = group.querySelector('label')!;
+      expect([style.width, style.height, style.marginLeft, style.marginRight]).toEqual(['24px', '24px', 'auto', 'auto']);
+      expect(getComputedStyle(label).paddingLeft).toBe('0px');
+      expect(getComputedStyle(group.querySelector('input.form-radio')!).marginTop).toBe('0px');
+      // Ring and dot offset: jsdom resolves calc(1.2rem - 12px) against its 16px root font size, giving 7.2px.
+      // Without the rule it is 0px; with DKFDS's 4px hit-area offset kept it is 11.2px.
+      expect([getComputedStyle(label, '::before').marginTop, getComputedStyle(label, '::after').marginTop]).toEqual(['7.2px', '7.2px']);
+    }
+    expect(getComputedStyle(root.querySelector('fieldset .form-group-radio')!).width).not.toBe('24px');
+  });
 });

@@ -53,12 +53,12 @@
           <p class="drawer-muted">{{ 'sessionDetail.preferencesMinPeople' | t }}</p>
         } @else {
           <div class="table--responsive-scroll">
-            <table class="table table--extracompact preference-table" aria-labelledby="person-preferences-heading">
+            <table class="table table--compact preference-table" aria-labelledby="person-preferences-heading">
               <thead>
                 <tr>
                   <th scope="col">{{ 'sessionDetail.preferencePerson' | t }}</th>
                   @for (option of preferenceOptions; track option.value) {
-                    <th scope="col">{{ option.labelKey | t }}</th>
+                    <th scope="col" class="align-text-center">{{ option.labelKey | t }}</th>
                   }
                 </tr>
               </thead>
