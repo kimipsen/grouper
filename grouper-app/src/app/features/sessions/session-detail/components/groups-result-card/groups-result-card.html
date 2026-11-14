@@ -1,15 +1,38 @@
 <section class="card section-card groups-display">
   <div class="card-content">
     <div class="groups-header">
-      <h2 class="card-heading">{{ 'sessionDetail.generatedGroups' | t }}</h2>
+      <h2 class="card-heading" id="results-heading" tabindex="-1">{{ 'sessionDetail.generatedGroups' | t }}</h2>
       @if (result().overallSatisfaction !== undefined) {
         <span class="badge badge-info">
           {{ 'sessionDetail.satisfaction' | t:{ score: result().overallSatisfaction ?? 0 } }}
         </span>
       }
-      <button class="button button-secondary regenerate-button" type="button" (click)="regenerate.emit()">
-        {{ 'sessionDetail.regenerateGroups' | t }}
-      </button>
+      @if (!historical()) {
+        <button class="button button-secondary regenerate-button" type="button" (click)="regenerate.emit()">
+          {{ 'sessionDetail.regenerateGroups' | t }}
+        </button>
+      }
+    </div>
+
+    <div class="result-summary">
+      <p class="result-summary-line">
+        {{ 'sessionDetail.result.generatedAt' | t:{ date: generatedAt() } }}
+      </p>
+      <ul class="nobullet-list result-settings" [attr.aria-label]="'sessionDetail.result.settings.title' | t">
+        <li>{{ 'sessionDetail.strategy' | t }}: {{ strategyKey() | t }}</li>
+        <li>{{ 'sessionDetail.result.settings.groupSize' | t:{ size: result().settings.groupSize } }}</li>
+        @if (result().settings.allowPartialGroups !== undefined) {
+          <li>
+            {{ (result().settings.allowPartialGroups ? 'sessionDetail.result.settings.partialGroupsOn' : 'sessionDetail.result.settings.partialGroupsOff') | t }}
+          </li>
+        }
+        @if (result().settings.genderMode; as genderMode) {
+          <li>{{ 'sessionDetail.result.settings.genderMode' | t:{ mode: ('sessionDetail.genderMode.' + genderMode | t) } }}</li>
+        }
+        @if (result().settings.weightIds !== undefined) {
+          <li>{{ 'sessionDetail.result.settings.weights' | t:{ count: weightsCount() } }}</li>
+        }
+      </ul>
     </div>
 
     <ul class="card-row row">
@@ -24,8 +47,12 @@
               <ul class="nobullet-list group-members">
                 @for (memberId of group.memberIds; track memberId) {
                   <li>
-                    {{ getPersonName(memberId) || ('sessionDetail.unnamedPerson' | t) }}<span class="sr-only">, </span>
-                    <span class="badge member-gender">{{ 'sessionDetail.gender.' + getPersonGender(memberId) | t }}</span>
+                    @if (isRemovedPerson(memberId)) {
+                      <span class="removed-person">{{ 'sessionDetail.removedPerson' | t }}</span>
+                    } @else {
+                      {{ getPersonName(memberId) || ('sessionDetail.unnamedPerson' | t) }}<span class="sr-only">, </span>
+                      <span class="badge member-gender">{{ 'sessionDetail.gender.' + getPersonGender(memberId) | t }}</span>
+                    }
                   </li>
                 }
               </ul>
