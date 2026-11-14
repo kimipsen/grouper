@@ -330,6 +330,179 @@ describe('SessionDetail', () => {
     });
   });
 
+  describe('single-gender warnings', () => {
+    const warning = (key: string, params: Record<string, string | number> = {}) => ({ key, params });
+    const people: Person[] = [
+      { id: 'p1', name: 'Anna', gender: 'female', createdAt: new Date() },
+      { id: 'p2', name: 'Bo', gender: 'male', createdAt: new Date() },
+      { id: 'p3', name: 'Kim', gender: 'male', createdAt: new Date() },
+      { id: 'p4', name: 'Sam', createdAt: new Date() },
+    ];
+    const result = {
+      groups: [],
+      strategy: GroupingStrategy.RANDOM,
+      settings: { strategy: GroupingStrategy.RANDOM, groupSize: 2, allowPartialGroups: true },
+      timestamp: new Date(),
+    };
+
+    async function setup(
+      genderMode: 'single' | 'mixed',
+      validateSettings: ReturnType<typeof vi.fn>,
+      createGroupsWithSession: ReturnType<typeof vi.fn> = vi.fn().mockReturnValue(result)
+    ) {
+      const currentSession = signal<Session | null>({
+        id: 'session-1',
+        name: 'Demo Session',
+        description: '',
+        people,
+        preferences: {},
+        groupingHistory: [],
+        customWeights: [],
+        genderMode,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await TestBed.configureTestingModule({
+        imports: [SessionDetail],
+        providers: [
+          { provide: ActivatedRoute, useValue: { params: new BehaviorSubject({ id: 'session-1' }) } },
+          provideRouter([]),
+          {
+            provide: SessionService,
+            useValue: {
+              currentSession,
+              setCurrentSession: vi.fn(),
+              updateSessionGenderMode: vi.fn(),
+              updatePreferenceScoring: vi.fn(),
+              addGroupingResult: vi.fn(),
+            },
+          },
+          {
+            provide: GroupingService,
+            useValue: {
+              validateSettings,
+              createGroupsWithSession,
+              countByGender: vi.fn().mockReturnValue({ female: 1, male: 2, unspecified: 1 }),
+            },
+          },
+          { provide: I18nService, useClass: MockI18nService },
+        ],
+        schemas: [NO_ERRORS_SCHEMA],
+      }).compileComponents();
+
+      const fixture = TestBed.createComponent(SessionDetail);
+      fixture.detectChanges();
+      return { fixture, notifications: TestBed.inject(NotificationService) };
+    }
+
+    const valid = (warnings: { key: string; params?: Record<string, string | number> }[] = []) => ({
+      isValid: true,
+      errors: [],
+      warnings,
+    });
+
+    it('passes per-gender counts, including unspecified, to validateSettings in single mode', async () => {
+      const validateSettings = vi.fn().mockReturnValue(valid());
+      const { fixture } = await setup('single', validateSettings);
+
+      fixture.componentInstance.generateGroups();
+
+      expect(validateSettings).toHaveBeenCalledWith(4, expect.objectContaining({ genderMode: 'single' }), {
+        female: 1,
+        male: 2,
+        unspecified: 1,
+      });
+    });
+
+    it('passes no genderCounts and shows no warning toast in mixed mode', async () => {
+      const validateSettings = vi
+        .fn()
+        .mockReturnValue(valid([warning('grouping.warnings.singleGenderTooSmallOne', { groupSize: 2 })]));
+      const { fixture, notifications } = await setup('mixed', validateSettings);
+
+      fixture.componentInstance.generateGroups();
+
+      expect(validateSettings).toHaveBeenCalledWith(4, expect.objectContaining({ genderMode: 'mixed' }), undefined);
+      expect(notifications.toasts().map((toast) => toast.variant)).toEqual(['success']);
+    });
+
+    it('shows a returned warning as a warning toast in single mode', async () => {
+      const params = { count: 1, groupSize: 2 };
+      const { fixture, notifications } = await setup(
+        'single',
+        vi.fn().mockReturnValue(valid([warning('grouping.warnings.singleGenderTooSmallOne', params)]))
+      );
+
+      fixture.componentInstance.generateGroups();
+
+      expect(notifications.toasts()).toContainEqual(
+        expect.objectContaining({ variant: 'warning', key: 'grouping.warnings.singleGenderTooSmallOne', params })
+      );
+    });
+
+    it('emits the success toast first and the warnings after it', async () => {
+      const { fixture, notifications } = await setup(
+        'single',
+        vi.fn().mockReturnValue(valid([warning('grouping.warnings.singleGenderTooSmallOne')]))
+      );
+
+      fixture.componentInstance.generateGroups();
+
+      // Toasts are newest first, so the warning (emitted last) comes before the success toast.
+      expect(notifications.toasts().map((toast) => toast.variant)).toEqual(['warning', 'success']);
+    });
+
+    it('shows no warnings when generation fails', async () => {
+      const { fixture, notifications } = await setup(
+        'single',
+        vi.fn().mockReturnValue(valid([warning('grouping.warnings.singleGenderTooSmallOne')])),
+        vi.fn().mockImplementation(() => {
+          throw new Error('boom');
+        })
+      );
+
+      fixture.componentInstance.generateGroups();
+
+      expect(notifications.toasts()).toEqual([]);
+    });
+
+    it('shows no warnings when validation fails', async () => {
+      const { fixture, notifications } = await setup('single', vi.fn().mockReturnValue({
+        isValid: false,
+        errors: [{ key: 'grouping.errors.groupSizeMin' }],
+        warnings: [warning('grouping.warnings.singleGenderTooSmallOne')],
+      }));
+
+      fixture.componentInstance.generateGroups();
+
+      expect(notifications.toasts()).toEqual([]);
+    });
+
+    it('keeps all three warnings visible when four toasts compete for the MAX_TOASTS slots', async () => {
+      const { fixture, notifications } = await setup(
+        'single',
+        vi.fn().mockReturnValue(
+          valid([
+            warning('grouping.warnings.groupSizeLargerThanPeople', { groupSize: 9, peopleCount: 4 }),
+            warning('grouping.warnings.singleGenderTooSmallMany', { count: 2, groupSize: 9 }),
+            warning('grouping.warnings.unevenDistributionMany', { remainder: 3, peopleCount: 4 }),
+          ])
+        )
+      );
+
+      fixture.componentInstance.generateGroups();
+
+      const toasts = notifications.toasts();
+      expect(toasts.map((toast) => toast.key)).toEqual([
+        'grouping.warnings.unevenDistributionMany',
+        'grouping.warnings.singleGenderTooSmallMany',
+        'grouping.warnings.groupSizeLargerThanPeople',
+      ]);
+      expect(toasts.every((toast) => toast.variant === 'warning')).toBe(true);
+    });
+  });
+
   describe('destructive actions', () => {
     const person: Person = { id: 'p1', name: '', gender: 'female', createdAt: new Date() };
     const weight = { id: 'w1', name: 'Skill', mode: 'balance' as const };
