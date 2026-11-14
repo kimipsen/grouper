@@ -1,10 +1,11 @@
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { ChangeDetectorRef, NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { GroupingService } from '../../../core/services/grouping.service';
 import { I18nService } from '../../../core/services/i18n.service';
 import { SessionService } from '../../../core/services/session.service';
+import { SessionStorageService } from '../../../core/services/session-storage.service';
 import { GroupingStrategy } from '../../../models/group.model';
 import { Session } from '../../../models/session.model';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -561,7 +562,10 @@ describe('SessionDetail', () => {
               setCurrentSession: vi.fn(),
               updateSessionGenderMode: vi.fn(),
               updatePreferenceScoring: vi.fn(),
-              addGroupingResult: vi.fn(),
+              // Like the real service: mutates the session's history in place.
+              addGroupingResult: vi.fn().mockImplementation((_id: string, added: typeof result) => {
+                currentSession()?.groupingHistory.push(added);
+              }),
             },
           },
           {
@@ -737,5 +741,273 @@ describe('SessionDetail', () => {
       expect(visiblePanels(root)).toEqual(['session-tabpanel-weights']);
       expect(document.activeElement?.id).toBe('new-weight-name');
     });
+  });
+});
+
+describe('SessionDetail history view', () => {
+  class HistoryI18nService {
+    locale = 'en-US';
+    t(key: string, params?: Record<string, string | number>): string {
+      return params ? `${key} ${Object.values(params).join(' ')}` : key;
+    }
+    getCurrentDateLocale(): string {
+      return this.locale;
+    }
+  }
+
+  function entry(day: number, strategy = GroupingStrategy.RANDOM, overallSatisfaction?: number) {
+    return {
+      groups: [],
+      strategy,
+      settings: { strategy, groupSize: 2, allowPartialGroups: true },
+      timestamp: new Date(Date.UTC(2026, 2, day, 12, 0, 0)),
+      overallSatisfaction,
+    };
+  }
+
+  function makeSession(id: string, history: ReturnType<typeof entry>[]): Session {
+    return {
+      id,
+      name: id,
+      description: '',
+      people: [{ id: 'p1', name: 'Ada', gender: 'female', createdAt: new Date() }],
+      preferences: {},
+      groupingHistory: history,
+      customWeights: [],
+      genderMode: 'mixed',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  async function setup(sessions: Session[], options: { tab?: string } = {}) {
+    const storage = {
+      loadSessions: () => sessions,
+      getCurrentSessionId: () => sessions[0].id,
+      saveSessions: vi.fn(),
+      saveCurrentSessionId: vi.fn(),
+      clearCurrentSessionId: vi.fn(),
+    };
+    const i18n = new HistoryI18nService();
+    const createGroupsWithSession = vi.fn().mockImplementation(() => entry(20));
+    const params$ = new BehaviorSubject({ id: sessions[0].id });
+    const queryParams: Record<string, string> = { tab: options.tab ?? 'results' };
+
+    await TestBed.configureTestingModule({
+      imports: [SessionDetail],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { params: params$, snapshot: { queryParamMap: convertToParamMap(queryParams) } } },
+        { provide: SessionStorageService, useValue: storage },
+        {
+          provide: GroupingService,
+          useValue: {
+            validateSettings: vi.fn().mockReturnValue({ isValid: true, errors: [], warnings: [] }),
+            createGroupsWithSession,
+          },
+        },
+        { provide: I18nService, useValue: i18n },
+      ],
+    }).compileComponents();
+
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(SessionDetail);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    await fixture.whenStable();
+    return { fixture, component: fixture.componentInstance, root, i18n, params$, sessionService: TestBed.inject(SessionService) };
+  }
+
+  const alertOf = (root: HTMLElement) => root.querySelector<HTMLElement>('#history-alert');
+  const entryButtons = (root: HTMLElement) => Array.from(root.querySelectorAll<HTMLButtonElement>('.history-entry'));
+
+  afterEach(() => document.querySelectorAll('app-session-detail').forEach((element) => element.remove()));
+
+  it('shows the latest result after load without generating, and no historical alert', async () => {
+    const { root, component } = await setup([makeSession('s1', [entry(1), entry(2), entry(3)])]);
+
+    expect(component.viewedResult).toBe(component.latestResult);
+    expect(root.querySelector('app-groups-result-card')).not.toBeNull();
+    expect(alertOf(root)).toBeNull();
+    expect(root.textContent).not.toContain('sessionDetail.tabs.resultsEmpty');
+  });
+
+  it('lists entries newest-first', async () => {
+    const { root, component } = await setup([makeSession('s1', [entry(1), entry(2, GroupingStrategy.WEIGHTED), entry(3)])]);
+
+    expect(component.historyEntries().map((e) => e.index)).toEqual([2, 1, 0]);
+    expect(entryButtons(root)).toHaveLength(3);
+    expect(entryButtons(root)[1].textContent).toContain('sessionDetail.strategyWeighted');
+    expect(entryButtons(root)[0].getAttribute('aria-current')).toBe('true');
+  });
+
+  it('shows an older entry read-only with the dated alert and moves focus to it', async () => {
+    const history = [entry(1), entry(2), entry(3)];
+    const { fixture, root, component } = await setup([makeSession('s1', history)]);
+
+    entryButtons(root)[2].click();
+    await fixture.whenStable();
+
+    expect(component.viewedHistoryIndex()).toBe(0);
+    expect(component.viewedResult).toBe(component.session?.groupingHistory[0]);
+    const alert = alertOf(root);
+    expect(alert?.getAttribute('role')).toBe('status');
+    expect(alert?.textContent).toContain('sessionDetail.history.viewingFrom');
+    expect(alert?.textContent).toContain(component.formatResultDate(history[0]));
+    expect(alert?.textContent).toContain('2026');
+    expect(document.activeElement).toBe(alert);
+    expect(root.querySelector('app-groups-result-card .button')).toBeNull();
+    expect(entryButtons(root).map((b) => b.getAttribute('aria-current'))).toEqual([null, null, 'true']);
+  });
+
+  it('re-focuses the alert when another older entry is selected and ignores re-selecting the same entry', async () => {
+    const { fixture, root, component } = await setup([makeSession('s1', [entry(1), entry(2), entry(3)])]);
+
+    component.selectHistoryEntry(0);
+    await fixture.whenStable();
+    (document.activeElement as HTMLElement).blur();
+    component.selectHistoryEntry(0);
+    await fixture.whenStable();
+    expect(document.activeElement).not.toBe(alertOf(root));
+
+    component.selectHistoryEntry(1);
+    await fixture.whenStable();
+    expect(component.viewedHistoryIndex()).toBe(1);
+    expect(document.activeElement).toBe(alertOf(root));
+  });
+
+  it('returns to the latest with "Show latest result" and focuses the card heading', async () => {
+    const { fixture, root, component } = await setup([makeSession('s1', [entry(1), entry(2)])]);
+    component.selectHistoryEntry(0);
+    await fixture.whenStable();
+
+    alertOf(root)?.querySelector<HTMLButtonElement>('button')?.click();
+    await fixture.whenStable();
+
+    expect(component.viewedHistoryIndex()).toBeNull();
+    expect(alertOf(root)).toBeNull();
+    expect(document.activeElement?.id).toBe('results-heading');
+  });
+
+  it('treats selecting the newest entry as latest mode without an alert', async () => {
+    const { fixture, root, component } = await setup([makeSession('s1', [entry(1), entry(2)])]);
+
+    component.selectHistoryEntry(1);
+    await fixture.whenStable();
+
+    expect(component.viewedHistoryIndex()).toBeNull();
+    expect(alertOf(root)).toBeNull();
+  });
+
+  it('returns to the latest when a grouping is generated while viewing history, without focusing the alert', async () => {
+    const { fixture, root, component } = await setup([makeSession('s1', [entry(1), entry(2)])]);
+    component.selectHistoryEntry(0);
+    await fixture.whenStable();
+
+    component.generateGroups();
+    await fixture.whenStable();
+
+    expect(component.viewedHistoryIndex()).toBeNull();
+    expect(alertOf(root)).toBeNull();
+    expect(component.historyEntries().map((e) => e.index)).toEqual([2, 1, 0]);
+    expect(entryButtons(root)).toHaveLength(3);
+    expect(document.activeElement?.id).not.toBe('results-heading');
+  });
+
+  it('shows the empty text and no list for an empty history, and no list for a single entry', async () => {
+    const empty = await setup([makeSession('s1', [])]);
+    expect(empty.root.textContent).toContain('sessionDetail.tabs.resultsEmpty');
+    expect(empty.root.querySelector('app-groups-history-list .history-list')).toBeNull();
+    empty.root.remove();
+    TestBed.resetTestingModule();
+
+    const single = await setup([makeSession('s1', [entry(1)])]);
+    expect(single.root.querySelector('app-groups-result-card')).not.toBeNull();
+    expect(single.root.querySelector('app-groups-history-list .history-list')).toBeNull();
+  });
+
+  it('falls back to the empty state after a confirmed reset while viewing history', async () => {
+    const { fixture, root, component } = await setup([makeSession('s1', [entry(1), entry(2)])]);
+    component.selectHistoryEntry(0);
+    await fixture.whenStable();
+
+    const reset = component.resetSession();
+    TestBed.inject(ConfirmDialogService).settle(true);
+    await reset;
+    await fixture.whenStable();
+
+    expect(component.viewedHistoryIndex()).toBeNull();
+    expect(component.historyEntries()).toEqual([]);
+    expect(alertOf(root)).toBeNull();
+    expect(root.textContent).toContain('sessionDetail.tabs.resultsEmpty');
+  });
+
+  it('clamps a stale index to the latest and resets it when the session changes', async () => {
+    const { fixture, root, component, sessionService, params$ } = await setup([
+      makeSession('s1', [entry(1), entry(2), entry(3)]),
+      makeSession('s2', [entry(4)]),
+    ]);
+    component.selectHistoryEntry(0);
+    await fixture.whenStable();
+
+    component.viewedHistoryIndex.set(9);
+    expect(component.isViewingHistory).toBe(false);
+    expect(component.viewedResult).toBe(component.latestResult);
+
+    component.viewedHistoryIndex.set(0);
+    params$.next({ id: 's2' });
+    sessionService.setCurrentSession('s2');
+    await fixture.whenStable();
+
+    expect(component.session?.id).toBe('s2');
+    expect(component.viewedHistoryIndex()).toBeNull();
+    expect(alertOf(root)).toBeNull();
+    expect(component.historyEntries().map((e) => e.index)).toEqual([0]);
+  });
+
+  it('updates the alert date when the locale changes while viewing history', async () => {
+    const { fixture, root, component, i18n } = await setup([makeSession('s1', [entry(1), entry(2)])]);
+    component.selectHistoryEntry(0);
+    await fixture.whenStable();
+    const before = alertOf(root)?.textContent;
+
+    i18n.locale = 'da-DK';
+    fixture.debugElement.injector.get(ChangeDetectorRef).markForCheck();
+    fixture.detectChanges();
+
+    expect(alertOf(root)?.textContent).not.toBe(before);
+    expect(alertOf(root)?.textContent).toContain(component.formatResultDate(component.session!.groupingHistory[0]));
+  });
+
+  it('selects the right entry for identical timestamps and renders a badge for satisfaction 0', async () => {
+    const first = entry(1, GroupingStrategy.RANDOM, 0);
+    const second = entry(1, GroupingStrategy.WEIGHTED, 5);
+    const { fixture, root, component } = await setup([makeSession('s1', [first, second, entry(2)])]);
+
+    expect(entryButtons(root)[2].querySelector('.badge')).not.toBeNull();
+    entryButtons(root)[1].click();
+    await fixture.whenStable();
+
+    expect(component.viewedResult).toBe(component.session?.groupingHistory[1]);
+  });
+
+  it('keeps the history list input stable across change detection with no history change', async () => {
+    const { fixture, component } = await setup([makeSession('s1', [entry(1), entry(2)])]);
+    const before = component.historyEntries();
+
+    fixture.detectChanges();
+    component.selectHistoryEntry(0);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component.historyEntries()).toBe(before);
+  });
+
+  it('has no axe violations for the Results tab in history mode', async () => {
+    const { fixture, root, component } = await setup([makeSession('s1', [entry(1, GroupingStrategy.RANDOM, 0), entry(2), entry(3)])]);
+    component.selectHistoryEntry(0);
+    await fixture.whenStable();
+
+    expect(await getAxeViolations(root)).toEqual([]);
   });
 });

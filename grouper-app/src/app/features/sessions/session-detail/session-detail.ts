@@ -20,6 +20,7 @@ import { PersonDrawer } from './components/person-drawer/person-drawer';
 import { GroupingConfigCard, GroupingFieldError } from './components/grouping-config-card/grouping-config-card';
 import { CustomWeightsCard } from './components/custom-weights-card/custom-weights-card';
 import { GroupsResultCard } from './components/groups-result-card/groups-result-card';
+import { GroupsHistoryEntry, GroupsHistoryList } from './components/groups-history-list/groups-history-list';
 
 export type SessionTab = 'people' | 'weights' | 'groups' | 'results';
 
@@ -43,6 +44,7 @@ function isSessionTab(value: string | null | undefined): value is SessionTab {
     GroupingConfigCard,
     CustomWeightsCard,
     GroupsResultCard,
+    GroupsHistoryList,
   ]
 })
 export class SessionDetail implements OnInit {
@@ -82,8 +84,12 @@ export class SessionDetail implements OnInit {
   }
   readonly genderWeightId = '__gender__';
 
-  // Current grouping result
-  currentResult: GroupingResult | null = null;
+  // Results tab: null means the latest grouping is shown, otherwise an index into groupingHistory (oldest-first).
+  readonly viewedHistoryIndex = signal<number | null>(null);
+  /** Newest-first {index, result} pairs; rebuilt only in syncHistory so the list input stays stable. */
+  readonly historyEntries = signal<GroupsHistoryEntry[]>([]);
+  private syncedSessionId: string | null = null;
+  private syncedHistory: GroupingResult[] | null = null;
   readonly groupingError = signal<ValidationMessage | null>(null);
   readonly groupingFieldErrors = signal<GroupingFieldError[]>([]);
 
@@ -134,6 +140,35 @@ export class SessionDetail implements OnInit {
     });
   }
 
+  get latestResult(): GroupingResult | null {
+    const history = this.session?.groupingHistory ?? [];
+    return history[history.length - 1] ?? null;
+  }
+
+  /** Index of the shown historical entry; null when the latest is shown or the stored index is stale. */
+  private get validViewedIndex(): number | null {
+    const index = this.viewedHistoryIndex();
+    const history = this.session?.groupingHistory ?? [];
+    return index !== null && Number.isInteger(index) && index >= 0 && index < history.length ? index : null;
+  }
+
+  get viewedResult(): GroupingResult | null {
+    const index = this.validViewedIndex;
+    return index === null ? this.latestResult : (this.session?.groupingHistory[index] ?? null);
+  }
+
+  get isViewingHistory(): boolean {
+    return this.validViewedIndex !== null;
+  }
+
+  get dateLocale(): string {
+    return this.i18n.getCurrentDateLocale();
+  }
+
+  formatResultDate(result: GroupingResult): string {
+    return new Intl.DateTimeFormat(this.dateLocale, { dateStyle: 'medium', timeStyle: 'short' }).format(result.timestamp);
+  }
+
   ngOnInit(): void {
     const initialTab = this.route.snapshot.queryParamMap.get('tab');
     if (isSessionTab(initialTab)) {
@@ -156,6 +191,9 @@ export class SessionDetail implements OnInit {
         this.router.navigate(['/sessions']);
         return;
       }
+
+      // A different session or a replaced history array (reset, import) invalidates the viewed index.
+      this.syncHistory(session.id !== this.syncedSessionId || session.groupingHistory !== this.syncedHistory);
 
       this.genderModeControl.setValue(session.genderMode ?? 'mixed', { emitEvent: false });
       const scoring = session.preferenceScoring ?? DEFAULT_PREFERENCE_SCORING;
@@ -221,6 +259,7 @@ export class SessionDetail implements OnInit {
     if (!confirmed || !this.session) return;
 
     this.sessionService.resetSession(this.session.id);
+    this.syncHistory(true);
     this.refreshAfterConfirm();
     this.notifications.success('sessionDetail.snackbar.sessionReset');
   }
@@ -365,13 +404,14 @@ export class SessionDetail implements OnInit {
     }
 
     try {
-      this.currentResult = this.groupingService.createGroupsWithSession(
+      const result = this.groupingService.createGroupsWithSession(
         this.session,
         settings,
         this.i18n.getCurrentDateLocale()
       );
 
-      this.sessionService.addGroupingResult(this.session.id, this.currentResult);
+      this.sessionService.addGroupingResult(this.session.id, result);
+      this.syncHistory(true);
       this.showGroupingErrors([]);
       this.showResults();
       this.notifications.success('sessionDetail.snackbar.groupsGenerated');
@@ -409,6 +449,29 @@ export class SessionDetail implements OnInit {
     field?.focus();
   }
 
+  /** Shows an earlier grouping read-only; the newest entry is the latest view, not history. */
+  selectHistoryEntry(index: number): void {
+    const history = this.session?.groupingHistory ?? [];
+    if (index < 0 || index >= history.length) return;
+
+    if (index === history.length - 1) {
+      this.showLatestResult();
+      return;
+    }
+    if (index === this.validViewedIndex) return;
+
+    this.viewedHistoryIndex.set(index);
+    this.focusAfterRender('history-alert');
+  }
+
+  showLatestResult(): void {
+    const wasViewingHistory = this.isViewingHistory;
+    this.viewedHistoryIndex.set(null);
+    if (wasViewingHistory) {
+      this.focusAfterRender('results-heading');
+    }
+  }
+
   regenerateGroups(): void {
     this.generateGroups();
   }
@@ -418,6 +481,22 @@ export class SessionDetail implements OnInit {
     if (this.activeTab() === 'results') return;
     this.selectTab('results');
     this.document.getElementById('session-tabpanel-results')?.focus();
+  }
+
+  /** Single sync point for the newest-first history entries; optionally returns the view to the latest. */
+  private syncHistory(resetIndex: boolean): void {
+    const session = this.session;
+    const history = session?.groupingHistory ?? [];
+    this.syncedSessionId = session?.id ?? null;
+    this.syncedHistory = session?.groupingHistory ?? null;
+    this.historyEntries.set(history.map((result, index) => ({ index, result })).reverse());
+    if (resetIndex) {
+      this.viewedHistoryIndex.set(null);
+    }
+  }
+
+  private focusAfterRender(id: string): void {
+    afterNextRender(() => this.document.getElementById(id)?.focus(), { injector: this.injector });
   }
 
   /**

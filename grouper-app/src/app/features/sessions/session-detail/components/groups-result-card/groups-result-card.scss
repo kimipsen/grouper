@@ -1,5 +1,6 @@
 // DKFDS .card-content aligns children to flex-start; these blocks should span the card.
 .groups-header,
+.result-summary,
 .card-row {
   align-self: stretch;
 }
@@ -38,4 +39,19 @@
 
 .member-gender {
   margin-left: 0.5rem;
+}
+
+.result-summary {
+  margin-bottom: 1.5rem;
+
+  .result-summary-line {
+    margin: 0 0 0.5rem;
+  }
+}
+
+.result-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  margin: 0;
 }
