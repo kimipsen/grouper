@@ -1,12 +1,13 @@
 import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { GroupingService } from '../../../core/services/grouping.service';
 import { I18nService } from '../../../core/services/i18n.service';
 import { SessionService } from '../../../core/services/session.service';
 import { GroupingStrategy } from '../../../models/group.model';
 import { Session } from '../../../models/session.model';
+import { getAxeViolations } from '../../../../testing/axe';
 import { SessionDetail } from './session-detail';
 
 class MockI18nService {
@@ -122,5 +123,55 @@ describe('SessionDetail accessibility', () => {
       return !aria && !text;
     });
     expect(unlabeledButton).toBeUndefined();
+  });
+
+  it('has no axe violations on the Results tab in history mode', async () => {
+    const entry = (day: number, overallSatisfaction?: number) => ({
+      groups: [],
+      strategy: GroupingStrategy.RANDOM,
+      settings: { strategy: GroupingStrategy.RANDOM, groupSize: 2, allowPartialGroups: true },
+      timestamp: new Date(Date.UTC(2026, 2, day, 12)),
+      overallSatisfaction,
+    });
+    const currentSession = signal<Session | null>({
+      id: 'session-1',
+      name: 'Demo Session',
+      description: '',
+      people: [],
+      preferences: {},
+      groupingHistory: [entry(1, 0), entry(2), entry(3)],
+      customWeights: [],
+      genderMode: 'mixed',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [SessionDetail],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: { params: new BehaviorSubject({ id: 'session-1' }), snapshot: { queryParamMap: convertToParamMap({ tab: 'results' }) } },
+        },
+        provideRouter([]),
+        {
+          provide: SessionService,
+          useValue: { currentSession, setCurrentSession: vi.fn(), updateSessionGenderMode: vi.fn(), updatePreferenceScoring: vi.fn() },
+        },
+        { provide: GroupingService, useValue: {} },
+        { provide: I18nService, useClass: MockI18nService },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(SessionDetail);
+    const root: HTMLElement = fixture.nativeElement;
+    document.body.appendChild(root);
+    await fixture.whenStable();
+    fixture.componentInstance.selectHistoryEntry(0);
+    await fixture.whenStable();
+
+    expect(root.querySelector('#history-alert')).not.toBeNull();
+    expect(await getAxeViolations(root)).toEqual([]);
+    root.remove();
   });
 });
