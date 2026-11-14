@@ -397,7 +397,12 @@ export class SessionDetail implements OnInit {
       weightIds: this.selectedWeightIds
     };
 
-    const validation = this.groupingService.validateSettings(this.session.people.length, settings);
+    const isSingleGender = settings.genderMode === 'single';
+    const validation = this.groupingService.validateSettings(
+      this.session.people.length,
+      settings,
+      isSingleGender ? this.groupingService.countByGender(this.session.people) : undefined
+    );
     if (!validation.isValid) {
       this.showGroupingErrors(validation.errors);
       return;
@@ -415,6 +420,12 @@ export class SessionDetail implements OnInit {
       this.showGroupingErrors([]);
       this.showResults();
       this.notifications.success('sessionDetail.snackbar.groupsGenerated');
+      if (isSingleGender) {
+        // Emitted after the success toast so the warnings are the newest and survive the toast limit.
+        for (const warning of validation.warnings) {
+          this.notifications.show('warning', warning.key, warning.params);
+        }
+      }
     } catch (error: unknown) {
       this.showGroupingErrors([this.getGroupingErrorMessage(error)]);
     }

@@ -183,7 +183,9 @@
       "unevenDistributionOne": "{{peopleCount}} personer kan ikke fordeles ligeligt i grupper på {{groupSize}}. {{remainder}} person fordeles på grupperne.",
       "unevenDistributionMany": "{{peopleCount}} personer kan ikke fordeles ligeligt i grupper på {{groupSize}}. {{remainder}} personer fordeles på grupperne.",
       "partialGroupOne": "En gruppe vil have {{remainder}} person i stedet for {{groupSize}}",
-      "partialGroupMany": "En gruppe vil have {{remainder}} personer i stedet for {{groupSize}}"
+      "partialGroupMany": "En gruppe vil have {{remainder}} personer i stedet for {{groupSize}}",
+      "singleGenderTooSmallOne": "Én person af samme køn kan ikke udfylde en gruppe på {{groupSize}} og placeres i en mindre gruppe.",
+      "singleGenderTooSmallMany": "{{count}} personer af samme køn kan ikke udfylde en gruppe på {{groupSize}} og placeres i en mindre gruppe."
     }
   }
 }
