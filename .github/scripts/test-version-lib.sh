@@ -52,24 +52,26 @@ fail() {
   FAILED_NAMES+=("$1")
   printf 'FAIL: %s\n' "$1" >&2
   shift
-  [ $# -gt 0 ] && printf '      %s\n' "$@" >&2
+  [[ $# -gt 0 ]] && printf '      %s\n' "$@" >&2
 }
 
 # assert_eq <name> <expected> <actual>
 assert_eq() {
-  if [ "$2" = "$3" ]; then
+  local name=$1 expected=$2 actual=$3
+  if [[ "$expected" = "$actual" ]]; then
     pass
   else
-    fail "$1" "expected: '$2'" "actual:   '$3'"
+    fail "$name" "expected: '$expected'" "actual:   '$actual'"
   fi
 }
 
 # assert_status <name> <expected-status> <actual-status>
 assert_status() {
-  if [ "$2" -eq "$3" ]; then
+  local name=$1 expected=$2 actual=$3
+  if [[ "$expected" -eq "$actual" ]]; then
     pass
   else
-    fail "$1" "expected exit status $2, got $3"
+    fail "$name" "expected exit status $expected, got $actual"
   fi
 }
 
@@ -92,26 +94,32 @@ commit() {
 }
 
 # tag_head <tag>: lightweight tag on HEAD (the lib only looks at names).
-tag_head() { git tag "$1"; }
+tag_head() {
+  local tag=$1
+  git tag "$tag"
+}
 
 # caller_records <range>: builds bump_level's stdin the way the real caller must: first-parent
 # commits oldest first, FULL message for human authors, SUBJECT ONLY for dependabot[bot]
 # (Dependabot bodies embed upstream release notes).
 caller_records() {
-  local sha author
+  local range=$1 sha author
   while read -r sha; do
     author=$(git log -1 --format=%an "$sha")
-    if [ "$author" = "$VERSION_LIB_DEPENDABOT_ACTOR" ]; then
+    if [[ "$author" = "$VERSION_LIB_DEPENDABOT_ACTOR" ]]; then
       git log -1 --format=%s "$sha"
     else
       git log -1 --format=%B "$sha"
     fi
     printf '%s\n' "$VERSION_LIB_RECORD_SEP"
-  done < <(git rev-list --first-parent --reverse "$1")
+  done < <(git rev-list --first-parent --reverse "$range")
 }
 
 # level_for_range <range>
-level_for_range() { caller_records "$1" | bump_level; }
+level_for_range() {
+  local range=$1
+  caller_records "$range" | bump_level
+}
 
 # base_tag: highest strict semver tag in the current repo.
 base_tag() { git tag --list | latest_semver_tag; }
@@ -327,8 +335,8 @@ test_resolve_dry_run() {
     for input in "${inputs[@]}"; do
       for var in "${vars[@]}"; do
         case "$event" in
-          schedule) [ "$var" = true ] && expected=0 || expected=1 ;;
-          workflow_dispatch) [ "$input" = false ] && expected=0 || expected=1 ;;
+          schedule) [[ "$var" = true ]] && expected=0 || expected=1 ;;
+          workflow_dispatch) [[ "$input" = false ]] && expected=0 || expected=1 ;;
           *) expected=1 ;;
         esac
         actual=$(resolve_dry_run "$event" "$input" "$var")
@@ -365,15 +373,16 @@ eligible_status() {
 
 # variant <name> <jq-filter>: derives a PR JSON from the eligible fixture and prints its path.
 variant() {
-  local out="$WORK/variant-$1.json"
-  jq "$2" "$ELIGIBLE_FIXTURE" >"$out"
+  local name=$1 filter=$2
+  local out="$WORK/variant-$name.json"
+  jq "$filter" "$ELIGIBLE_FIXTURE" >"$out"
   printf '%s' "$out"
 }
 
 test_pr_is_eligible() {
   local sha f
-  [ -s "$ELIGIBLE_FIXTURE" ] || { fail 'eligible fixture exists' "$ELIGIBLE_FIXTURE"; return; }
-  [ -s "$HUMAN_FIXTURE" ] || { fail 'human fixture exists' "$HUMAN_FIXTURE"; return; }
+  [[ -s "$ELIGIBLE_FIXTURE" ]] || { fail 'eligible fixture exists' "$ELIGIBLE_FIXTURE"; return; }
+  [[ -s "$HUMAN_FIXTURE" ]] || { fail 'human fixture exists' "$HUMAN_FIXTURE"; return; }
 
   # The fixtures are trimmed copies of real API responses; assert the real values the jq paths rely on.
   assert_eq 'fixture 117 is the real Dependabot PR (user)' 'dependabot[bot]' "$(jq -r '.user.login' "$ELIGIBLE_FIXTURE")"
@@ -391,7 +400,7 @@ test_pr_is_eligible() {
   f=$(variant oversized '.body = ("x" * 140000)')
   local size
   size=$(wc -c <"$f")
-  if [ "$size" -gt 131072 ]; then pass; else fail 'oversized fixture is larger than 128 KiB' "size=$size"; fi
+  if [[ "$size" -gt 131072 ]]; then pass; else fail 'oversized fixture is larger than 128 KiB' "size=$size"; fi
   assert_eq 'oversized (>128 KiB) eligible PR is still eligible' 0 "$(eligible_status "$f" "$sha")"
   f=$(variant oversized-human '.body = ("x" * 140000) | .user.login = "someone"')
   assert_eq 'oversized (>128 KiB) ineligible PR is still ineligible' 1 "$(eligible_status "$f" "$sha")"
@@ -448,8 +457,9 @@ FAKE_REPO='octo/grouper'
 # endpoint or argument it does not know, so the script cannot pass by calling another API.
 # Per-PR failure modes live in $FAKE_GH_DIR/pr-<N>.mode (shapes recorded from gh 2.45.0).
 make_fake_gh() {
-  mkdir -p "$1"
-  cat >"$1/gh" <<'FAKE'
+  local dir=$1
+  mkdir -p "$dir"
+  cat >"$dir/gh" <<'FAKE'
 #!/usr/bin/env bash
 set -u
 dir=${FAKE_GH_DIR:?}
@@ -488,24 +498,25 @@ case "$mode" in
   *) echo "fake gh: unknown mode $mode" >&2; exit 64 ;;
 esac
 FAKE
-  chmod +x "$1/gh"
+  chmod +x "$dir/gh"
 }
 
 # Scenario state: S_REPO (working clone), S_ORIGIN (bare), S_GH (fake gh data dir).
 # new_scenario <name>: bare origin + working repo on master with v1.1.0 pushed.
 new_scenario() {
-  S_NAME=$1
-  S_ORIGIN="$WORK/$1-origin.git"
-  S_REPO="$WORK/$1"
-  S_GH="$WORK/$1-gh"
-  S_BIN="$WORK/$1-bin"
-  S_SUMMARY="$WORK/$1-summary.md"
-  S_TMP="$WORK/$1-tmp"
+  local name=$1
+  S_NAME=$name
+  S_ORIGIN="$WORK/$name-origin.git"
+  S_REPO="$WORK/$name"
+  S_GH="$WORK/$name-gh"
+  S_BIN="$WORK/$name-bin"
+  S_SUMMARY="$WORK/$name-summary.md"
+  S_TMP="$WORK/$name-tmp"
   mkdir -p "$S_GH" "$S_TMP"
   : >"$S_SUMMARY"
   make_fake_gh "$S_BIN"
   git init -q --bare -b master "$S_ORIGIN"
-  new_repo "$1"
+  new_repo "$name"
   git remote add origin "$S_ORIGIN"
   git tag v1.1.0
   git push -q origin master v1.1.0
@@ -530,7 +541,10 @@ pr_json() {
 # (author dependabot[bot] for dependabot/drift) and records the fake PR response.
 merge_pr() {
   local kind=$1 number=$2 title=$3 author=$GIT_AUTHOR_NAME
-  case "$kind" in dependabot | drift) author=$VERSION_LIB_DEPENDABOT_ACTOR ;; esac
+  case "$kind" in
+    dependabot | drift) author=$VERSION_LIB_DEPENDABOT_ACTOR ;;
+    *) ;; # human merges keep the default author
+  esac
   commit "$title (#$number)" "$author"
   pr_json "$kind" "$number" "$(git rev-parse HEAD)" "$title" >"$S_GH/pr-$number.json"
 }
@@ -549,8 +563,11 @@ run_tag_script() {
 
 local_tags() { git -C "$S_REPO" tag --list 'v*' | sort -V | tr '\n' ' ' | sed 's/ $//'; }
 remote_tags() { git -C "$S_ORIGIN" tag --list 'v*' | sort -V | tr '\n' ' ' | sed 's/ $//'; }
-all_refs() { git -C "$1" for-each-ref --format='%(refname) %(objectname)'; }
-gh_calls() { [ -f "$S_GH/calls.log" ] && cat "$S_GH/calls.log" || true; }
+all_refs() {
+  local repo=$1
+  git -C "$repo" for-each-ref --format='%(refname) %(objectname)'
+}
+gh_calls() { [[ -f "$S_GH/calls.log" ]] && cat "$S_GH/calls.log" || true; }
 # printed_tags: "<version> #<n>" lines a run printed (real "tagged" or dry "would tag").
 printed_tags() { printf '%s\n' "$RUN_OUT" | sed -n 's/^\(tagged\|would tag\) \(v[0-9.]*\) [0-9a-f]* (#\([0-9]*\))$/\2 #\3/p'; }
 
@@ -648,7 +665,7 @@ done
 HOOK
   chmod +x "$S_ORIGIN/hooks/pre-receive"
   run_tag_script
-  if [ "$RUN_STATUS" -ne 0 ]; then pass; else fail 'push rejection without a remote tag fails the run' "$RUN_OUT"; fi
+  if [[ "$RUN_STATUS" -ne 0 ]]; then pass; else fail 'push rejection without a remote tag fails the run' "$RUN_OUT"; fi
   assert_eq 'push rejection: no tag on the remote' 'v1.1.0' "$(remote_tags)"
   assert_eq 'push rejection: the unpublished local tag is dropped' 'v1.1.0' "$(local_tags)"
 
@@ -697,7 +714,7 @@ test_integration_lookup_outcomes() {
     merge_pr dependabot 173 'chore(deps): bump b'
     publish_master
     run_tag_script
-    if [ "$RUN_STATUS" -ne 0 ]; then pass; else fail "404 anchoring: $mode is not treated as 404" "$RUN_OUT"; fi
+    if [[ "$RUN_STATUS" -ne 0 ]]; then pass; else fail "404 anchoring: $mode is not treated as 404" "$RUN_OUT"; fi
     assert_eq "404 anchoring ($mode): PR after the failure is not tagged" 'v1.1.0 v1.1.1' "$(local_tags)"
   done
 
@@ -720,7 +737,7 @@ test_integration_lookup_outcomes() {
     merge_pr dependabot 193 'chore(deps): bump c'
     publish_master
     run_tag_script
-    if [ "$RUN_STATUS" -ne 0 ]; then pass; else fail "fail-closed: $mode aborts non-zero" "$RUN_OUT"; fi
+    if [[ "$RUN_STATUS" -ne 0 ]]; then pass; else fail "fail-closed: $mode aborts non-zero" "$RUN_OUT"; fi
     assert_eq "fail-closed ($mode): only the PR before the failure is tagged" 'v1.1.0 v1.1.1' "$(local_tags)"
     assert_eq "fail-closed ($mode): no lookup for the PR after the failure" 0 "$(gh_calls | grep -c 'pulls/193$')"
     # A retry after recovery resumes from the same position.
@@ -785,7 +802,8 @@ test_integration_blocked() {
 
 # build_parity_scenario <name>: same history for the dry/real comparison (feat in the middle).
 build_parity_scenario() {
-  new_scenario "$1"
+  local name=$1
+  new_scenario "$name"
   merge_pr dependabot 301 'chore(deps): bump a'
   merge_pr dependabot 302 'chore(deps): bump b'
   merge_pr human 303 'feat: new thing'
@@ -861,11 +879,11 @@ test_integration_config() {
   : >"$S_GH/calls.log"
   : >"$S_GH/repo-view-fails"
   run_tag_script GITHUB_REPOSITORY= DRY_RUN=1
-  if [ "$RUN_STATUS" -ne 0 ]; then pass; else fail 'config: missing GITHUB_REPOSITORY fails early' "$RUN_OUT"; fi
+  if [[ "$RUN_STATUS" -ne 0 ]]; then pass; else fail 'config: missing GITHUB_REPOSITORY fails early' "$RUN_OUT"; fi
   assert_eq 'config: the error names GITHUB_REPOSITORY' 1 "$(grep -c 'GITHUB_REPOSITORY is not set' <<<"$RUN_OUT")"
   # Unresolvable TARGET_REF.
   run_tag_script TARGET_REF=origin/nonexistent DRY_RUN=1
-  if [ "$RUN_STATUS" -ne 0 ]; then pass; else fail 'config: unresolvable TARGET_REF fails' "$RUN_OUT"; fi
+  if [[ "$RUN_STATUS" -ne 0 ]]; then pass; else fail 'config: unresolvable TARGET_REF fails' "$RUN_OUT"; fi
 }
 
 test_integration() {
@@ -917,12 +935,12 @@ test_lib_hygiene() {
 test_runner_self_check() {
   local status out
   out=$(VERSION_LIB_TEST_SELF_CHECK=1 bash "$SELF" 2>&1); status=$?
-  if [ "$status" -ne 0 ]; then pass; else fail 'runner exits non-zero when a case fails' "self-check run exited $status"; fi
+  if [[ "$status" -ne 0 ]]; then pass; else fail 'runner exits non-zero when a case fails' "self-check run exited $status"; fi
   if printf '%s' "$out" | grep -q 'deliberate self-check failure'; then pass; else fail 'runner self-check reports the failing case' "$out"; fi
 }
 
 main() {
-  if [ "${VERSION_LIB_TEST_SELF_CHECK:-}" = 1 ]; then
+  if [[ "${VERSION_LIB_TEST_SELF_CHECK:-}" = 1 ]]; then
     # Only the deliberately failing case; used by test_runner_self_check.
     assert_eq 'deliberate self-check failure' 'expected' 'actual'
   else
@@ -938,7 +956,7 @@ main() {
   fi
 
   printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
-  if [ "$FAIL" -ne 0 ]; then
+  if [[ "$FAIL" -ne 0 ]]; then
     printf 'Failed cases:\n' >&2
     printf '  - %s\n' "${FAILED_NAMES[@]}" >&2
     return 1

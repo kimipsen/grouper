@@ -39,7 +39,7 @@ TARGET_REF=${TARGET_REF:-origin/master}
 REMOTE=${REMOTE:-origin}
 
 # DRY_RUN contract: unset = real, 0 = real, everything else (1, false, yes, empty...) = dry.
-if [ -z "${DRY_RUN+x}" ] || [ "$DRY_RUN" = 0 ]; then
+if [[ -z "${DRY_RUN+x}" ]] || [[ "$DRY_RUN" = 0 ]]; then
   DRY=0
 else
   DRY=1
@@ -70,26 +70,26 @@ finish() {
   local status=$?
   trap - EXIT
   {
-    printf '## Tag Dependabot merges%s\n\n' "$([ "$DRY" -eq 1 ] && printf ' (dry run)')"
-    if [ ${#HEADLINES[@]} -gt 0 ]; then
+    printf '## Tag Dependabot merges%s\n\n' "$([[ "$DRY" -eq 1 ]] && printf ' (dry run)')"
+    if [[ ${#HEADLINES[@]} -gt 0 ]]; then
       printf '%s\n\n' "${HEADLINES[@]}"
     fi
-    if [ ${#TAGGED_LINES[@]} -gt 0 ]; then
-      printf '### %s\n\n' "$([ "$DRY" -eq 1 ] && printf 'Would tag' || printf 'Tagged')"
+    if [[ ${#TAGGED_LINES[@]} -gt 0 ]]; then
+      printf '### %s\n\n' "$([[ "$DRY" -eq 1 ]] && printf 'Would tag' || printf 'Tagged')"
       printf -- '- %s\n' "${TAGGED_LINES[@]}"
       printf '\n'
     fi
-    if [ ${#SKIPPED_LINES[@]} -gt 0 ]; then
+    if [[ ${#SKIPPED_LINES[@]} -gt 0 ]]; then
       printf '### Skipped\n\n'
       printf -- '- %s\n' "${SKIPPED_LINES[@]}"
       printf '\n'
     fi
-    if [ ${#DRIFT_LINES[@]} -gt 0 ]; then
+    if [[ ${#DRIFT_LINES[@]} -gt 0 ]]; then
       printf '### Dependabot merges failing the auto-merge signal\n\n'
       printf -- '- %s\n' "${DRIFT_LINES[@]}"
       printf '\n'
     fi
-    if [ "$status" -ne 0 ]; then
+    if [[ "$status" -ne 0 ]]; then
       printf 'The run failed with exit status %d; see the job log.\n' "$status"
     fi
   } >>"$SUMMARY_FILE" 2>/dev/null || true
@@ -114,7 +114,7 @@ die() {
 highest_tag() {
   {
     git tag --list
-    if [ ${#SIM_TAGS[@]} -gt 0 ]; then
+    if [[ ${#SIM_TAGS[@]} -gt 0 ]]; then
       printf '%s\n' "${!SIM_TAGS[@]}"
     fi
   } | latest_semver_tag
@@ -123,10 +123,11 @@ highest_tag() {
 # Prints the commit sha of a tag name; would-be tags resolve through SIM_TAGS because git
 # cannot resolve a tag that was never created.
 tag_commit() {
-  if [ -n "${SIM_TAGS[$1]+x}" ]; then
-    printf '%s\n' "${SIM_TAGS[$1]}"
+  local tag=$1
+  if [[ -n "${SIM_TAGS[$tag]+x}" ]]; then
+    printf '%s\n' "${SIM_TAGS[$tag]}"
   else
-    git rev-parse --verify --quiet "refs/tags/$1^{commit}" || true
+    git rev-parse --verify --quiet "refs/tags/$tag^{commit}" || true
   fi
 }
 
@@ -134,7 +135,7 @@ tag_commit() {
 recompute_base() {
   BASE_TAG=$(highest_tag)
   BASE_SHA=
-  if [ -n "$BASE_TAG" ]; then
+  if [[ -n "$BASE_TAG" ]]; then
     BASE_SHA=$(tag_commit "$BASE_TAG")
   fi
 }
@@ -143,7 +144,7 @@ recompute_base() {
 # for dependabot[bot] (its bodies embed upstream release notes).
 commit_record() {
   local sha=$1
-  if [ "$(git log -1 --format=%an "$sha")" = "$VERSION_LIB_DEPENDABOT_ACTOR" ]; then
+  if [[ "$(git log -1 --format=%an "$sha")" = "$VERSION_LIB_DEPENDABOT_ACTOR" ]]; then
     git log -1 --format=%s "$sha"
   else
     git log -1 --format=%B "$sha"
@@ -152,23 +153,23 @@ commit_record() {
 
 # range_level <base-sha> <commit-sha>: bump level of the first-parent commits in base..commit.
 range_level() {
-  local sha
+  local base=$1 commit=$2 sha
   while read -r sha; do
     commit_record "$sha"
     printf '%s\n' "$VERSION_LIB_RECORD_SEP"
-  done < <(git rev-list --first-parent --reverse "$1..$2") | bump_level
+  done < <(git rev-list --first-parent --reverse "$base..$commit") | bump_level
 }
 
 # first_blocker <base-sha> <commit-sha>: first commit of the range that alone forces `none`.
 first_blocker() {
-  local sha
+  local base=$1 commit=$2 sha
   while read -r sha; do
-    if [ "$({ commit_record "$sha"; printf '%s\n' "$VERSION_LIB_RECORD_SEP"; } | bump_level)" = none ]; then
+    if [[ "$({ commit_record "$sha"; printf '%s\n' "$VERSION_LIB_RECORD_SEP"; } | bump_level)" = none ]]; then
       printf '%s\n' "$sha"
       return 0
     fi
-  done < <(git rev-list --first-parent --reverse "$1..$2")
-  printf '%s\n' "$2"
+  done < <(git rev-list --first-parent --reverse "$base..$commit")
+  printf '%s\n' "$commit"
 }
 
 block() {
@@ -183,11 +184,11 @@ block() {
 # `ok`, `not-found` or `unknown`. A 404 is only recognised from the CLI's own error line on
 # stderr (`gh: ... (HTTP 404)`), never from stdout, titles or bodies.
 fetch_pr() {
-  local rc=0
+  local number=$1 rc=0
   : >"$PR_TMP"
   : >"$ERR_TMP"
-  gh api "repos/$GITHUB_REPOSITORY/pulls/$1" >"$PR_TMP" 2>"$ERR_TMP" || rc=$?
-  if [ "$rc" -ne 0 ]; then
+  gh api "repos/$GITHUB_REPOSITORY/pulls/$number" >"$PR_TMP" 2>"$ERR_TMP" || rc=$?
+  if [[ "$rc" -ne 0 ]]; then
     if grep -Eq '^gh: .*\(HTTP 404\)$' "$ERR_TMP"; then
       printf 'not-found\n'
     else
@@ -215,12 +216,12 @@ pr_is_signal_drift() {
 
 # remote_has_tag <version>: status 0 = exists, 1 = absent; any ls-remote error aborts the run.
 remote_has_tag() {
-  local rc=0
-  git ls-remote --exit-code --tags "$REMOTE" "refs/tags/$1" >/dev/null 2>&1 || rc=$?
+  local version=$1 rc=0
+  git ls-remote --exit-code --tags "$REMOTE" "refs/tags/$version" >/dev/null 2>&1 || rc=$?
   case "$rc" in
     0) return 0 ;;
     2) return 1 ;;
-    *) die "git ls-remote against '$REMOTE' failed with status $rc while checking tag $1" ;;
+    *) die "git ls-remote against '$REMOTE' failed with status $rc while checking tag $version" ;;
   esac
 }
 
@@ -234,7 +235,7 @@ walk() {
   local -a commits
 
   recompute_base
-  if [ -z "$BASE_SHA" ]; then
+  if [[ -z "$BASE_SHA" ]]; then
     block "$TARGET_SHA" "no semver base tag (vX.Y.Z) exists"
     return 0
   fi
@@ -265,7 +266,7 @@ walk() {
     # Cheap-first: decide the bump locally; a blocked range stays blocked for every later
     # commit, so the walk stops before any API call.
     level=$(range_level "$BASE_SHA" "$c")
-    if [ "$level" = none ]; then
+    if [[ "$level" = none ]]; then
       block "$(first_blocker "$BASE_SHA" "$c")" "breaking change after ${BASE_TAG}; release manually"
       return 0
     fi
@@ -295,16 +296,16 @@ walk() {
 
     version=$(next_version "$BASE_TAG" "$level")
     title=$(jq -r '(.title // "") | gsub("[\\r\\n]+"; " ")' <"$PR_TMP")
-    [ -n "$title" ] || title="PR #${number}"
+    [[ -n "$title" ]] || title="PR #${number}"
     msg="${version}: ${title} (#${number})"
 
-    if [ -n "$(git rev-parse -q --verify "refs/tags/$version" || true)" ] || remote_has_tag "$version"; then
+    if [[ -n "$(git rev-parse -q --verify "refs/tags/$version" || true)" ]] || remote_has_tag "$version"; then
       log "tag ${version} already exists; next run recomputes"
       SKIPPED_LINES+=("${version} already exists; stopped, the next run recomputes")
       return 0
     fi
 
-    if [ "$DRY" -eq 1 ]; then
+    if [[ "$DRY" -eq 1 ]]; then
       SIM_TAGS[$version]=$c
       log "would tag ${version} ${c} (#${number})"
       TAGGED_LINES+=("${version} on \`${c:0:7}\` (#${number}) ${title}")
@@ -314,7 +315,7 @@ walk() {
     git tag -a "$version" "$c" -m "$msg"
     rc=0
     git push "$REMOTE" "refs/tags/$version" || rc=$?
-    if [ "$rc" -ne 0 ]; then
+    if [[ "$rc" -ne 0 ]]; then
       # Drop the tag this run created so a local base never points at an unpublished tag.
       git tag -d "$version" >/dev/null
       if remote_has_tag "$version"; then
@@ -330,19 +331,19 @@ walk() {
 }
 
 main() {
-  if [ -z "${GITHUB_REPOSITORY:-}" ]; then
+  if [[ -z "${GITHUB_REPOSITORY:-}" ]]; then
     GITHUB_REPOSITORY=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)
   fi
-  [ -n "${GITHUB_REPOSITORY:-}" ] ||
+  [[ -n "${GITHUB_REPOSITORY:-}" ]] ||
     die "GITHUB_REPOSITORY is not set and 'gh repo view' could not determine it (expected owner/name)"
   export GITHUB_REPOSITORY
 
   TARGET_SHA=$(git rev-parse --verify --quiet "${TARGET_REF}^{commit}") ||
     die "TARGET_REF '${TARGET_REF}' does not resolve to a commit"
 
-  if [ "$DRY" -eq 1 ]; then
+  if [[ "$DRY" -eq 1 ]]; then
     log "DRY RUN: no tags will be created or pushed."
-    if [ "${GITHUB_EVENT_NAME:-}" = schedule ] && [ "${AUTO_TAG_ENABLED:-}" != true ]; then
+    if [[ "${GITHUB_EVENT_NAME:-}" = schedule ]] && [[ "${AUTO_TAG_ENABLED:-}" != true ]]; then
       notice "DRY RUN: AUTO_TAG_ENABLED is not true"
       HEADLINES+=("**DRY RUN: AUTO_TAG_ENABLED is not true**")
     fi
@@ -350,11 +351,11 @@ main() {
 
   walk
 
-  if [ ${#DRIFT_LINES[@]} -gt 0 ]; then
+  if [[ ${#DRIFT_LINES[@]} -gt 0 ]]; then
     warn "${#DRIFT_LINES[@]} Dependabot merge(s) failing the auto-merge signal; re-verify the eligibility signal if this persists"
     HEADLINES+=("**${#DRIFT_LINES[@]} Dependabot merge(s) failing the auto-merge signal (see below)**")
   fi
-  log "Done: ${#TAGGED_LINES[@]} tag(s) $([ "$DRY" -eq 1 ] && printf 'proposed' || printf 'created')."
+  log "Done: ${#TAGGED_LINES[@]} tag(s) $([[ "$DRY" -eq 1 ]] && printf 'proposed' || printf 'created')."
 }
 
 main "$@"

@@ -61,7 +61,7 @@ latest_semver_tag() {
 # ---------------------------------------------------------------------------
 bump_level() {
   local level=patch seen=0 record
-  while IFS= read -r -d "$VERSION_LIB_RECORD_SEP" record || [ -n "$record" ]; do
+  while IFS= read -r -d "$VERSION_LIB_RECORD_SEP" record || [[ -n "$record" ]]; do
     _version_lib_record_is_blank "$record" && continue
     seen=1
     case "$(_version_lib_record_level "$record")" in
@@ -70,9 +70,10 @@ bump_level() {
         return 0
         ;;
       minor) level=minor ;;
+      *) ;; # patch keeps the current level
     esac
   done
-  if [ "$seen" -eq 0 ]; then
+  if [[ "$seen" -eq 0 ]]; then
     printf 'none\n'
   else
     printf '%s\n' "$level"
@@ -81,7 +82,8 @@ bump_level() {
 
 # True (status 0) when the record has no non-whitespace character.
 _version_lib_record_is_blank() {
-  [[ "$1" =~ ^[[:space:]]*$ ]]
+  local record=$1
+  [[ "$record" =~ ^[[:space:]]*$ ]]
 }
 
 # Prints the level (none|minor|patch) of one record.
@@ -92,17 +94,17 @@ _version_lib_record_level() {
 
   # Split into lines, dropping leading blank lines (git log separates records with a
   # newline after the terminator) and trailing blank lines.
-  while IFS= read -r line || [ -n "$line" ]; do
+  while IFS= read -r line || [[ -n "$line" ]]; do
     line=${line%$'\r'}
-    if [ ${#lines[@]} -eq 0 ] && [[ "$line" =~ ^[[:space:]]*$ ]]; then
+    if [[ ${#lines[@]} -eq 0 ]] && [[ "$line" =~ ^[[:space:]]*$ ]]; then
       continue
     fi
     lines+=("$line")
   done <<<"$record"
-  while [ ${#lines[@]} -gt 0 ] && [[ "${lines[${#lines[@]} - 1]}" =~ ^[[:space:]]*$ ]]; do
+  while [[ ${#lines[@]} -gt 0 ]] && [[ "${lines[${#lines[@]} - 1]}" =~ ^[[:space:]]*$ ]]; do
     unset 'lines[${#lines[@]}-1]'
   done
-  [ ${#lines[@]} -gt 0 ] || { printf 'patch\n'; return 0; }
+  [[ ${#lines[@]} -gt 0 ]] || { printf 'patch\n'; return 0; }
 
   subject=${lines[0]}
 
@@ -118,7 +120,7 @@ _version_lib_record_level() {
       last_blank=$i
     fi
   done
-  if [ "$last_blank" -ge 1 ]; then
+  if [[ "$last_blank" -ge 1 ]]; then
     start=$((last_blank + 1))
     for ((i = start; i < ${#lines[@]}; i++)); do
       if [[ "${lines[i]}" =~ ^BREAKING[\ -]CHANGE: ]]; then
@@ -206,10 +208,10 @@ resolve_dry_run() {
   local event=${1-} input=${2-} enabled=${3-}
   case "$event" in
     schedule)
-      if [ "$enabled" = "true" ]; then printf '0\n'; else printf '1\n'; fi
+      if [[ "$enabled" = "true" ]]; then printf '0\n'; else printf '1\n'; fi
       ;;
     workflow_dispatch)
-      if [ "$input" = "false" ]; then printf '0\n'; else printf '1\n'; fi
+      if [[ "$input" = "false" ]]; then printf '0\n'; else printf '1\n'; fi
       ;;
     *)
       printf '1\n'
