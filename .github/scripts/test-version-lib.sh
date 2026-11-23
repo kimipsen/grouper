@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# test-version-lib.sh - self-contained tests for version-lib.sh (issue #112).
+# test-version-lib.sh - self-contained tests for version-lib.sh and tag-dependabot-merges.sh (issue #112).
 #
 # Deterministic by design: no network, no clock, no dependence on the caller's git
 # configuration. Run locally with:  bash .github/scripts/test-version-lib.sh
@@ -439,6 +439,447 @@ test_pr_is_eligible() {
 }
 
 # ---------------------------------------------------------------------------
+# Integration: tag-dependabot-merges.sh against a local bare origin and a fake gh
+# ---------------------------------------------------------------------------
+TAG_SCRIPT="$SCRIPT_DIR/tag-dependabot-merges.sh"
+FAKE_REPO='octo/grouper'
+
+# make_fake_gh <dir>: a PATH-first `gh` that serves $FAKE_GH_DIR/pr-<N>.json and FAILS on any
+# endpoint or argument it does not know, so the script cannot pass by calling another API.
+# Per-PR failure modes live in $FAKE_GH_DIR/pr-<N>.mode (shapes recorded from gh 2.45.0).
+make_fake_gh() {
+  mkdir -p "$1"
+  cat >"$1/gh" <<'FAKE'
+#!/usr/bin/env bash
+set -u
+dir=${FAKE_GH_DIR:?}
+printf '%s\n' "$*" >>"$dir/calls.log"
+if [ "$*" = 'repo view --json nameWithOwner -q .nameWithOwner' ]; then
+  [ -f "$dir/repo-view-fails" ] && { echo 'gh: not a git repository' >&2; exit 1; }
+  printf '%s\n' "${FAKE_GH_REPO:?}"
+  exit 0
+fi
+if [ "$#" -ne 2 ] || [ "$1" != api ] || [[ "$2" != "repos/${FAKE_GH_REPO:?}/pulls/"* ]]; then
+  echo "fake gh: unexpected invocation: $*" >&2
+  exit 64
+fi
+n=${2##*/}
+[[ "$n" =~ ^[0-9]+$ ]] || { echo "fake gh: bad PR number in: $*" >&2; exit 64; }
+mode=ok
+[ -f "$dir/pr-$n.mode" ] && mode=$(cat "$dir/pr-$n.mode")
+case "$mode" in
+  ok)
+    [ -f "$dir/pr-$n.json" ] || { echo "fake gh: no fixture for PR $n" >&2; exit 64; }
+    cat "$dir/pr-$n.json" ;;
+  404) printf '{"message":"Not Found","documentation_url":"https://docs.github.com/rest/pulls/pulls#get-a-pull-request","status":"404"}\n'
+       echo 'gh: Not Found (HTTP 404)' >&2; exit 1 ;;
+  403) printf '{"message":"API rate limit exceeded","status":"403"}\n'
+       echo 'gh: API rate limit exceeded (HTTP 403)' >&2; exit 1 ;;
+  429) printf '{"message":"Too Many Requests","status":"429"}\n'
+       echo 'gh: Too Many Requests (HTTP 429)' >&2; exit 1 ;;
+  500) printf '{"message":"Server Error","status":"500"}\n'
+       echo 'gh: Server Error (HTTP 500)' >&2; exit 1 ;;
+  empty) exit 0 ;;
+  garbage) echo '<html>bad gateway</html>'; exit 0 ;;
+  # Not the CLI's 404 line: a lookalike on stdout and a different stderr must NOT count as 404.
+  lookalike) printf '{"message":"Not Found (HTTP 404)","status":"404"}\n'
+             echo 'gh: connection reset by peer' >&2; exit 1 ;;
+  lookalike-stderr) echo 'gh: request failed (HTTP 404) retrying' >&2; exit 1 ;;
+  *) echo "fake gh: unknown mode $mode" >&2; exit 64 ;;
+esac
+FAKE
+  chmod +x "$1/gh"
+}
+
+# Scenario state: S_REPO (working clone), S_ORIGIN (bare), S_GH (fake gh data dir).
+# new_scenario <name>: bare origin + working repo on master with v1.1.0 pushed.
+new_scenario() {
+  S_NAME=$1
+  S_ORIGIN="$WORK/$1-origin.git"
+  S_REPO="$WORK/$1"
+  S_GH="$WORK/$1-gh"
+  S_BIN="$WORK/$1-bin"
+  S_SUMMARY="$WORK/$1-summary.md"
+  S_TMP="$WORK/$1-tmp"
+  mkdir -p "$S_GH" "$S_TMP"
+  : >"$S_SUMMARY"
+  make_fake_gh "$S_BIN"
+  git init -q --bare -b master "$S_ORIGIN"
+  new_repo "$1"
+  git remote add origin "$S_ORIGIN"
+  git tag v1.1.0
+  git push -q origin master v1.1.0
+}
+
+# pr_json <kind> <number> <sha> <title>: PR response derived from the real #117 / #109 fixtures.
+#   dependabot: eligible; drift: Dependabot PR merged by the bot but auto_merge null;
+#   human: human author and merger.
+pr_json() {
+  local kind=$1 number=$2 sha=$3 title=$4 filter
+  case "$kind" in
+    dependabot) filter='.' ;;
+    drift) filter='.auto_merge = null' ;;
+    human) filter='.user.login = "kimipsen" | .merged_by.login = "kimipsen" | .auto_merge = null' ;;
+    *) echo "pr_json: bad kind $kind" >&2; exit 2 ;;
+  esac
+  jq --argjson n "$number" --arg sha "$sha" --arg title "$title" \
+    ".number = \$n | .merge_commit_sha = \$sha | .title = \$title | $filter" "$ELIGIBLE_FIXTURE"
+}
+
+# merge_pr <kind> <number> <title>: adds a squash-style commit "<title> (#<number>)" on master
+# (author dependabot[bot] for dependabot/drift) and records the fake PR response.
+merge_pr() {
+  local kind=$1 number=$2 title=$3 author=$GIT_AUTHOR_NAME
+  case "$kind" in dependabot | drift) author=$VERSION_LIB_DEPENDABOT_ACTOR ;; esac
+  commit "$title (#$number)" "$author"
+  pr_json "$kind" "$number" "$(git rev-parse HEAD)" "$title" >"$S_GH/pr-$number.json"
+}
+
+publish_master() { git push -q origin master; }
+
+# run_tag_script [VAR=value ...]: runs the script in the working repo with the fake gh first on
+# PATH and WITHOUT any git identity, so the script has to provide its own. Sets RUN_OUT/RUN_STATUS.
+run_tag_script() {
+  RUN_STATUS=0
+  RUN_OUT=$(cd "$S_REPO" && env -u GIT_AUTHOR_NAME -u GIT_AUTHOR_EMAIL -u GIT_COMMITTER_NAME -u GIT_COMMITTER_EMAIL \
+    PATH="$S_BIN:$PATH" FAKE_GH_DIR="$S_GH" FAKE_GH_REPO="$FAKE_REPO" GITHUB_REPOSITORY="$FAKE_REPO" \
+    GITHUB_STEP_SUMMARY="$S_SUMMARY" TMPDIR="$S_TMP" TARGET_REF=origin/master "$@" \
+    bash "$TAG_SCRIPT" 2>&1) || RUN_STATUS=$?
+}
+
+local_tags() { git -C "$S_REPO" tag --list 'v*' | sort -V | tr '\n' ' ' | sed 's/ $//'; }
+remote_tags() { git -C "$S_ORIGIN" tag --list 'v*' | sort -V | tr '\n' ' ' | sed 's/ $//'; }
+all_refs() { git -C "$1" for-each-ref --format='%(refname) %(objectname)'; }
+gh_calls() { [ -f "$S_GH/calls.log" ] && cat "$S_GH/calls.log" || true; }
+# printed_tags: "<version> #<n>" lines a run printed (real "tagged" or dry "would tag").
+printed_tags() { printf '%s\n' "$RUN_OUT" | sed -n 's/^\(tagged\|would tag\) \(v[0-9.]*\) [0-9a-f]* (#\([0-9]*\))$/\2 #\3/p'; }
+
+test_integration_basic() {
+  new_scenario basic
+  local c1 c2 c3 before after v oid tagger
+  merge_pr dependabot 114 'chore(deps): bump a from 1 to 2'
+  c1=$(git rev-parse HEAD)
+  merge_pr dependabot 113 'chore(deps): bump b from 1 to 2'
+  c2=$(git rev-parse HEAD)
+  merge_pr dependabot 115 'chore(deps): bump the angular group'
+  c3=$(git rev-parse HEAD)
+  # A response far over the 128 KiB single-argument limit must not break the run.
+  head -c 200000 /dev/zero | tr '\0' x >"$WORK/pad.txt"
+  jq --rawfile pad "$WORK/pad.txt" '.body = $pad' "$S_GH/pr-115.json" >"$S_GH/pr-115.big"
+  mv "$S_GH/pr-115.big" "$S_GH/pr-115.json"
+  publish_master
+
+  run_tag_script
+  assert_status 'integration: real run exits 0' 0 "$RUN_STATUS"
+  assert_eq 'integration: tags v1.1.1..v1.1.3 created locally' 'v1.1.0 v1.1.1 v1.1.2 v1.1.3' "$(local_tags)"
+  assert_eq 'integration: tags pushed to the bare origin' 'v1.1.0 v1.1.1 v1.1.2 v1.1.3' "$(remote_tags)"
+  assert_eq 'integration: out-of-order PR numbers are tagged in merge order' $'v1.1.1 #114\nv1.1.2 #113\nv1.1.3 #115' "$(printed_tags)"
+  local -a expect_commit=("$c1" "$c2" "$c3") expect_msg=(
+    'v1.1.1: chore(deps): bump a from 1 to 2 (#114)'
+    'v1.1.2: chore(deps): bump b from 1 to 2 (#113)'
+    'v1.1.3: chore(deps): bump the angular group (#115)')
+  local i=0
+  for v in v1.1.1 v1.1.2 v1.1.3; do
+    assert_eq "integration: $v is an annotated tag object" tag "$(git -C "$S_REPO" cat-file -t "refs/tags/$v")"
+    assert_eq "integration: $v points at the squash commit" "${expect_commit[$i]}" "$(git -C "$S_REPO" rev-parse "$v^{commit}")"
+    assert_eq "integration: $v message" "${expect_msg[$i]}" "$(git -C "$S_REPO" tag -l --format='%(contents:subject)' "$v")"
+    assert_eq "integration: $v on origin is the same object" "$(git -C "$S_REPO" rev-parse "refs/tags/$v")" "$(git -C "$S_ORIGIN" rev-parse "refs/tags/$v")"
+    i=$((i + 1))
+  done
+  tagger=$(git -C "$S_REPO" cat-file -p refs/tags/v1.1.1 | sed -n 's/^tagger \(.*\) <.*/\1/p')
+  assert_eq 'integration: the script supplies the bot identity itself' 'github-actions[bot]' "$tagger"
+  assert_eq 'integration: temp files are removed (TMPDIR is empty)' '' "$(ls -A "$S_TMP")"
+  assert_eq 'integration: only expected endpoints were called' $'api repos/octo/grouper/pulls/114\napi repos/octo/grouper/pulls/113\napi repos/octo/grouper/pulls/115' "$(gh_calls)"
+  assert_eq 'integration: summary lists the tags' 3 "$(grep -c '^- v1\.1\.[123] on ' "$S_SUMMARY")"
+
+  # Idempotence: nothing new, nothing moves, and no further API calls.
+  before=$(all_refs "$S_REPO"; all_refs "$S_ORIGIN")
+  : >"$S_GH/calls.log"
+  run_tag_script
+  after=$(all_refs "$S_REPO"; all_refs "$S_ORIGIN")
+  assert_status 'integration: second run exits 0' 0 "$RUN_STATUS"
+  assert_eq 'integration: second run creates and moves no refs' "$before" "$after"
+  assert_eq 'integration: second run prints no tags' '' "$(printed_tags)"
+  assert_eq 'integration: second run makes no API calls' '' "$(gh_calls)"
+  oid=$(git -C "$S_REPO" rev-parse refs/tags/v1.1.0)
+  assert_eq 'integration: pre-existing tag v1.1.0 is unchanged' "$(git -C "$S_ORIGIN" rev-parse refs/tags/v1.1.0)" "$oid"
+}
+
+test_integration_feat() {
+  new_scenario feat
+  merge_pr dependabot 121 'chore(deps): bump a'
+  merge_pr human 122 'feat: add grouping option'   # untagged, but counts toward the bump
+  merge_pr dependabot 123 'chore(deps): bump b'
+  merge_pr dependabot 124 'chore(deps): bump c'
+  publish_master
+  run_tag_script
+  assert_status 'integration feat: exits 0' 0 "$RUN_STATUS"
+  assert_eq 'integration feat: minor after the human feat, then patch' $'v1.1.1 #121\nv1.2.0 #123\nv1.2.1 #124' "$(printed_tags)"
+  assert_eq 'integration feat: the human merge is not tagged' 'v1.1.0 v1.1.1 v1.2.0 v1.2.1' "$(local_tags)"
+  assert_eq 'integration feat: human merge only looked up, no drift' 0 "$(grep -c 'failing the auto-merge signal' <<<"$RUN_OUT")"
+  assert_eq 'integration feat: human merge raises no warning' 0 "$(grep -c '^::warning::' <<<"$RUN_OUT")"
+}
+
+test_integration_remote_tag() {
+  new_scenario remote
+  local oid
+  merge_pr dependabot 131 'chore(deps): bump a'
+  merge_pr dependabot 132 'chore(deps): bump b'
+  publish_master
+  # (a) v1.1.1 exists only in the bare origin: created after the clone, local check misses it.
+  git -C "$S_ORIGIN" tag v1.1.1 "$(git -C "$S_ORIGIN" rev-parse v1.1.0)"
+  oid=$(git -C "$S_ORIGIN" rev-parse refs/tags/v1.1.1)
+  run_tag_script
+  assert_status 'remote-only tag: run exits 0' 0 "$RUN_STATUS"
+  assert_eq 'remote-only tag: no further tags created' '' "$(printed_tags)"
+  assert_eq 'remote-only tag: nothing local created' 'v1.1.0' "$(local_tags)"
+  assert_eq 'remote-only tag: remote tag object unchanged' "$oid" "$(git -C "$S_ORIGIN" rev-parse refs/tags/v1.1.1)"
+  assert_eq 'remote-only tag: stops with the documented message' 1 "$(grep -c 'tag v1.1.1 already exists; next run recomputes' <<<"$RUN_OUT")"
+
+  # (b) pre-receive hook rejects tag pushes and no remote tag appears: the run fails.
+  new_scenario reject
+  merge_pr dependabot 141 'chore(deps): bump a'
+  publish_master
+  cat >"$S_ORIGIN/hooks/pre-receive" <<'HOOK'
+#!/usr/bin/env bash
+while read -r old new ref; do
+  case "$ref" in refs/tags/*) echo "rejected by test hook" >&2; exit 1 ;; esac
+done
+HOOK
+  chmod +x "$S_ORIGIN/hooks/pre-receive"
+  run_tag_script
+  if [ "$RUN_STATUS" -ne 0 ]; then pass; else fail 'push rejection without a remote tag fails the run' "$RUN_OUT"; fi
+  assert_eq 'push rejection: no tag on the remote' 'v1.1.0' "$(remote_tags)"
+  assert_eq 'push rejection: the unpublished local tag is dropped' 'v1.1.0' "$(local_tags)"
+
+  # (c) race: the hook rejects the push but the tag appears on the remote meanwhile.
+  new_scenario race
+  merge_pr dependabot 151 'chore(deps): bump a'
+  publish_master
+  cat >"$S_ORIGIN/hooks/pre-receive" <<'HOOK'
+#!/usr/bin/env bash
+while read -r old new ref; do
+  case "$ref" in refs/tags/v1.1.1)
+    # Ref updates are forbidden inside the receive quarantine, so step out of it.
+    env -u GIT_QUARANTINE_PATH -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES \
+      git update-ref refs/tags/v1.1.1 "$(git rev-parse refs/tags/v1.1.0)"
+    exit 1 ;; esac
+done
+HOOK
+  chmod +x "$S_ORIGIN/hooks/pre-receive"
+  oid=$(git -C "$S_ORIGIN" rev-parse refs/tags/v1.1.0^{commit})
+  run_tag_script
+  assert_status 'push race with an existing remote tag: exits 0' 0 "$RUN_STATUS"
+  assert_eq 'push race: remote tag is not moved' "$oid" "$(git -C "$S_ORIGIN" rev-parse refs/tags/v1.1.1^{commit})"
+  assert_eq 'push race: unpublished local tag is dropped' 'v1.1.0' "$(local_tags)"
+}
+
+test_integration_lookup_outcomes() {
+  local mode
+  # 404 is a definitive "not a PR": ineligible, later PRs are still tagged.
+  new_scenario notfound
+  merge_pr dependabot 161 'chore(deps): bump a'
+  commit 'fix: reference an issue not a PR (#162)'
+  printf 404 >"$S_GH/pr-162.mode"
+  merge_pr dependabot 163 'chore(deps): bump b'
+  publish_master
+  run_tag_script
+  assert_status '404: run exits 0' 0 "$RUN_STATUS"
+  assert_eq '404: later PRs are still tagged' $'v1.1.1 #161\nv1.1.2 #163' "$(printed_tags)"
+  assert_eq '404: the 404 commit was looked up and skipped' 1 "$(grep -c 'skip .* (#162): not a pull request' <<<"$RUN_OUT")"
+
+  # A 404 lookalike is unknown: stdout text, or a stderr line that is not the CLI's own.
+  for mode in lookalike lookalike-stderr; do
+    new_scenario "anchor-$mode"
+    merge_pr dependabot 171 'chore(deps): bump a'
+    commit 'fix: something (#172)'
+    printf '%s' "$mode" >"$S_GH/pr-172.mode"
+    merge_pr dependabot 173 'chore(deps): bump b'
+    publish_master
+    run_tag_script
+    if [ "$RUN_STATUS" -ne 0 ]; then pass; else fail "404 anchoring: $mode is not treated as 404" "$RUN_OUT"; fi
+    assert_eq "404 anchoring ($mode): PR after the failure is not tagged" 'v1.1.0 v1.1.1' "$(local_tags)"
+  done
+
+  # A title or body containing 404 on a successful response is judged by pr_is_eligible only.
+  new_scenario title404
+  merge_pr dependabot 181 'fix(deps): handle HTTP 404 (Not Found) in a'
+  merge_pr human 182 'fix: gh: Not Found (HTTP 404)'
+  merge_pr dependabot 183 'chore(deps): bump b'
+  publish_master
+  run_tag_script
+  assert_status 'title with 404: exits 0' 0 "$RUN_STATUS"
+  assert_eq 'title with 404: eligible tagged, human skipped, later tagged' $'v1.1.1 #181\nv1.1.2 #183' "$(printed_tags)"
+
+  # Fail closed: every unknown outcome aborts before any later PR is tagged.
+  for mode in 403 429 500 empty garbage; do
+    new_scenario "closed-$mode"
+    merge_pr dependabot 191 'chore(deps): bump a'
+    merge_pr dependabot 192 'chore(deps): bump b'
+    printf '%s' "$mode" >"$S_GH/pr-192.mode"
+    merge_pr dependabot 193 'chore(deps): bump c'
+    publish_master
+    run_tag_script
+    if [ "$RUN_STATUS" -ne 0 ]; then pass; else fail "fail-closed: $mode aborts non-zero" "$RUN_OUT"; fi
+    assert_eq "fail-closed ($mode): only the PR before the failure is tagged" 'v1.1.0 v1.1.1' "$(local_tags)"
+    assert_eq "fail-closed ($mode): no lookup for the PR after the failure" 0 "$(gh_calls | grep -c 'pulls/193$')"
+    # A retry after recovery resumes from the same position.
+    rm -f "$S_GH/pr-192.mode"
+    run_tag_script
+    assert_eq "fail-closed ($mode): the next run resumes and tags the rest" 'v1.1.0 v1.1.1 v1.1.2 v1.1.3' "$(local_tags)"
+  done
+}
+
+test_integration_signal_drift() {
+  new_scenario drift
+  merge_pr drift 201 'chore(deps): bump a'
+  publish_master
+  run_tag_script
+  assert_status 'drift: run does not fail' 0 "$RUN_STATUS"
+  assert_eq 'drift: no tag created' 'v1.1.0' "$(local_tags)"
+  assert_eq 'drift: a warning annotation is emitted' 1 "$(grep -c '^::warning::1 Dependabot merge(s) failing the auto-merge signal' <<<"$RUN_OUT")"
+  assert_eq 'drift: the summary lists the PR' 1 "$(grep -c '^- #201 ' "$S_SUMMARY")"
+
+  new_scenario nodrift
+  merge_pr human 211 'fix: human change'
+  publish_master
+  run_tag_script
+  assert_status 'no drift for human merges: exits 0' 0 "$RUN_STATUS"
+  assert_eq 'no drift for human merges: no warning' 0 "$(grep -c '^::warning::' <<<"$RUN_OUT")"
+  assert_eq 'no drift for human merges: no summary entry' 0 "$(grep -c 'failing the auto-merge signal' "$S_SUMMARY")"
+}
+
+test_integration_blocked() {
+  local blocker
+  new_scenario blocked
+  merge_pr dependabot 221 'chore(deps): bump a'
+  merge_pr human 222 'feat!: drop the old export format'
+  blocker=$(git rev-parse HEAD)
+  merge_pr dependabot 223 'chore(deps): bump b'
+  publish_master
+  run_tag_script
+  assert_status 'blocked: exits 0' 0 "$RUN_STATUS"
+  assert_eq 'blocked: only the commit before the blocker is tagged' 'v1.1.0 v1.1.1' "$(local_tags)"
+  assert_eq 'blocked: no API call at or after the blocker' 'api repos/octo/grouper/pulls/221' "$(gh_calls)"
+  assert_eq 'blocked: warning names the blocking commit' 1 "$(grep -c "^::warning::Automatic tagging blocked since $blocker" <<<"$RUN_OUT")"
+  assert_eq 'blocked: summary carries the headline' 1 "$(grep -c "Automatic tagging blocked since $blocker" "$S_SUMMARY")"
+
+  new_scenario blockedfirst
+  merge_pr human 231 'fix!: rename everything'
+  merge_pr dependabot 232 'chore(deps): bump a'
+  publish_master
+  run_tag_script
+  assert_status 'blocked at the start: exits 0' 0 "$RUN_STATUS"
+  assert_eq 'blocked at the start: no tag and no API call' '' "$(local_tags | sed 's/^v1.1.0$//')$(gh_calls)"
+
+  new_scenario nobase
+  git tag -d v1.1.0 >/dev/null
+  git -C "$S_ORIGIN" tag -d v1.1.0 >/dev/null
+  merge_pr dependabot 241 'chore(deps): bump a'
+  publish_master
+  run_tag_script
+  assert_status 'no base tag: exits 0' 0 "$RUN_STATUS"
+  assert_eq 'no base tag: warns and tags nothing' 1 "$(grep -c '^::warning::Automatic tagging blocked since .*no semver base tag' <<<"$RUN_OUT")"
+  assert_eq 'no base tag: no API call' '' "$(gh_calls)"
+}
+
+# build_parity_scenario <name>: same history for the dry/real comparison (feat in the middle).
+build_parity_scenario() {
+  new_scenario "$1"
+  merge_pr dependabot 301 'chore(deps): bump a'
+  merge_pr dependabot 302 'chore(deps): bump b'
+  merge_pr human 303 'feat: new thing'
+  merge_pr dependabot 304 'chore(deps): bump c'
+  merge_pr dependabot 305 'chore(deps): bump d'
+  publish_master
+}
+
+test_integration_dry_run() {
+  local before after dry real
+  build_parity_scenario dry
+  before=$(all_refs "$S_REPO"; all_refs "$S_ORIGIN")
+  run_tag_script DRY_RUN=1
+  after=$(all_refs "$S_REPO"; all_refs "$S_ORIGIN")
+  assert_status 'dry run: exits 0' 0 "$RUN_STATUS"
+  assert_eq 'dry run: zero refs created locally or in the bare origin' "$before" "$after"
+  dry=$(printed_tags)
+  assert_eq 'dry run: simulated sequence advances the base' $'v1.1.1 #301\nv1.1.2 #302\nv1.2.0 #304\nv1.2.1 #305' "$dry"
+
+  build_parity_scenario real
+  run_tag_script DRY_RUN=0
+  real=$(printed_tags)
+  assert_eq 'dry/real parity: the printed sets are equal' "$real" "$dry"
+  assert_eq 'dry/real parity: a real run creates exactly that set' 'v1.1.0 v1.1.1 v1.1.2 v1.2.0 v1.2.1' "$(local_tags)"
+
+  # Any other DRY_RUN value fails safe to a dry run.
+  build_parity_scenario failsafe
+  before=$(all_refs "$S_REPO"; all_refs "$S_ORIGIN")
+  run_tag_script DRY_RUN=false
+  after=$(all_refs "$S_REPO"; all_refs "$S_ORIGIN")
+  assert_eq 'DRY_RUN=false is a dry run (fail safe)' "$before" "$after"
+  run_tag_script DRY_RUN=
+  after=$(all_refs "$S_REPO"; all_refs "$S_ORIGIN")
+  assert_eq 'empty DRY_RUN is a dry run (fail safe)' "$before" "$after"
+
+  # A dry run does not propose a tag that already exists on the remote.
+  new_scenario dryremote
+  merge_pr dependabot 311 'chore(deps): bump a'
+  merge_pr dependabot 312 'chore(deps): bump b'
+  publish_master
+  git -C "$S_ORIGIN" tag v1.1.2 "$(git -C "$S_ORIGIN" rev-parse v1.1.0)"
+  run_tag_script DRY_RUN=1
+  assert_eq 'dry run: remote-only tag is not proposed, walk stops' 'v1.1.1 #311' "$(printed_tags)"
+  new_scenario realremote
+  merge_pr dependabot 311 'chore(deps): bump a'
+  merge_pr dependabot 312 'chore(deps): bump b'
+  publish_master
+  git -C "$S_ORIGIN" tag v1.1.2 "$(git -C "$S_ORIGIN" rev-parse v1.1.0)"
+  run_tag_script
+  assert_eq 'dry/real parity with a remote-only tag' 'v1.1.1 #311' "$(printed_tags)"
+
+  # Forced dry run (schedule while AUTO_TAG_ENABLED is not true) is announced.
+  new_scenario forced
+  merge_pr dependabot 321 'chore(deps): bump a'
+  publish_master
+  run_tag_script DRY_RUN=1 GITHUB_EVENT_NAME=schedule AUTO_TAG_ENABLED=
+  assert_status 'forced dry run: exits 0' 0 "$RUN_STATUS"
+  assert_eq 'forced dry run: notice annotation' 1 "$(grep -c '^::notice::DRY RUN: AUTO_TAG_ENABLED is not true' <<<"$RUN_OUT")"
+  assert_eq 'forced dry run: summary headline' 1 "$(grep -c 'DRY RUN: AUTO_TAG_ENABLED is not true' "$S_SUMMARY")"
+  run_tag_script DRY_RUN=1 GITHUB_EVENT_NAME=workflow_dispatch
+  assert_eq 'requested dry run (dispatch): no forced-dry-run notice' 0 "$(grep -c '^::notice::' <<<"$RUN_OUT")"
+}
+
+test_integration_config() {
+  new_scenario config
+  merge_pr dependabot 331 'chore(deps): bump a'
+  publish_master
+  # GITHUB_REPOSITORY defaults from `gh repo view`.
+  run_tag_script GITHUB_REPOSITORY= DRY_RUN=1
+  assert_status 'config: GITHUB_REPOSITORY falls back to gh repo view' 0 "$RUN_STATUS"
+  assert_eq 'config: the fallback asked gh repo view once' 1 "$(gh_calls | grep -c '^repo view --json nameWithOwner -q .nameWithOwner$')"
+  # Neither source: fail early with a clear message and no API call.
+  : >"$S_GH/calls.log"
+  : >"$S_GH/repo-view-fails"
+  run_tag_script GITHUB_REPOSITORY= DRY_RUN=1
+  if [ "$RUN_STATUS" -ne 0 ]; then pass; else fail 'config: missing GITHUB_REPOSITORY fails early' "$RUN_OUT"; fi
+  assert_eq 'config: the error names GITHUB_REPOSITORY' 1 "$(grep -c 'GITHUB_REPOSITORY is not set' <<<"$RUN_OUT")"
+  # Unresolvable TARGET_REF.
+  run_tag_script TARGET_REF=origin/nonexistent DRY_RUN=1
+  if [ "$RUN_STATUS" -ne 0 ]; then pass; else fail 'config: unresolvable TARGET_REF fails' "$RUN_OUT"; fi
+}
+
+test_integration() {
+  test_integration_basic
+  test_integration_feat
+  test_integration_remote_tag
+  test_integration_lookup_outcomes
+  test_integration_signal_drift
+  test_integration_blocked
+  test_integration_dry_run
+  test_integration_config
+}
+
+# ---------------------------------------------------------------------------
 # Library hygiene
 # ---------------------------------------------------------------------------
 test_lib_hygiene() {
@@ -454,6 +895,13 @@ test_lib_hygiene() {
   if grep -nE '(^|[^_[:alnum:]])(git|gh|curl|wget|nc)[[:space:]]' "$SCRIPT_DIR/version-lib.sh" |
     grep -vE '^[0-9]+:[[:space:]]*#' | grep -vE '^[0-9]+:.*#.*(git|gh)' >/dev/null; then
     fail 'version-lib.sh contains no git/gh/curl invocations' "$(grep -nE '(git|gh|curl|wget)[[:space:]]' "$SCRIPT_DIR/version-lib.sh" | head -3)"
+  else
+    pass
+  fi
+
+  # Tags are never force-pushed or force-replaced (an existing tag must never move).
+  if grep -nE 'git (push|tag)[^#]*(--force|--force-with-lease|[[:space:]]-f([[:space:]]|$)|[[:space:]]\+refs)' "$SCRIPT_DIR/tag-dependabot-merges.sh" >/dev/null; then
+    fail 'tag-dependabot-merges.sh never forces a push or a tag'
   else
     pass
   fi
@@ -484,6 +932,7 @@ main() {
     test_versioning_in_git
     test_resolve_dry_run
     test_pr_is_eligible
+    test_integration
     test_lib_hygiene
     test_runner_self_check
   fi
