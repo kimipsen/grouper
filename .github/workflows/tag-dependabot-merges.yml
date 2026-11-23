@@ -1,0 +1,56 @@
+name: Tag Dependabot Merges
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run: log what would be tagged without creating or pushing tags'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: tag-dependabot-merges
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    # Scheduled runs always use the default branch; a manual dispatch from another
+    # branch must never tag.
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Run tagging script tests
+        run: bash .github/scripts/test-version-lib.sh
+
+      # Rollout gate: scheduled runs are dry runs until the repository variable
+      # AUTO_TAG_ENABLED is exactly "true". See resolve_dry_run in version-lib.sh.
+      - name: Resolve dry-run mode
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          VAR_AUTO_TAG_ENABLED: ${{ vars.AUTO_TAG_ENABLED }}
+        run: |
+          set -euo pipefail
+          # shellcheck source=.github/scripts/version-lib.sh
+          source .github/scripts/version-lib.sh
+          DRY_RUN=$(resolve_dry_run "$EVENT_NAME" "$INPUT_DRY_RUN" "$VAR_AUTO_TAG_ENABLED")
+          echo "DRY_RUN=${DRY_RUN}" >> "$GITHUB_ENV"
+
+      - name: Tag auto-merged Dependabot PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTO_TAG_ENABLED: ${{ vars.AUTO_TAG_ENABLED }}
+        run: bash .github/scripts/tag-dependabot-merges.sh
