@@ -36,3 +36,7 @@ yarn-error.log*
 /.claude/
 /.runtime/
 /CLAUDE.md
+
+# Wrangler (Cloudflare Workers) local state
+/.wrangler/
+/.dev.vars
