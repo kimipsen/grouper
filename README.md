@@ -47,14 +47,14 @@ npm --prefix grouper-app run build
 npx wrangler deploy
 ```
 
-- `not_found_handling = "single-page-application"` makes page navigations serve `index.html`, while missing static files (for example a missing `.js`) still return 404.
+- `not_found_handling = "single-page-application"` makes page navigations serve `index.html`. Cloudflare documents that requests that are not navigations (for example a missing `.js`) should return 404, but this is not verified here: local `wrangler dev` 4.167.0 returned 200 with the `index.html` body for missing `.js`/`.json` files. Confirm the 404 after the first deploy (see Rollout).
 - Unknown app paths are redirected to `/sessions` by the `**` route in the Angular router.
 - Docker/nginx already falls back to `index.html` via `try_files`.
 - Cloudflare project settings (the build command) live outside this repository. The Workers Builds project is assumed to run the Angular build before `npx wrangler deploy`; otherwise the assets directory is missing.
 
 ### Rollout
 
-- After deploy, check the Worker URL: `/sessions` and `/session/abc` requested with `-H 'Sec-Fetch-Mode: navigate'` should return 200, and a missing `.js` file requested without that header should return 404.
+- After deploy, check the Worker URL: `/sessions` and `/session/abc` requested with `-H 'Sec-Fetch-Mode: navigate'` should return 200. A missing `.js` file requested without that header is expected to return 404; confirm this on the deployed Worker. If it also returns 200 with `index.html`, a follow-up is needed (for example a Worker script that returns 404 for missing static files).
 - The Worker `name` in `wrangler.jsonc` (`grouper`) must match the Workers Builds project, or the build errors.
 - A preview URL from a non-production branch build is an optional pre-merge check.
 - Rollback: revert the pull request. The Workers dashboard can also roll back a deployment.
