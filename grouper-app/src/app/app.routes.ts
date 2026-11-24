@@ -19,4 +19,5 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/sessions/session-detail/session-detail').then((module) => module.SessionDetail),
   },
+  { path: '**', redirectTo: '/sessions' },
 ];
