@@ -12,6 +12,8 @@ import { NotificationService } from '../../../core/services/notification.service
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { Person } from '../../../models/person.model';
 import { getAxeViolations } from '../../../../testing/axe';
+import { By } from '@angular/platform-browser';
+import { GroupsResultCard } from './components/groups-result-card/groups-result-card';
 import { SessionDetail } from './session-detail';
 
 class MockI18nService {
@@ -1003,6 +1005,15 @@ describe('SessionDetail history view', () => {
     expect(root.querySelector('app-groups-result-card')).not.toBeNull();
     expect(alertOf(root)).toBeNull();
     expect(root.textContent).not.toContain('sessionDetail.tabs.resultsEmpty');
+  });
+
+  it('passes the session name to the result card and offers Print alongside Regenerate', async () => {
+    const { fixture, root, component } = await setup([makeSession('s1', [entry(1)])]);
+
+    const card = fixture.debugElement.query(By.directive(GroupsResultCard)).componentInstance as GroupsResultCard;
+    expect(card.sessionName()).toBe(component.session?.name);
+    expect(root.querySelector('app-groups-result-card .regenerate-button')).not.toBeNull();
+    expect(root.querySelector('app-groups-result-card .print-button')).not.toBeNull();
   });
 
   it('lists entries newest-first', async () => {
