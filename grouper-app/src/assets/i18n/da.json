@@ -111,6 +111,7 @@
     "generatedGroups": "Genererede grupper",
     "satisfaction": "Tilfredshed: {{score}}",
     "regenerateGroups": "Generer nye grupper",
+    "print": "Udskriv",
     "groupLabel": "Gruppe {{index}}",
     "score": "Score: {{score}}",
     "history": {

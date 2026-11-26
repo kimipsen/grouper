@@ -111,6 +111,7 @@
     "generatedGroups": "Generated Groups",
     "satisfaction": "Satisfaction: {{score}}",
     "regenerateGroups": "Generate new groups",
+    "print": "Print",
     "groupLabel": "Group {{index}}",
     "score": "Score: {{score}}",
     "history": {

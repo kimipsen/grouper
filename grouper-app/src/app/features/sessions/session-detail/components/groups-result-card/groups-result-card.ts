@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DOCUMENT, inject, input, output } from '@angular/core';
 import { GroupingResult } from '../../../../../models/group.model';
 import { Gender, Person } from '../../../../../models/person.model';
 import { I18nService } from '../../../../../core/services/i18n.service';
@@ -14,10 +14,12 @@ import { strategyLabelKey } from '../../strategy-label';
 })
 export class GroupsResultCard {
   private readonly i18n = inject(I18nService);
+  private readonly document = inject(DOCUMENT);
 
   readonly result = input.required<GroupingResult>();
   readonly people = input.required<Person[]>();
   readonly historical = input(false);
+  readonly sessionName = input('');
 
   readonly regenerate = output<void>();
 
@@ -25,7 +27,12 @@ export class GroupsResultCard {
 
   readonly strategyKey = computed(() => strategyLabelKey(this.result().strategy));
   readonly generatedAt = computed(() => this.formatDate(this.result().timestamp));
+  readonly printTitle = computed(() => this.sessionName().trim());
   readonly weightsCount = computed(() => this.result().settings.weightIds?.length ?? 0);
+
+  print(): void {
+    this.document.defaultView?.print();
+  }
 
   getPersonName(personId: string): string {
     return this.peopleById().get(personId)?.name ?? '';

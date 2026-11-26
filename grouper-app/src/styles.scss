@@ -24,3 +24,33 @@ body {
     padding: 0;
   }
 }
+
+// Print: hide app chrome so only the Results print sheet is left on the page.
+// Hide SIBLINGS of the print path only. Never hide `main`, `app-session-detail`, `.tab-container`, `.tab-panel`,
+// `app-groups-result-card`, `.groups-display` or `.card-content`: they are ancestors of (or are) the print sheet.
+// Never set `display` on `.tab-panel` or `.tab-container`, so `[hidden]` panels keep their UA `display: none`.
+// The person drawer lives inside the (hidden) People panel and needs no selector of its own.
+@media print {
+  .skipnav,
+  .header,
+  footer,
+  app-toast-container,
+  app-confirm-modal,
+  .back-link,
+  .page-title,
+  .tab-list,
+  #history-alert,
+  app-groups-history-list {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .tab-container,
+  .tab-panel {
+    border: 0;
+    padding: 0;
+  }
+}

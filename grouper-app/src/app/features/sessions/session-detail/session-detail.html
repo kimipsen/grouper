@@ -125,6 +125,7 @@
           [result]="viewed"
           [people]="session.people"
           [historical]="isViewingHistory"
+          [sessionName]="session.name"
           (regenerate)="regenerateGroups()" />
         <app-groups-history-list
           [entries]="historyEntries()"
