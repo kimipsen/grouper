@@ -1,5 +1,5 @@
 <section class="card section-card groups-display">
-  <div class="card-content">
+  <div class="card-content screen-only">
     <div class="groups-header">
       <h2 class="card-heading" id="results-heading" tabindex="-1">{{ 'sessionDetail.generatedGroups' | t }}</h2>
       @if (result().overallSatisfaction !== undefined) {
@@ -7,11 +7,16 @@
           {{ 'sessionDetail.satisfaction' | t:{ score: result().overallSatisfaction ?? 0 } }}
         </span>
       }
-      @if (!historical()) {
-        <button class="button button-secondary regenerate-button" type="button" (click)="regenerate.emit()">
-          {{ 'sessionDetail.regenerateGroups' | t }}
+      <div class="header-actions">
+        @if (!historical()) {
+          <button class="button button-secondary regenerate-button" type="button" (click)="regenerate.emit()">
+            {{ 'sessionDetail.regenerateGroups' | t }}
+          </button>
+        }
+        <button class="button button-secondary print-button" type="button" (click)="print()">
+          {{ 'sessionDetail.print' | t }}
         </button>
-      }
+      </div>
     </div>
 
     <div class="result-summary">
@@ -61,5 +66,30 @@
         </li>
       }
     </ul>
+  </div>
+
+  <div class="print-sheet">
+    @if (printTitle(); as title) {
+      <h2 class="print-title">{{ title }}</h2>
+    }
+    <p class="print-meta">{{ 'sessionDetail.result.generatedAt' | t:{ date: generatedAt() } }}</p>
+    <p class="print-meta">{{ 'sessionDetail.strategy' | t }}: {{ strategyKey() | t }}</p>
+    <p class="print-meta">{{ 'sessionDetail.result.settings.groupSize' | t:{ size: result().settings.groupSize } }}</p>
+    <ol class="print-groups">
+      @for (group of result().groups; track group.id; let i = $index) {
+        <li class="print-group">
+          <h3 class="print-group-label">{{ 'sessionDetail.groupLabel' | t:{ index: i + 1 } }}</h3>
+          @if (group.satisfactionScore !== undefined) {
+            <p class="print-score">{{ 'sessionDetail.score' | t:{ score: group.satisfactionScore } }}</p>
+          }
+          <ul class="nobullet-list print-members">
+            @for (memberId of group.memberIds; track memberId) {
+              <li><span class="print-checkbox" aria-hidden="true">☐</span>{{ isRemovedPerson(memberId) ? ('sessionDetail.removedPerson' | t) : (getPersonName(memberId) || ('sessionDetail.unnamedPerson' | t)) }}</li>
+            }
+          </ul>
+          <div class="print-notes" aria-hidden="true"></div>
+        </li>
+      }
+    </ol>
   </div>
 </section>

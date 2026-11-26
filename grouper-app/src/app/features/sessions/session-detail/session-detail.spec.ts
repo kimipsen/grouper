@@ -1029,7 +1029,7 @@ describe('SessionDetail history view', () => {
     expect(alert?.textContent).toContain(component.formatResultDate(history[0]));
     expect(alert?.textContent).toContain('2026');
     expect(document.activeElement).toBe(alert);
-    expect(root.querySelector('app-groups-result-card .button')).toBeNull();
+    expect(root.querySelector('app-groups-result-card .regenerate-button')).toBeNull();
     expect(entryButtons(root).map((b) => b.getAttribute('aria-current'))).toEqual([null, null, 'true']);
   });
 
